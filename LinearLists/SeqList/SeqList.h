@@ -17,7 +17,8 @@ public:
 	SeqList(int sz=defaultSize);					// Constructor	
 	SeqList(SeqList<T>& L);							// Copy constructor
 	SeqList<T> operator=(SeqList<T>& L);			// Operator= overloading
-	~SeqList() { delete[] data; }					// Destructor
+	virtual ~SeqList() { delete[] data; }			// Virtual destructor
+	virtual T* getPtr2data() { return data; }		// Get the pointer to data(i.e. &data[0]). Use it carfully!
 	virtual int size()const { return maxSize; }		// Get the maximum volume of the list
 	virtual int length()const { return last + 1; }	// Get the number of pactical existing items
 	virtual int search(const T& x)const;			// Search specified item x and return its logical sequence number 
@@ -26,8 +27,8 @@ public:
 	virtual bool append(const T& x);			 	// Add value x at the end of list
 	virtual bool remove(int i, T& x);				// Remove the i-th item & store the removed value
 	virtual bool remove(int i);						// Remove the i-th item without storing the removed value	
-	virtual void Union(SeqList<T>& L2);				// Union of two lists
-	virtual void Intersection(SeqList<T>& L2);		// Intersection of two lists
+	virtual void Union(SeqList<T>& L2);				// Union of two lists, and store the result in *this
+	virtual void Intersection(SeqList<T>& L2);		// Intersection of two lists, and store the result in *this
 	virtual void input();							// Input data via the console window
 	virtual void Import(const string& filename);	// Import corresponding data from a local host file
 	virtual void output()const;						// Output data via the console window
@@ -35,6 +36,15 @@ public:
 	virtual bool isEmpty()const { return last == -1 ? true : false; }
 	virtual bool isFull()const { return last + 1 == maxSize ? true : false; }
 	virtual void sort() {/* Do a sort in a specific manner which hinges on the data type T. */ }
+	virtual T& getData(int i)const {
+		// Get the i-th item value & return its reference
+		if (i > 0 && i <= last + 1)
+			return data[i - 1];		
+		else{
+			cerr << "Error! Invalid i, index i must range from 1 to " << last + 1 << endl;
+			//exit(1);
+		}
+	}
 	virtual bool getData(int i, T& x)const {
 		// Get the i-th item value via reference x, and return true if succeed & return false otherwise
 		if (i > 0 && i <= last + 1) {
@@ -49,13 +59,13 @@ public:
 		if (i > 0 && i <= last + 1)
 			data[i - 1] = x;
 		else
-			cerr << "Error! Invalid i, index i must be range from 1 to" << last + 1 << endl;
+			cerr << "Error! Invalid i, index i must range from 1 to " << last + 1 << endl;
 	}
-protected:
+private:
 	T* data;
 	int maxSize;									// The maximum volume of the list
 	int last;									    // The physical index number(starting from 0) of the last existing item
-
+	
 };
 
 template<typename T>
@@ -316,7 +326,7 @@ void SeqList<T>::Export(const string& filename)const {
 	ofstream os(filename, ios::out | ios::binary | ios::_Noreplace);
 	if (!os) {
 		cerr << "Open file error! File \"" << filename << "\" has already existed." << endl;
-		abort();
+		exit(1);
 	}
 	
 	for (int i = 0; i <= last; ++i)

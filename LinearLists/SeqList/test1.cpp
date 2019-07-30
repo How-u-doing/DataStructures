@@ -23,7 +23,7 @@ int main()
 	cout << "\nLB:\n";
 	LB.output();
 	LB.insert(0, "Mark");
-	LB.insert(3, "Jacob");
+	LB.insert(3, "Gorgeous");
 	LB.insert(2, "Ania");
 	cout << "\nLB_insert_3:\n";
 	LB.output();
@@ -35,5 +35,13 @@ int main()
 	LD.Intersection(LA);
 	cout << "\nIntersection of LA & LB:\n";
 	LD.output();
+	SeqList<string> LE(LC);
+	cout << "\nLE:" << endl;
+	LinearList<string>* p = &LE;
+	p->output();
+	string* sptr = LE.getPtr2data();
+	cout << endl << *(sptr + 2) << " is one of my favorite people, & the most beatiful girl I ever know real life!" << endl;
+	cout << "I'm somehow insanely into YOU-" << p->getData(3) << " for no reason!!" << endl;
+
 	return 0;
 }
