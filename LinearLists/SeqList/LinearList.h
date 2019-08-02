@@ -1,3 +1,4 @@
+// linear list header
 #pragma once
 #ifndef LINEARLIST_H
 #define LINEARLIST_H

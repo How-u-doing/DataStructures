@@ -1,3 +1,4 @@
+// sequential list header
 #pragma once
 #ifndef SEQLIST_H
 #define SEQLIST_H
@@ -295,7 +296,7 @@ void SeqList<T>::Import(const string& filename) {
 			return;
 		// else execute following instructions
 	}
-	ifstream is(filename, ios::binary | ios::in);
+	ifstream is(filename, ios::in | ios::binary);
 	if (!is) {
 		cerr << "Open file \"" << filename << "\" error! Can't find this file.\n";
 		cout<<"Please check the validity of its directory or filename." << endl;
