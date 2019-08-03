@@ -31,5 +31,6 @@ struct Nodeptr {
 		ptr = ptr->next;							// ++(*this)
 		return tmp;
 	}
-	Node<T>& operator*() { return *ptr; }
+	Node<T>* operator->() { return ptr; }			// dereference to access member
+	Node<T>& operator*() { return *ptr; }			// dereference to access whole object
 };
