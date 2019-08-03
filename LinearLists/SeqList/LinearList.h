@@ -8,7 +8,6 @@ class LinearList {
 public:	
 	virtual ~LinearList() {};								// Virtual destructor
 	virtual int size()const = 0;							// Get the maximum volume of the list
-	virtual void resize(int newsz)=0;						// Change the size(maximum volume) of the list
 	virtual int length()const = 0;							// Get the number of pactical existing items
 	virtual int search(const T& x)const = 0;				// Search specified item x and return its logical sequence number 
 	virtual bool getData(int i, T& x)const = 0;				// Get the i-th item value via reference x, and return true if succeed & return false otherwise

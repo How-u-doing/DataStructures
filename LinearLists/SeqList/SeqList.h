@@ -19,11 +19,11 @@ public:
 	SeqList(SeqList<T>& L);							// Copy constructor
 	SeqList<T> operator=(SeqList<T>& L);			// Operator= overloading
 	virtual ~SeqList() { delete[] data; }			// Virtual destructor
-	virtual T* getPtr2data() { return data; }		// Get the pointer to data(i.e. &data[0]). Use it carfully!
+	T* getPtr2data() { return data; }				// New function in derived class SeqList to get the pointer to data(i.e. &data[0]). Use it carfully!
+	void resize(int newsz);							// New function in derived class SeqList to change the size(maximum volume) of the list	
 	virtual int size()const { return maxSize; }		// Get the maximum volume of the list
 	virtual int length()const { return last + 1; }	// Get the number of pactical existing items
 	virtual int search(const T& x)const;			// Search specified item x and return its logical sequence number 
-	virtual void resize(int newsz);					// Change the size(maximum volume) of the list	
 	virtual bool insert(int i, const T& x);			// Insert value x after the i-th item, 0<=i<=index_of_last_one_in_logical
 	virtual bool append(const T& x);			 	// Add value x at the end of list
 	virtual bool remove(int i, T& x);				// Remove the i-th item & store the removed value
