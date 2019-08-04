@@ -2,7 +2,7 @@
 #include"SeqList.h"
 using namespace std;
 
-int main()
+int Main()
 {
 	SeqList<string> LA(50), LB, LC, LD;
 	// input Friends characters:
@@ -41,7 +41,7 @@ int main()
 	p->output();
 	string* sptr = LE.getPtr2data();
 	cout << endl << *(sptr + 2) << " is one of my favorite people, & the most beatiful girl I ever know real life!" << endl;
-	cout << "I'm somehow insanely into YOU-" << p->getData(3) << " for no reason!!" << endl;
+	cout << "I'm somehow insanely into YOU-" << p->getVal(3) << " for no reason!!" << endl;
 
 	return 0;
 }

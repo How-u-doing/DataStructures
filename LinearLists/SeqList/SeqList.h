@@ -37,7 +37,7 @@ public:
 	virtual bool isEmpty()const { return last == -1 ? true : false; }
 	virtual bool isFull()const { return last + 1 == maxSize ? true : false; }
 	virtual void sort() {/* Do a sort in a specific manner which hinges on the data type T. */ }
-	virtual T& getData(int i)const {
+	virtual T& getVal(int i)const {
 		// Get the i-th item value & return its reference
 		if (i > 0 && i <= last + 1)
 			return data[i - 1];		
@@ -46,7 +46,7 @@ public:
 			//exit(1);
 		}
 	}
-	virtual bool getData(int i, T& x)const {
+	virtual bool getVal(int i, T& x)const {
 		// Get the i-th item value via reference x, and return true if succeed & return false otherwise
 		if (i > 0 && i <= last + 1) {
 			x = data[i - 1];
@@ -55,7 +55,7 @@ public:
 		else
 			return false;
 	}
-	virtual void setData(int i, const T& x) {
+	virtual void setVal(int i, const T& x) {
 		// Set value x for the i-th item	
 		if (i > 0 && i <= last + 1)
 			data[i - 1] = x;
@@ -232,7 +232,7 @@ void SeqList<T>::Union(SeqList<T>& L2) {
 	int m = L2.length();
 	T x;
 	for (int i = 1; i <= m; ++i) {
-		L2.getData(i, x);
+		L2.getVal(i, x);
 		if (!search(x))									// not found x in this list
 			append(x);
 	}
@@ -243,7 +243,7 @@ void SeqList<T>::Intersection(SeqList<T>& L2) {
 	int n = last + 1, i = 1;
 	T x;
 	while (i <= n) {
-		getData(i, x);
+		getVal(i, x);
 		if (!L2.search(x)) {
 			// not found x in list L2
 			remove(i);
