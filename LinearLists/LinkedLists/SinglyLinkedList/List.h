@@ -317,12 +317,13 @@ void List<T>::Import(const string& filename) {
 		exit(1);
 	}
 
-	Node<T>* curr = first->next = new Node<T>;
-	if (curr == nullptr) { cerr << "Memory allocation error!" << endl; exit(1); }
-	while (is.read((char*) &(curr->data), sizeof(curr->data))) {
-		curr->next = new Node<T>;
-		if (curr == nullptr) { cerr << "Memory allocation error!" << endl; exit(1); }
-	}
+	T tmp;
+	Node<T>* curr = first;
+	while (is.read((char*) &tmp, sizeof(T))) {
+		curr->next = new Node<T>(tmp);
+		if (curr->next == nullptr) { cerr << "Memory allocation error!" << endl; exit(1); }
+		curr = curr->next;
+	}	
 	is.close();
 }
 
