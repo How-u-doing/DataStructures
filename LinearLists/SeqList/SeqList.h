@@ -17,7 +17,7 @@ class SeqList : public LinearList<T> {
 public:	
 	SeqList(int sz=defaultSize);					// Constructor	
 	SeqList(SeqList<T>& L);							// Copy constructor
-	SeqList<T> operator=(SeqList<T>& L);			// Operator= overloading
+	SeqList<T>& operator=(SeqList<T>& L);			// Operator= overloading
 	virtual ~SeqList() { delete[] data; }			// Virtual destructor
 	T* getPtr2data() { return data; }				// New function in derived class SeqList to get the pointer to data(i.e. &data[0]). Use it carfully!
 	void resize(int newsz);							// New function in derived class SeqList to change the size(maximum volume) of the list	
@@ -92,7 +92,7 @@ SeqList<T>::SeqList(SeqList<T>& L) {
 }
 
 template<typename T>
-SeqList<T> SeqList<T>::operator=(SeqList<T>& L)
+SeqList<T>& SeqList<T>::operator=(SeqList<T>& L)
 {
 	if (&L != this) {
 		T* data0 = data;
