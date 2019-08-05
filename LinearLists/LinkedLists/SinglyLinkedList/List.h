@@ -287,12 +287,13 @@ void List<T>::input() {
 			return;
 		// else execute following instructions
 	}
-	Node<T>* curr = first->next = new Node<T>;
-	if (curr == nullptr) { cerr << "Memory allocation error!" << endl; exit(1); }
+	Node<T>* curr = first;
+	T tmp;
 	cout << "Please input data.  (Attention: to end up with Ctrl+Z)" << endl;
-	while (cin >> curr->data) {
-		curr->next = new Node<T>;
+	while (cin >> tmp) {
+		curr->next = new Node<T>(tmp);
 		if (curr == nullptr) { cerr << "Memory allocation error!" << endl; exit(1); }
+		curr = curr->next;
 	}
 }
 
