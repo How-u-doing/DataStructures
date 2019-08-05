@@ -32,6 +32,17 @@ struct Nodeptr {
 		ptr = ptr->next;							// ++(*this)
 		return tmp;
 	}
+	Nodeptr<T> operator=(Node<T>* p) { ptr = p; }
+	Nodeptr<T> operator=(Nodeptr<T> p) { ptr = p; }
+	bool operator==(Nodeptr<T> p) { return ptr == p.ptr ? true : false; }
+	bool operator==(Node<T>* p) { return ptr == p ? true : false; }
+	bool operator!=(Nodeptr<T> p) { return ptr == p.ptr ? false : true; }
+	bool operator!=(Node<T>* p) { return ptr == p ? false : true; }
+	Nodeptr<T> operator+=(int n) {
+		if (n < 0) { cerr << "Invalid argument n, n must be no less than 0." << endl; return *this; }
+		// when n is too large, *this points to the last node for security 
+		while (n-- && ptr->next != nullptr) ++(*this);
+	}
 	Node<T>* operator->() { return ptr; }			// dereference to access member
 	Node<T>& operator*() { return *ptr; }			// dereference to access whole object
 };
