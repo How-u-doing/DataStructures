@@ -279,14 +279,16 @@ void List<T>::input() {
 		cout << "Warning, the list is not null. Input new data will cover the original data\n";
 		cout << "Are you sure to go on?('y' or 'n')\n";
 		char c;
-		// clear input buffer
-		while ((c = getchar()) != '\n');
+		// clear stdin buffer to avoid cin extracting '\n' for c
+		cin.clear();
+		cin.sync();
 
 		cin >> c;
-		if (c != 'y' && c != 'Y')					// cancel
-			return;
+		if (c != 'y' && c != 'Y') 					// cancel
+			return;	
 		// else execute following instructions
 	}
+	clear();
 	Node<T>* curr = first;
 	T tmp;
 	cout << "Please input data.  (Attention: to end up with Ctrl+Z)" << endl;
@@ -294,7 +296,7 @@ void List<T>::input() {
 		curr->next = new Node<T>(tmp);
 		if (curr->next == nullptr) { cerr << "Memory allocation error!" << endl; exit(1); }
 		curr = curr->next;
-	}
+	}	
 }
 
 template<typename T>
@@ -303,14 +305,16 @@ void List<T>::Import(const string& filename) {
 		cout << "Warning, the list is not null. Input new data will cover the original data\n";
 		cout << "Are you sure to go on?('y' or 'n')\n";
 		char c;
-		// clear input buffer
-		while ((c = getchar()) != '\n');
+		// clear stdin buffer to avoid cin extracting '\n' for c
+		cin.clear();
+		cin.sync();
 
 		cin >> c;
 		if (c != 'y' && c != 'Y')					// cancel
 			return;
 		// else execute following instructions
 	}
+	clear();
 	ifstream is(filename, ios::in | ios::binary);
 	if (!is) {
 		cerr << "Open file \"" << filename << "\" error! Can't find this file.\n";
