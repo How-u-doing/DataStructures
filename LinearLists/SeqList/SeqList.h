@@ -260,8 +260,9 @@ void SeqList<T>::input() {
 		cout << "Warning, the list is not null. Input new data will cover the original data\n";
 		cout << "Are you sure to go on?('y' or 'n')\n";
 		char c;
-		// clear input buffer
-		while ((c = getchar()) != '\n');
+		// clear stdin buffer to avoid cin extracting '\n' for c
+		cin.clear();
+		cin.sync();
 
 		cin >> c;
 		if (c != 'y' && c != 'Y')
@@ -288,8 +289,9 @@ void SeqList<T>::Import(const string& filename) {
 		cout << "Warning, the list is not null. Input new data will cover the original data\n";
 		cout << "Are you sure to go on?('y' or 'n')\n";
 		char c;
-		// clear input buffer
-		while ((c = getchar()) != '\n');
+		// clear stdin buffer to avoid cin extracting '\n' for c
+		cin.clear();
+		cin.sync();
 
 		cin >> c;
 		if (c != 'y' && c != 'Y')
