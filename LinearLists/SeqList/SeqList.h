@@ -8,7 +8,6 @@
 #include<string>
 #include<cstdlib>
 #include"LinearList.h"
-using namespace std;
 
 const int defaultSize = 100;						// Default size of list, you can modify it here
 
@@ -31,9 +30,9 @@ public:
 	virtual void Union(SeqList<T>& L2);				// Union of two lists, and store the result in *this
 	virtual void Intersection(SeqList<T>& L2);		// Intersection of two lists, and store the result in *this
 	virtual void input();							// Input data via the console window
-	virtual void Import(const string& filename);	// Import corresponding data from a local host file
+	virtual void Import(const std::string& filename);// Import corresponding data from a local host file
 	virtual void output()const;						// Output data via the console window
-	virtual void Export(const string& filename)const;// Export corresponding data into a local host file
+	virtual void Export(const std::string& filename)const;// Export corresponding data into a local host file
 	virtual bool isEmpty()const { return last == -1 ? true : false; }
 	virtual bool isFull()const { return last + 1 == maxSize ? true : false; }
 	virtual void sort() {/* Do a sort in a specific manner which hinges on the data type T. */ }
@@ -42,8 +41,8 @@ public:
 		if (i > 0 && i <= last + 1)
 			return data[i - 1];		
 		else{
-			cerr << "Error! Invalid i, index i must range from 1 to " << last + 1 << endl;
-			//exit(1);
+			std::cerr << "Error! Invalid i, index i must range from 1 to " << last + 1 << std::endl;
+			exit(1);
 		}
 	}
 	virtual bool getVal(int i, T& x)const {
@@ -60,7 +59,7 @@ public:
 		if (i > 0 && i <= last + 1)
 			data[i - 1] = x;
 		else
-			cerr << "Error! Invalid i, index i must range from 1 to " << last + 1 << endl;
+			std::cerr << "Error! Invalid i, index i must range from 1 to " << last + 1 << std::endl;
 	}
 private:
 	T* data;
@@ -75,7 +74,7 @@ SeqList<T>::SeqList(int sz) {
 		maxSize = sz;
 		last = -1;									// set practical length of the list null
 		data = new T[maxSize];
-		if (data == nullptr) { cerr << "Memory allocation error!" << endl; exit(1); }
+		if (data == nullptr) { std::cerr << "Memory allocation error!" << std::endl; exit(1); }
 	}
 }
 
@@ -84,7 +83,7 @@ SeqList<T>::SeqList(SeqList<T>& L) {
 	maxSize = L.maxSize;
 	last = L.length()-1;
 	data = new T[maxSize];
-	if (data == nullptr) { cerr << "Memory allocation error!" << endl; exit(1); }	
+	if (data == nullptr) { std::cerr << "Memory allocation error!" << std::endl; exit(1); }
 	int n = last + 1;
 	T *ptrsrc = L.data, *ptrdes = data;
 	// copy each item of list L	to new array
@@ -100,7 +99,7 @@ SeqList<T>& SeqList<T>::operator=(SeqList<T>& L)
 		maxSize = L.size();
 
 		data = new T[maxSize];
-		if (data == nullptr) { cerr << "Memory allocation error!" << endl; exit(1); }
+		if (data == nullptr) { std::cerr << "Memory allocation error!" << std::endl; exit(1); }
 		int n = last + 1;
 		T *ptrsrc = L.data, *ptrdes = data;
 		// copy each item of list L	to new array
@@ -121,23 +120,24 @@ int SeqList<T>::search(const T& x)const {
 
 template<typename T>
 void SeqList<T>::resize(int newsz) {
-	if (newsz <= 0) { cerr << "Invalid newsz! newsz must be a positive integer." << endl; return; }
+	if (newsz <= 0) { std::cerr << "Invalid newsz! newsz must be a positive integer." << std::endl; return; }
 	if (newsz != maxSize) {
 		if (newsz < last + 1) {
-			cout << "Warning, newsz is smaller than the practical length of the list. Data lose may occur.\n";
-			cout << "Are you sure to go on?('y' or 'n')\n";
+			std::cout << "Warning, newsz is smaller than the practical length of the list. Data lose may occur.\n";
+			std::cout << "Are you sure to go on?('y' or 'n')\n";
 			char c;
-			// clear input buffer
-			while ((c = getchar()) != '\n');
+			// clear stdin buffer to avoid cin extracting '\n' for c
+			std::cin.clear();
+			std::cin.sync();
 
-			cin >> c;
+			std::cin >> c;
 			if (c != 'y' && c != 'Y') 
 				return;
 			// else execute following instructions
 		}
 		maxSize = newsz;
 		T* newdata = new T[maxSize];
-		if (newdata == nullptr) { cerr << "Memory allocation error!" << endl; exit(1); }
+		if (newdata == nullptr) { std::cerr << "Memory allocation error!" << std::endl; exit(1); }
 		int n;
 		if (newsz >= last + 1) n = last + 1;			
 		else { n = newsz; last = newsz - 1; }			
@@ -156,11 +156,11 @@ bool SeqList<T>::insert(int i, const T& x) {
 	/* Insert a new element x after the i-th item, 0<=i<=last+1. 
 	   In particular, i=0, insert x at the beginning position. */ 
 	if (last == maxSize - 1) {
-		cerr << "List is full, cannot insert!\n";
+		std::cerr << "List is full, cannot insert!\n";
 		return false;			
 	}
 	if (i<0 || i>last + 1) {
-		cerr << "Invalid index i, i must be satisfy 0<=i<=" << last + 1 << endl;
+		std::cerr << "Invalid index i, i must be satisfy 0<=i<=" << last + 1 << std::endl;
 		return false;
 	}
 
@@ -177,7 +177,7 @@ template<typename T>
 bool SeqList<T>::append(const T& x) {
 	// add a new element x at the end of the list
 	if (last == maxSize - 1) {
-		cerr << "List's full, failed to insert!\n";
+		std::cerr << "List's full, failed to insert!\n";
 		return false;
 	}
 	// self-increase of "last" & insert x
@@ -189,11 +189,11 @@ template<typename T>
 bool SeqList<T>::remove(int i, T& x) {
 	// Remove the i-th item & store the removed value
 	if (last == -1) {
-		cerr << "List is null, cannot remove!" << endl;
+		std::cerr << "List is null, cannot remove!" << std::endl;
 		return false;
 	}
 	if (i<1 || i>last + 1) {
-		cerr << "Invalid index i, i must be satisfy 1<=i<=" << last + 1 << endl;
+		std::cerr << "Invalid index i, i must be satisfy 1<=i<=" << last + 1 << std::endl;
 		return false;
 	}
 	// store the item that is going to be romoved
@@ -211,11 +211,11 @@ template<typename T>
 bool SeqList<T>::remove(int i) {
 	// Remove the i-th item without storing it
 	if (last == -1) {
-		cerr << "List is null, cannot remove!" << endl;
+		std::cerr << "List is null, cannot remove!" << std::endl;
 		return false;
 	}
 	if (i<1 || i>last + 1) {
-		cerr << "Invalid index i, i must be satisfy 1<=i<=" << last + 1 << endl;
+		std::cerr << "Invalid index i, i must be satisfy 1<=i<=" << last + 1 << std::endl;
 		return false;
 	}
 	
@@ -257,51 +257,51 @@ void SeqList<T>::Intersection(SeqList<T>& L2) {
 template<typename T>
 void SeqList<T>::input() {
 	if (last != -1) {
-		cout << "Warning, the list is not null. Input new data will cover the original data\n";
-		cout << "Are you sure to go on?('y' or 'n')\n";
+		std::cout << "Warning, the list is not null. Input new data will cover the original data\n";
+		std::cout << "Are you sure to go on?('y' or 'n')\n";
 		char c;
 		// clear stdin buffer to avoid cin extracting '\n' for c
-		cin.clear();
-		cin.sync();
+		std::cin.clear();
+		std::cin.sync();
 
-		cin >> c;
+		std::cin >> c;
 		if (c != 'y' && c != 'Y')
 			return;
 		// else execute following instructions
 	}
-	cout << "Please input data.  (Attention: to end up with Ctrl+Z)" << endl;
+	std::cout << "Please input data.  (Attention: to end up with Ctrl+Z)" << std::endl;
 	int i = 0;
 	last = -1;
-	while (cin >> data[i++]) {
+	while (std::cin >> data[i++]) {
 		++last;
 		if (last == maxSize - 1) {
-			cout << "The list is full." << endl; 
+			std::cout << "The list is full." << std::endl;
 			break;
 		}
 	}
-	cout << "You have input " << last + 1 << " data item(s)." << endl;	
+	std::cout << "You have input " << last + 1 << " data item(s)." << std::endl;
 }
 
 
 template<typename T>
-void SeqList<T>::Import(const string& filename) {
+void SeqList<T>::Import(const std::string& filename) {
 	if (last != -1) {
-		cout << "Warning, the list is not null. Input new data will cover the original data\n";
-		cout << "Are you sure to go on?('y' or 'n')\n";
+		std::cout << "Warning, the list is not null. Input new data will cover the original data\n";
+		std::cout << "Are you sure to go on?('y' or 'n')\n";
 		char c;
 		// clear stdin buffer to avoid cin extracting '\n' for c
-		cin.clear();
-		cin.sync();
+		std::cin.clear();
+		std::cin.sync();
 
-		cin >> c;
+		std::cin >> c;
 		if (c != 'y' && c != 'Y')
 			return;
 		// else execute following instructions
 	}
-	ifstream is(filename, ios::in | ios::binary);
+	std::ifstream is(filename, std::ios::in | std::ios::binary);
 	if (!is) {
-		cerr << "Open file \"" << filename << "\" error! Can't find this file.\n";
-		cout<<"Please check the validity of its directory or filename." << endl;
+		std::cerr << "Open file \"" << filename << "\" error! Can't find this file.\n";
+		std::cout<<"Please check the validity of its directory or filename." << std::endl;
 		exit(1);
 	}
 	int i = 0;
@@ -309,26 +309,26 @@ void SeqList<T>::Import(const string& filename) {
 	while (is.read((char*)(data + i++), sizeof(T))) {
 		++last;
 		if (last == maxSize - 1) {
-			cout << "The list is full." << endl;
+			std::cout << "The list is full." << std::endl;
 			break;
 		}
 	}
 	is.close();
-	cout << "You have imported " << last + 1 << " data item(s) from file \"" << filename << "\"." << endl;
+	std::cout << "You have imported " << last + 1 << " data item(s) from file \"" << filename << "\"." << std::endl;
 }
 
 template<typename T>
 void SeqList<T>::output()const {
 	for (int i = 0; i <= last; ++i)
-		cout << "#" << i + 1 << ": " << data[i] << endl;
+		std::cout << "#" << i + 1 << ": " << data[i] << std::endl;
 }
 
 
 template<typename T>
-void SeqList<T>::Export(const string& filename)const {
-	ofstream os(filename, ios::out | ios::binary | ios::_Noreplace);
+void SeqList<T>::Export(const std::string& filename)const {
+	std::ofstream os(filename, std::ios::out | std::ios::binary | std::ios::_Noreplace);
 	if (!os) {
-		cerr << "Open file error! File \"" << filename << "\" has already existed." << endl;
+		std::cerr << "Open file error! File \"" << filename << "\" has already existed." << std::endl;
 		exit(1);
 	}
 	
