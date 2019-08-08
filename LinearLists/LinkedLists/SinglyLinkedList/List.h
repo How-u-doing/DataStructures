@@ -93,14 +93,14 @@ T& List<T>::operator[](int index) {
 	// i=0, return head node info(may be null)
 	if (index < 0) { std::cerr << "Invalid argument index, index must be no less than 0." << std::endl; exit(1); }
 	Node<T>* curr = first;
-	while (index-- && curr != nullptr)
+	while (index--) {
 		curr = curr->next;
-	if (curr == nullptr) {
-		std::cerr << "Index exceeded the list's length." << std::endl;
-		exit(1);
+		if (curr == nullptr) {
+			std::cerr << "Index exceeded the list's length." << std::endl;
+			exit(1);
+		}
 	}
-	else
-		return curr->data;		
+	return curr->data;
 }						
 
 template<typename T>
@@ -135,13 +135,14 @@ Node<T>* List<T>::locate(int i)const {
 	**/
 	if (i < 0) { std::cerr << "Invalid argument i, i must be no less than 0." << std::endl; exit(1); }
 	Node<T>* curr = first;
-	int k = 0;
-	while (curr != nullptr) {		
-		if (k == i) return curr;
+	while (i--) {
 		curr = curr->next;
-		++k;
+		if (curr == nullptr) {
+			std::cerr << "Index exceeded the list's length." << std::endl;
+			exit(1);
+		}
 	}
-	return nullptr;
+	return curr;
 }
 
 template<typename T>

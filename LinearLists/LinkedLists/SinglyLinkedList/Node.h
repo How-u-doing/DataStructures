@@ -41,7 +41,14 @@ struct Nodeptr {
 	Nodeptr<T> operator+=(int n) {
 		if (n < 0) { cerr << "Invalid argument n, n must be no less than 0." << endl; return *this; }
 		// when n is too large, *this points to the last node for security 
-		while (n-- && ptr->next != nullptr) ++(*this);
+		while (n--) {
+			++(*this);
+			if (this->ptr == nullptr) {
+				cerr << "Maximum backward-moving-steps exceeded." << endl;
+				exit(1);
+			}
+		}
+		return *this;		
 	}
 	Node<T>* operator->() { return ptr; }			// dereference to access member
 	Node<T>& operator*() { return *ptr; }			// dereference to access whole object
