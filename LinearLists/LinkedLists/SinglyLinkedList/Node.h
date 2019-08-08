@@ -39,8 +39,7 @@ struct Nodeptr {
 	bool operator!=(Nodeptr<T> p) { return ptr == p.ptr ? false : true; }
 	bool operator!=(Node<T>* p) { return ptr == p ? false : true; }
 	Nodeptr<T> operator+=(int n) {
-		if (n < 0) { cerr << "Invalid argument n, n must be no less than 0." << endl; return *this; }
-		// when n is too large, *this points to the last node for security 
+		if (n < 0) { cerr << "Invalid argument n, n must be no less than 0." << endl; exit(1); }		
 		while (n--) {
 			++(*this);
 			if (this->ptr == nullptr) {
