@@ -89,10 +89,11 @@ List<T>& List<T>::operator=(List<T>& L) {
 
 template<typename T>
 T& List<T>::operator[](int index) {	
-	// access list items via [], 1<=index<=length(), equivalent to getVal(int i)	
-	if (index < 1) { std::cerr << "Invalid argument index, index must be no less than 1." << std::endl; exit(1); }
-	Node<T>* curr = first->next;
-	while (--index && curr != nullptr)
+	// access list items via [], 0<=index<=length(), equivalent to getVal(int i)
+	// i=0, return head node info(may be null)
+	if (index < 0) { std::cerr << "Invalid argument index, index must be no less than 0." << std::endl; exit(1); }
+	Node<T>* curr = first;
+	while (index-- && curr != nullptr)
 		curr = curr->next;
 	if (curr == nullptr) {
 		std::cerr << "Index exceeded the list's length." << std::endl;
@@ -105,10 +106,10 @@ T& List<T>::operator[](int index) {
 template<typename T>
 void List<T>::clear() {
 	// erase all Nodes
-	Node<T>* curr = first->next;
+	Node<T>* curr = first->next, *del;
 	first->next = nullptr;
 	while (curr != nullptr) {
-		Node<T>* del = curr;
+		del = curr;
 		curr = curr->next;
 		delete del;
 	}
@@ -170,8 +171,8 @@ int List<T>::search(const T& x)const {
 
 template<typename T>
 T& List<T>::getVal(int i)const {
-	// return the value of i-th item, i>=1
-	if (i < 1) { std::cerr << "Invalid argument i, i must be no less than 1." << std::endl; exit(1); }
+	// return the value of i-th item, i>=0, i=0 return head node info(may be null)
+	if (i < 0) { std::cerr << "Invalid argument i, i must be no less than 0." << std::endl; exit(1); }
 	Node<T>* curr = locate(i);
 	if (curr != nullptr) { return curr->data; }
 	else { std::cerr << "Parameter i exceeded the list's length." << std::endl; exit(1); }
@@ -179,8 +180,8 @@ T& List<T>::getVal(int i)const {
 
 template<typename T>
 bool List<T>::getVal(int i, T& x)const {
-	// assign the value of i-th item to x, i>=1
-	if (i < 1)return false;							// invalid argument i
+	// assign the value of i-th item to x, i>=0, i=0 return head node info(may be null)
+	if (i < 0) { std::cerr << "Invalid argument i, i must be no less than 0." << std::endl; exit(1); }
 	Node<T>* curr = locate(i);
 	if (curr != nullptr) {							// locate successfully
 		x = curr->data;
@@ -199,7 +200,7 @@ void List<T>::setVal(int i, const T& x) {
 	if (curr != nullptr) 							// locate successfully
 		curr->data = x;
 	else
-		std::cout << "Setting value failed because i exceeds the list's length." << std::endl;
+		std::cout << "Setting value failed because i exceeded the list's length." << std::endl;
 }
 
 template<typename T>
