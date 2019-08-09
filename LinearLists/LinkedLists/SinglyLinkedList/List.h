@@ -91,12 +91,12 @@ template<typename T>
 T& List<T>::operator[](int index) {	
 	// access list items via [], 0<=index<=length(), equivalent to getVal(int i)
 	// i=0, return head node info(may be null)
-	if (index < 0) { std::cerr << "Invalid argument index, index must be no less than 0." << std::endl; exit(1); }
+	if (index < 0) { std::cerr << "Using operator[] error! Reason: Invalid argument index, index must be no less than 0." << std::endl; exit(1); }
 	Node<T>* curr = first;
 	while (index--) {
 		curr = curr->next;
 		if (curr == nullptr) {
-			std::cerr << "Index exceeded the list's length." << std::endl;
+			std::cerr << "Using operator[] error! Reason: Argument index exceeded the list's length." << std::endl;
 			exit(1);
 		}
 	}
@@ -133,15 +133,10 @@ Node<T>* List<T>::locate(int i)const {
 	 * In particular,	 i=0,	  return first(i.e. the pointer to first node)
 	 *				  i>length(), return nullptr
 	**/
-	if (i < 0) { std::cerr << "Invalid argument i, i must be no less than 0." << std::endl; exit(1); }
+	if (i < 0) { std::cerr << "Locating error! Reason: Invalid argument i, i must be no less than 0." << std::endl; exit(1); }
 	Node<T>* curr = first;
-	while (i--) {
+	while (i-- && curr != nullptr)
 		curr = curr->next;
-		if (curr == nullptr) {
-			std::cerr << "Index exceeded the list's length." << std::endl;
-			exit(1);
-		}
-	}
 	return curr;
 }
 
@@ -173,16 +168,14 @@ int List<T>::search(const T& x)const {
 template<typename T>
 T& List<T>::getVal(int i)const {
 	// return the value of i-th item, i>=0, i=0 return head node info(may be null)
-	if (i < 0) { std::cerr << "Invalid argument i, i must be no less than 0." << std::endl; exit(1); }
 	Node<T>* curr = locate(i);
 	if (curr != nullptr) { return curr->data; }
-	else { std::cerr << "Parameter i exceeded the list's length." << std::endl; exit(1); }
+	else { std::cerr << "Getting value error! Reason: Argument i exceeded the list's length." << std::endl; exit(1); }
 }
 
 template<typename T>
 bool List<T>::getVal(int i, T& x)const {
 	// assign the value of i-th item to x, i>=0, i=0 return head node info(may be null)
-	if (i < 0) { std::cerr << "Invalid argument i, i must be no less than 0." << std::endl; exit(1); }
 	Node<T>* curr = locate(i);
 	if (curr != nullptr) {							// locate successfully
 		x = curr->data;
@@ -192,25 +185,21 @@ bool List<T>::getVal(int i, T& x)const {
 }
 
 template<typename T>
-void List<T>::setVal(int i, const T& x) {
-	if (i < 1) {
-		std::cout << "Setting value failed due to invalid argument i. i must satisfy i>=1." << std::endl;
-		return;
-	}
+void List<T>::setVal(int i, const T& x) {	
 	Node<T>* curr = locate(i);
 	if (curr != nullptr) 							// locate successfully
 		curr->data = x;
-	else
-		std::cout << "Setting value failed because i exceeded the list's length." << std::endl;
+	else { std::cerr << "Setting value error! Reason: Argument i exceeded the list's length." << std::endl; exit(1); }
 }
 
 template<typename T>
 bool List<T>::insert(int i, const T& x) {
 	/* Insert a new element x after the i-th node, i>=0
 	 * In particular, i=0, insert x after head node. 
-	**/ 
-	if (i < 0) { std::cout << "Invalid argument i, i must be no less than 0." << std::endl; return false; }
+	**/
 	Node<T>* curr = locate(i);
+	if (curr == nullptr) { std::cerr << "Insertion error! Reason: Argument i exceeded the list's length." << std::endl; return false; }
+
 	Node<T>* newNode = new Node<T>(x);
 	if (newNode == nullptr) { std::cerr << "Memory allocation error!" << std::endl; exit(1); }
 	newNode->next = curr->next;
@@ -225,6 +214,7 @@ bool List<T>::append(const T& x) {
 	// make pointer curr point to last node
 	while (curr->next != nullptr)
 		curr = curr->next;
+
 	Node<T>* newNode = new Node<T>(x);
 	if (newNode == nullptr) { std::cerr << "Memory allocation error!" << std::endl; exit(1); }
 	newNode->next = curr->next;
@@ -235,9 +225,13 @@ bool List<T>::append(const T& x) {
 template<typename T>
 bool List<T>::remove(int i, T& x) {
 	// remove the i-th node & store the removed value
-	if (i < 1) { std::cout << "Invalid argument i, i must be no less than 1." << std::endl; return false; }
-	Node<T>* delpre = locate(i - 1), *del;
-	del = delpre->next;
+	if (i < 1) { std::cout << "Deletion error! Reason: Invalid argument i, i must be no less than 1." << std::endl; exit(1); }
+	Node<T>* delpre = locate(i - 1), *del = delpre->next;
+	if (del == nullptr) {
+		std::cout << "Deletion error! Reason: Argument i exceeded the list's length." << std::endl;
+		return false;
+	}
+
 	delpre->next = del->next;
 	x = del->data;
 	delete del;
@@ -247,9 +241,13 @@ bool List<T>::remove(int i, T& x) {
 template<typename T>
 bool List<T>::remove(int i) {
 	// remove the i-th node without storing it
-	if (i < 1) { std::cout << "Invalid argument i, i must be no less than 1." << std::endl; return false; }
-	Node<T>* delpre = locate(i - 1), *del;
-	del = delpre->next;
+	if (i < 1) { std::cout << "Deletion error! Reason: Invalid argument i, i must be no less than 1." << std::endl; exit(1); }
+	Node<T>* delpre = locate(i - 1), *del = delpre->next;
+	if (del == nullptr) {
+		std::cout << "Deletion error! Reason: Argument i exceeded the list's length." << std::endl;
+		return false;
+	}
+
 	delpre->next = del->next;
 	delete del;
 	return true;
@@ -304,7 +302,7 @@ void List<T>::input() {
 			return;	
 		// else execute following instructions
 	}
-	clear();
+	clear();										// erase all existing nodes
 	Node<T>* curr = first;
 	T tmp;
 	std::cout << "Please input data.  (Attention: to end up with Ctrl+Z)" << std::endl;
@@ -330,7 +328,8 @@ void List<T>::Import(const std::string& filename) {
 			return;
 		// else execute following instructions
 	}
-	clear();
+	clear();										// erase all existing nodes
+	// import data from some local file
 	std::ifstream is(filename, std::ios::in | std::ios::binary);
 	if (!is) {
 		std::cerr << "Open file \"" << filename << "\" error! Can't find this file.\n";
