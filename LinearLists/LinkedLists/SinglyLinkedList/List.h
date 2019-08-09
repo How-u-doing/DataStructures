@@ -306,6 +306,7 @@ void List<T>::input() {
 	Node<T>* curr = first;
 	T tmp;
 	std::cout << "Please input data.  (Attention: to end up with Ctrl+Z)" << std::endl;
+	std::cin.clear();
 	while (std::cin >> tmp) {
 		curr->next = new Node<T>(tmp);
 		if (curr->next == nullptr) { std::cerr << "Memory allocation error!" << std::endl; exit(1); }
@@ -339,6 +340,7 @@ void List<T>::Import(const std::string& filename) {
 
 	T tmp;
 	Node<T>* curr = first;
+	is.clear();
 	while (is.read((char*) &tmp, sizeof(T))) {
 		curr->next = new Node<T>(tmp);
 		if (curr->next == nullptr) { std::cerr << "Memory allocation error!" << std::endl; exit(1); }
