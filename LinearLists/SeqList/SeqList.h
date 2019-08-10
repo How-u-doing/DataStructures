@@ -17,6 +17,7 @@ public:
 	SeqList(int sz=defaultSize);					// Constructor	
 	SeqList(SeqList<T>& L);							// Copy constructor
 	SeqList<T>& operator=(SeqList<T>& L);			// Operator= overloading
+	T& operator[](int index) { return getVal(index); }
 	virtual ~SeqList() { delete[] data; }			// Virtual destructor
 	T* getPtr2data() { return data; }				// New function in derived class SeqList to get the pointer to data(i.e. &data[0]). Use it carfully!
 	void resize(int newsz);							// New function in derived class SeqList to change the size(maximum volume) of the list	
@@ -29,10 +30,10 @@ public:
 	virtual bool remove(int i);						// Remove the i-th item without storing the removed value	
 	virtual void Union(SeqList<T>& L2);				// Union of two lists, and store the result in *this
 	virtual void Intersection(SeqList<T>& L2);		// Intersection of two lists, and store the result in *this
-	virtual void input();							// Input data via the console window
-	virtual void Import(const std::string& filename);// Import corresponding data from a local host file
+	virtual void input();							// Input data via the console window	
 	virtual void output()const;						// Output data via the console window
-	virtual void Export(const std::string& filename)const;// Export corresponding data into a local host file
+	virtual void Import(const std::string& filename, const std::string& mode_selection_text_or_binary);	    // Read corresponding data from a local host file
+	virtual void Export(const std::string& filename, const std::string& mode_selection_text_or_binary)const;// Write corresponding data into a local host file	
 	virtual bool isEmpty()const { return last == -1 ? true : false; }
 	virtual bool isFull()const { return last + 1 == maxSize ? true : false; }
 	virtual void sort() {/* Do a sort in a specific manner which hinges on the data type T. */ }
@@ -187,7 +188,7 @@ bool SeqList<T>::append(const T& x) {
 
 template<typename T>
 bool SeqList<T>::remove(int i, T& x) {
-	// Remove the i-th item & store the removed value
+	// Remove the i-th item & store the value to be removed
 	if (last == -1) {
 		std::cerr << "List is null, cannot remove!" << std::endl;
 		return false;
@@ -196,7 +197,7 @@ bool SeqList<T>::remove(int i, T& x) {
 		std::cerr << "Invalid index i, i must be satisfy 1<=i<=" << last + 1 << std::endl;
 		return false;
 	}
-	// store the item that is going to be romoved
+	// store the item that is going to be removed
 	x = data[i-1];
 
 	for (int j = i; j <= last; ++j)
@@ -272,6 +273,7 @@ void SeqList<T>::input() {
 	std::cout << "Please input data.  (Attention: to end up with Ctrl+Z)" << std::endl;
 	int i = 0;
 	last = -1;
+	std::cin.clear();								// reset the iostate of cin to good
 	while (std::cin >> data[i++]) {
 		++last;
 		if (last == maxSize - 1) {
@@ -282,9 +284,14 @@ void SeqList<T>::input() {
 	std::cout << "You have input " << last + 1 << " data item(s)." << std::endl;
 }
 
+template<typename T>
+void SeqList<T>::output()const {
+	for (int i = 0; i <= last; ++i)
+		std::cout << "#" << i + 1 << ": " << data[i] << std::endl;
+}
 
 template<typename T>
-void SeqList<T>::Import(const std::string& filename) {
+void SeqList<T>::Import(const std::string& filename, const std::string& mode_selection_text_or_binary) {
 	if (last != -1) {
 		std::cout << "Warning, the list is not null. Input new data will cover the original data\n";
 		std::cout << "Are you sure to go on?('y' or 'n')\n";
@@ -298,43 +305,124 @@ void SeqList<T>::Import(const std::string& filename) {
 			return;
 		// else execute following instructions
 	}
-	std::ifstream is(filename, std::ios::in | std::ios::binary);
-	if (!is) {
-		std::cerr << "Open file \"" << filename << "\" error! Can't find this file.\n";
-		std::cout<<"Please check the validity of its directory or filename." << std::endl;
-		exit(1);
-	}
-	int i = 0;
-	last = -1;
-	while (is.read((char*)(data + i++), sizeof(T))) {
-		++last;
-		if (last == maxSize - 1) {
-			std::cout << "The list is full." << std::endl;
-			break;
+	// match import mode
+	if (mode_selection_text_or_binary == "text") {
+		// read in ASCII text form
+
+		// open file
+		std::ifstream ifs(filename, ios_base::in);
+		if (!ifs) {
+			std::cerr << "Error in opening file for reading! Can't find file \"" << filename << "\".\n"
+					  << "Please check the validity of its directory or filename." << std::endl;
+			exit(1);
 		}
+
+		// read data		
+		int i = 0;
+		last = -1;
+		while (ifs >> *(data + i++)) {
+			++last;
+			if (last == maxSize - 1) {
+				std::cout << "The list is full." << std::endl;
+				break;
+			}
+		}
+
+		// tell if read correctly & error handling
+		if (ifs.eof())									// finish reading the file(successfully)
+			ifs.clear();								// reset the iostate of ifs to good
+		else {											// file readed may not match with the data type
+			std::cerr << "Error in reading file " << "\"" << filename << "\"!\n"
+				<< "The file you're trying to read may not match the data type." << std::endl;
+			exit(1);
+		}
+
+		ifs.close();
 	}
-	is.close();
-	std::cout << "You have imported " << last + 1 << " data item(s) from file \"" << filename << "\"." << std::endl;
+	else
+		if (mode_selection_text_or_binary == "binary") {
+			// read in binary form
+
+			// open file
+			std::ifstream ifs(filename, ios_base::in | ios_base::binary);
+			if (!ifs) {
+				std::cerr << "Error in opening file for reading! Can't find file \"" << filename << "\".\n"
+						  << "Please check the validity of its directory or filename." << std::endl;
+				exit(1);
+			}
+
+			// read data
+			int i = 0;
+			last = -1;
+			while (ifs.read((char*)(data + i++), sizeof(T))) {
+				++last;
+				if (last == maxSize - 1) {
+					std::cout << "The list is full." << std::endl;
+					break;
+				}
+			}			
+			
+			// tell if read correctly & error handling
+			if (ifs.eof())									// finish reading the file(successfully)
+				ifs.clear();								// reset the iostate of ifs to good
+			else {											// file readed may not match with the data type
+				std::cerr << "Error in reading file " << "\"" << filename << "\"!\n"
+					<< "The file you're trying to read may not match the data type." << std::endl;
+				exit(1);
+			}
+
+			ifs.close();
+		}
+		// type argment 2 wrongly
+		else {
+			std::cerr << "Mode choosing error! It must be either \"text\" or \"binary\" mode." << std::endl;
+			exit(1);
+		}
+
+	std::cout << "You have imported " << last + 1 << " data item(s) from file \"" << filename << "\".\n\n";
 }
 
 template<typename T>
-void SeqList<T>::output()const {
-	for (int i = 0; i <= last; ++i)
-		std::cout << "#" << i + 1 << ": " << data[i] << std::endl;
-}
+void SeqList<T>::Export(const std::string& filename, const std::string& mode_selection_text_or_binary)const {
+	// match import mode
+	if (mode_selection_text_or_binary == "text") {
+		// write in ASCII text form
 
+		// open file
+		std::ofstream ofs(filename, ios_base::out | std::ios::_Noreplace);
+		if (!ofs) {
+			std::cerr << "Error in opening file for writing! File \"" << filename << "\" has already existed." << std::endl;
+			exit(1);
+		}
 
-template<typename T>
-void SeqList<T>::Export(const std::string& filename)const {
-	std::ofstream os(filename, std::ios::out | std::ios::binary | std::ios::_Noreplace);
-	if (!os) {
-		std::cerr << "Open file error! File \"" << filename << "\" has already existed." << std::endl;
-		exit(1);
+		// write data
+		for (int i = 0; i <= last; ++i)
+			ofs << *(data + i) << '\n';
+
+		ofs.close();
 	}
-	
-	for (int i = 0; i <= last; ++i)
-		os.write((char*)(data + i), sizeof(T));
-	os.close();
+	else
+		if (mode_selection_text_or_binary == "binary") {
+			// write in binary form
+
+			// open file
+			std::ofstream ofs(filename, ios_base::out | ios_base::binary | std::ios::_Noreplace);
+			if (!ofs) {
+				std::cerr << "Error in opening file for writing! File \"" << filename << "\" has already existed." << std::endl;
+				exit(1);
+			}
+
+			// write data
+			for (int i = 0; i <= last; ++i)
+				ofs.write((char*)(data + i), sizeof(T));
+
+			ofs.close();
+		}
+		// type argment 2 wrongly
+		else {
+			std::cerr << "Mode choosing error! It must be either \"text\" or \"binary\" mode." << std::endl;
+			exit(1);
+		}
 }
 
 #endif // !SEQLIST_H
