@@ -410,9 +410,9 @@ void List<T>::Import(const std::string& filename, const std::string& mode_select
 }
 
 template<typename T>
-void List<T>::Export(const std::string& filename, const std::string& mode_selction_text_or_binary)const {
+void List<T>::Export(const std::string& filename, const std::string& mode_selection_text_or_binary)const {
 	// match import mode
-	if (mode_selction_text_or_binary == "text") {
+	if (mode_selection_text_or_binary == "text") {
 		// write in ASCII text form
 
 		// open file
@@ -432,7 +432,7 @@ void List<T>::Export(const std::string& filename, const std::string& mode_selcti
 		ofs.close();
 	}
 	else
-		if (mode_selction_text_or_binary == "binary") {
+		if (mode_selection_text_or_binary == "binary") {
 			// write in binary form
 
 			// open file
