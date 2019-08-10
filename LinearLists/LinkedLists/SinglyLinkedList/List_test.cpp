@@ -22,12 +22,20 @@ struct Student {
 	char sex;
 	char addr[30];
 	friend ostream& operator<<(ostream& os, Student& s) {
-		os << s.name << " " << s.num << " " << s.sex << " " << s.addr << endl;
+		os << s.name << " " << s.num << " " << s.sex << " " << s.addr;
 		return os;
+	}
+	friend ofstream& operator<<(ofstream& ofs, Student& s) {
+		ofs << s.name << " " << s.num << " " << s.sex << " " << s.addr;
+		return ofs;
 	}
 	friend istream& operator>>(istream& is, Student& s) {
 		is >> s.name >> s.num >> s.sex >> s.addr;
 		return is;
+	}
+	friend ifstream& operator>>(ifstream& ifs, Student& s) {
+		ifs >> s.name >> s.num >> s.sex >> s.addr;
+		return ifs;
 	}
 	bool operator==(const Student& s) {
 		return (strcmp(name, s.name) == 0 && sex == s.sex && num == s.num && strcmp(addr, s.addr) == 0) ? true : false;
@@ -36,8 +44,7 @@ struct Student {
 
 int main()
 {
-
-	List<Student>  ls, ls2, ls3, ls4;
+	List<Student>  ls, ls2, ls3, ls4, ls5;
 	// input following content via console window:
 	/*  Mark 1001 M Chongqing
 		Ania 1002 W Guangzhou
@@ -82,11 +89,32 @@ int main()
 	// Export(), Import() test
 	ls.input();								// input with existing data test 
 	ls.output();
-	ls.Export("stu.dat");
-	ls4.Import("stu.dat");
-	cout << "\nLS4, imported from LS: " << endl;
+	ls2.Export("stud.txt","text");
+	ls2.Export("stud.dat", "binary");
+
+	// read correctly
+	ls4.Import("stud.txt", "text");
+	cout << "\nLS4, imported from LS2(text file): " << endl;
 	ls4.output();
 
-	cout << "\nEnd of test " << endl;
+	ls5.Import("stud.dat", "binary");
+	cout << "\nLS5, imported from LS2(binary file): " << endl;
+	ls5.output();
+
+	// try to read in wrong manner
+	List<Student> error_read1, error_read2;
+	// Somehow, in my computer system, it can read text file & binary file(even binary file 
+	// does not match with the data type) if I turn on binary mode, and finish reading at 
+	// position EOF(end-of-file) so that it will escape the read check. And messy code as
+	// well as data insecurity will occure resultantly.
+	error_read1.Import("stud.txt", "binary");				// just read, without telling u some error happened
+	cout << "\nerror_read1, imported from LS2(read text file in binary form): " << endl;
+	error_read1.output();
+
+	error_read2.Import("stud.dat", "text");					// program will exit & tell u some error has justed happened
+	cout << "\nerror_read2, imported from LS2(read binary file in text form): " << endl;
+	error_read2.output();
+	
+	cout << "\nEnd of the test." << endl;
 	return 0;
 }

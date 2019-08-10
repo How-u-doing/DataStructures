@@ -35,15 +35,15 @@ public:
 	virtual void Union(List<T>& L2);				// union of two lists, and store the result in *this
 	virtual void Intersection(List<T>& L2);			// intersection of two lists, and store the result in *this
 	virtual void input();							// input data via the console window
-	virtual void Import(const std::string& filename);// import corresponding data from a local host file
-	virtual void output()const;						// output data via the console window
-	virtual void Export(const std::string& filename)const;// export corresponding data into a local host file
-	virtual bool isEmpty()const { return first->next == nullptr ? true : false; }
+	virtual void output()const;						// output data via the console window	
 	virtual bool isFull()const { return false; }	// function derived from base class LinearList, no practical meaning in linked list
+	virtual bool isEmpty()const { return first->next == nullptr ? true : false; }
 	virtual void sort() {/* do a sort in a specific manner which hinges on the data type T. */ }
 	virtual T& getVal(int i)const;
 	virtual bool getVal(int i, T& x)const;
 	virtual void setVal(int i, const T& x);
+	virtual void Import(const std::string& filename, const std::string& mode_selection_text_or_binary);	    // Read corresponding data from a local host file
+	virtual void Export(const std::string& filename, const std::string& mode_selection_text_or_binary)const;// Write corresponding data into a local host file	
 	// new functions in derived class List
 	void clear();									// erase all
 	Node<T>* getHead()const { return first; }		// get the pointer to head node
@@ -224,7 +224,7 @@ bool List<T>::append(const T& x) {
 
 template<typename T>
 bool List<T>::remove(int i, T& x) {
-	// remove the i-th node & store the removed value
+	// remove the i-th node & store the value to be removed
 	if (i < 1) { std::cout << "Deletion error! Reason: Invalid argument i, i must be no less than 1." << std::endl; exit(1); }
 	Node<T>* delpre = locate(i - 1), *del = delpre->next;
 	if (del == nullptr) {
@@ -305,7 +305,7 @@ void List<T>::input() {
 	clear();										// erase all existing nodes
 	Node<T>* curr = first;
 	T tmp;
-	std::cout << "Please input data.  (Attention: to end up with Ctrl+Z)" << std::endl;
+	std::cout << "Please input data. (end up with Ctrl+Z)" << std::endl;
 	std::cin.clear();								// reset the iostate of cin to good
 	while (std::cin >> tmp) {
 		curr->next = new Node<T>(tmp);
@@ -315,7 +315,17 @@ void List<T>::input() {
 }
 
 template<typename T>
-void List<T>::Import(const std::string& filename) {
+void List<T>::output()const {
+	Node<T>* curr = first->next;
+	int i = 1;
+	while (curr != nullptr) {
+		std::cout << "#" << i++ << ": " << curr->data << std::endl;
+		curr = curr->next;
+	}
+}
+
+template<typename T>
+void List<T>::Import(const std::string& filename, const std::string& mode_selection_text_or_binary) {
 	if (first->next != nullptr) {					// this list has at least one node
 		std::cout << "Warning, the list is not null. Input new data will cover the original data\n";
 		std::cout << "Are you sure to go on?('y' or 'n')\n";
@@ -330,49 +340,122 @@ void List<T>::Import(const std::string& filename) {
 		// else execute following instructions
 	}
 	clear();										// erase all existing nodes
-	// import data from some local file
-	std::ifstream is(filename, std::ios::in | std::ios::binary);
-	if (!is) {
-		std::cerr << "Open file \"" << filename << "\" error! Can't find this file.\n";
-		std::cout<<"Please check the validity of its directory or filename." << std::endl;
-		exit(1);
-	}
+	// match import mode
+	if (mode_selection_text_or_binary == "text") {
+		// read in ASCII text form
 
-	T tmp;
-	Node<T>* curr = first;
-	is.clear();										// reset the iostate of is to good
-	while (is.read((char*) &tmp, sizeof(T))) {
-		curr->next = new Node<T>(tmp);
-		if (curr->next == nullptr) { std::cerr << "Memory allocation error!" << std::endl; exit(1); }
-		curr = curr->next;
-	}	
-	is.close();
+		// open file
+		std::ifstream ifs(filename, ios_base::in);
+		if (!ifs) {
+			std::cerr << "Error in opening file for reading! Can't find file \"" << filename << "\".\n"
+					  << "Please check the validity of its directory or filename." << std::endl;
+			exit(1);
+		}
+
+		// read data		
+		T tmp; Node<T>* curr = first;		
+		while (ifs >> tmp) {
+			curr->next = new Node<T>(tmp);
+			if (curr->next == nullptr) { std::cerr << "Memory allocation error!" << std::endl; exit(1); }
+			curr = curr->next;
+		}
+
+		// tell if read correctly & error handling
+		if (ifs.eof())									// finish reading the file(successfully)
+			ifs.clear();								// reset the iostate of ifs to good
+		else {											// file readed may not match with the data type
+			std::cerr << "Error in reading file " << "\"" << filename << "\"!\n"
+					  << "The file you're trying to read may not match the data type." << std::endl;
+			exit(1);
+		}
+
+		ifs.close();
+	}
+	else 
+		if (mode_selection_text_or_binary == "binary") {
+			// read in binary form
+
+			// open file
+			std::ifstream ifs(filename, ios_base::in | ios_base::binary);
+			if (!ifs) {
+				std::cerr << "Error in opening file for reading! Can't find file \"" << filename << "\".\n"
+					      << "Please check the validity of its directory or filename." << std::endl;
+				exit(1);
+			}
+
+			// read data
+			T tmp; Node<T>* curr = first;
+			while (ifs.read((char*)&tmp, sizeof(tmp))) {
+				curr->next = new Node<T>(tmp);
+				if (curr->next == nullptr) { std::cerr << "Memory allocation error!" << std::endl; exit(1); }
+				curr = curr->next;
+			}
+
+			// tell if read correctly & error handling
+			if (ifs.eof())									// finish reading the file(successfully)
+				ifs.clear();								// reset the iostate of ifs to good
+			else {											// file readed may not match with the data type
+				std::cerr << "Error in reading file " << "\"" << filename << "\"!\n"
+						  << "The file you're trying to read may not match the data type." << std::endl;
+				exit(1);
+			}
+
+			ifs.close();
+		}
+		// type argment 2 wrongly
+		else {
+			std::cerr << "Mode choosing error! It must be either \"text\" or \"binary\" mode." << std::endl;
+			exit(1);
+		}
 }
 
 template<typename T>
-void List<T>::output()const {
-	Node<T>* curr = first->next;
-	int i=1;
-	while (curr != nullptr) {
-		std::cout << "#" << i++ << ": " << curr->data << std::endl;
-		curr = curr->next;
-	}
-}
+void List<T>::Export(const std::string& filename, const std::string& mode_selction_text_or_binary)const {
+	// match import mode
+	if (mode_selction_text_or_binary == "text") {
+		// write in ASCII text form
 
-template<typename T>
-void List<T>::Export(const std::string& filename)const {
-	std::ofstream os(filename, std::ios::out | std::ios::binary | std::ios::_Noreplace);
-	if (!os) {
-		std::cerr << "Open file error! File \"" << filename << "\" has already existed." << std::endl;
-		exit(1);
+		// open file
+		std::ofstream ofs(filename, ios_base::out | std::ios::_Noreplace);
+		if (!ofs) {
+			std::cerr << "Error in opening file for writing! File \"" << filename << "\" has already existed." << std::endl;
+			exit(1);
+		}
+
+		// write data
+		Node<T>* curr = first->next;
+		while (curr != nullptr) {
+			ofs << curr->data << '\n';
+			curr = curr->next;
+		}
+
+		ofs.close();
 	}
-	
-	Node<T>* curr = first->next;
-	while (curr != nullptr) {
-		os.write((char*) &(curr->data), sizeof(curr->data));
-		curr = curr->next;
-	}
-	os.close();
+	else
+		if (mode_selction_text_or_binary == "binary") {
+			// write in binary form
+
+			// open file
+			std::ofstream ofs(filename, ios_base::out | ios_base::binary | std::ios::_Noreplace);
+			if (!ofs) {
+				std::cerr << "Error in opening file for writing! File \"" << filename << "\" has already existed." << std::endl;
+				exit(1);
+			}
+
+			// write data
+			Node<T>* curr = first->next;
+			while (curr != nullptr) {
+				ofs.write((char*) &(curr->data), sizeof(curr->data));
+				curr = curr->next;
+			}
+
+			ofs.close();
+		}
+		// type argment 2 wrongly
+		else {
+			std::cerr << "Mode choosing error! It must be either \"text\" or \"binary\" mode." << std::endl;
+			exit(1);
+		}	
 }
 
 #endif // !LIST_H
