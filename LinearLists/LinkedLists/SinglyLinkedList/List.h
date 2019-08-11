@@ -360,7 +360,7 @@ void List<T>::Import(const std::string& filename, const std::string& mode_select
 			curr = curr->next;
 		}
 
-		// tell if read correctly & error handling
+		// roughly tell if read correctly & error handling
 		if (ifs.eof())									// finish reading the file(successfully)
 			ifs.clear();								// reset the iostate of ifs to good
 		else {											// file readed may not match with the data type
@@ -391,7 +391,7 @@ void List<T>::Import(const std::string& filename, const std::string& mode_select
 				curr = curr->next;
 			}
 
-			// tell if read correctly & error handling
+			// roughly tell if read correctly & error handling
 			if (ifs.eof())									// finish reading the file(successfully)
 				ifs.clear();								// reset the iostate of ifs to good
 			else {											// file readed may not match with the data type
@@ -411,7 +411,7 @@ void List<T>::Import(const std::string& filename, const std::string& mode_select
 
 template<typename T>
 void List<T>::Export(const std::string& filename, const std::string& mode_selection_text_or_binary)const {
-	// match import mode
+	// match export mode
 	if (mode_selection_text_or_binary == "text") {
 		// write in ASCII text form
 
