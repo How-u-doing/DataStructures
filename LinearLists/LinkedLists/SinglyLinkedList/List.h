@@ -24,7 +24,7 @@ public:
 	List(const T& Info_for_head_node) { head = new Node<T>(Info_for_head_node); }	// constructor, & store info in head node
 	List(List<T>& L); 								// copy constructor
 	List<T>& operator=(List<T>& L);					// assignment operator= overloading	
-	virtual ~List() { clear(); }					// virtual destructor		
+	virtual ~List() { clear(); delete head; }		// virtual destructor		
 	virtual int size()const { return length(); }	// get the size of the list
 	virtual int length()const;						// get the number of pactical existing items	
 	virtual int search(const T& x)const;			// search specified item x and return its logical sequence number 	
@@ -105,7 +105,7 @@ T& List<T>::operator[](int index) {
 
 template<typename T>
 void List<T>::clear() {
-	// erase all Nodes
+	// erase all nodes but head node
 	Node<T>* curr = head->next, *del;
 	head->next = nullptr;
 	while (curr != nullptr) {
