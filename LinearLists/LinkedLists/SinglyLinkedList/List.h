@@ -20,8 +20,8 @@ struct Node {
 template<typename T>
 class List: public LinearList<T> {
 public:	
-	List() { first = new Node<T>; }					// constructor with no infomation in data zone of head node
-	List(const T& Info_for_head_node) { first = new Node<T>(Info_for_head_node); }	// constructor, & store info in head node
+	List() { head = new Node<T>; }					// constructor with no infomation in data zone of head node
+	List(const T& Info_for_head_node) { head = new Node<T>(Info_for_head_node); }	// constructor, & store info in head node
 	List(List<T>& L); 								// copy constructor
 	List<T>& operator=(List<T>& L);					// assignment operator= overloading	
 	virtual ~List() { clear(); }					// virtual destructor		
@@ -37,7 +37,7 @@ public:
 	virtual void input();							// input data via the console window
 	virtual void output()const;						// output data via the console window	
 	virtual bool isFull()const { return false; }	// function derived from base class LinearList, no practical meaning in linked list
-	virtual bool isEmpty()const { return first->next == nullptr ? true : false; }
+	virtual bool isEmpty()const { return head->next == nullptr ? true : false; }
 	virtual void sort() {/* do a sort in a specific manner which hinges on the data type T. */ }
 	virtual T& getVal(int i)const;
 	virtual bool getVal(int i, T& x)const;
@@ -46,12 +46,12 @@ public:
 	virtual void Export(const std::string& filename, const std::string& mode_selection_text_or_binary)const;// Write corresponding data into a local host file	
 	// new functions in derived class List
 	void clear();									// erase all
-	Node<T>* getHead()const { return first; }		// get the pointer to head node
+	Node<T>* getHead()const { return head; }		// get the pointer to head node
 	Node<T>* locate(int i)const;					// locate the i-th item	and return the pointer to this node	
 	Node<T>* find(const T& x)const;					// find specified item x and return the pointer to this node
 	T& operator[](int index);						// access list items via []
 private:
-	Node<T>* first;									// pointer to the first node of the list 	
+	Node<T>* head;									// pointer to the head node of the list 	
 };
 
 
@@ -59,8 +59,8 @@ template<typename T>
 List<T>::List(List<T>& L) {
 	// copy constructor
 	Node<T>* srcptr = L.getHead();
-	Node<T>* desptr = first = new Node<T>;
-	if (first == nullptr) { std::cerr << "Memory allocation error!" << std::endl; exit(1); }
+	Node<T>* desptr = head = new Node<T>;
+	if (head == nullptr) { std::cerr << "Memory allocation error!" << std::endl; exit(1); }
 	while (srcptr->next != nullptr) {
 		// copy data from L & construct dynamic linked list
 		desptr->next = new Node<T>(srcptr->next->data);
@@ -75,8 +75,8 @@ template<typename T>
 List<T>& List<T>::operator=(List<T>& L) {
 	// assignment operator= overloading
 	Node<T>* srcptr = L.getHead();
-	Node<T>* desptr = first = new Node<T>;
-	if (first == nullptr) { std::cerr << "Memory allocation error!" << std::endl; exit(1); }
+	Node<T>* desptr = head = new Node<T>;
+	if (head == nullptr) { std::cerr << "Memory allocation error!" << std::endl; exit(1); }
 	while (srcptr->next != nullptr) {
 		// copy data from L & construct dynamic linked list
 		desptr->next = new Node<T>(srcptr->next->data);
@@ -92,7 +92,7 @@ T& List<T>::operator[](int index) {
 	// access list items via [], 0<=index<=length(), equivalent to getVal(int i)
 	// i=0, return head node info(may be null)
 	if (index < 0) { std::cerr << "Using operator[] error! Reason: Invalid argument index, index must be no less than 0." << std::endl; exit(1); }
-	Node<T>* curr = first;
+	Node<T>* curr = head;
 	while (index--) {
 		curr = curr->next;
 		if (curr == nullptr) {
@@ -106,8 +106,8 @@ T& List<T>::operator[](int index) {
 template<typename T>
 void List<T>::clear() {
 	// erase all Nodes
-	Node<T>* curr = first->next, *del;
-	first->next = nullptr;
+	Node<T>* curr = head->next, *del;
+	head->next = nullptr;
 	while (curr != nullptr) {
 		del = curr;
 		curr = curr->next;
@@ -118,7 +118,7 @@ void List<T>::clear() {
 template<typename T>
 int List<T>::length()const {
 	// get the list's length 
-	Node<T>* curr = first->next;
+	Node<T>* curr = head->next;
 	int count = 0;
 	while (curr != nullptr) {
 		curr = curr->next;
@@ -130,11 +130,11 @@ int List<T>::length()const {
 template<typename T>
 Node<T>* List<T>::locate(int i)const {
 	/* locate the i-th node & return its pointer, 0<=i<=length()
-	 * In particular,	 i=0,	  return first(i.e. the pointer to first node)
+	 * In particular,	 i=0,	  return head(i.e. the pointer to head node)
 	 *				  i>length(), return nullptr
 	**/
 	if (i < 0) { std::cerr << "Locating error! Reason: Invalid argument i, i must be no less than 0." << std::endl; exit(1); }
-	Node<T>* curr = first;
+	Node<T>* curr = head;
 	while (i-- && curr != nullptr)
 		curr = curr->next;
 	return curr;
@@ -143,7 +143,7 @@ Node<T>* List<T>::locate(int i)const {
 template<typename T>
 Node<T>* List<T>::find(const T& x)const {
 	// find val x in the list & return its pointer. If cannot find return nullptr
-	Node<T>* curr = first->next;
+	Node<T>* curr = head->next;
 	while (curr != nullptr) {
 		if (curr->data == x)
 			break;
@@ -156,7 +156,7 @@ Node<T>* List<T>::find(const T& x)const {
 template<typename T>
 int List<T>::search(const T& x)const {
 	// search val x in the list & return its index. If cannot find return 0
-	Node<T>* curr = first->next;
+	Node<T>* curr = head->next;
 	int index = 1;
 	while (curr != nullptr) {
 		if (curr->data == x) return index;			
@@ -210,7 +210,7 @@ bool List<T>::insert(int i, const T& x) {
 template<typename T>
 bool List<T>::append(const T& x) {
 	// add a new element x at the end of the list
-	Node<T>* curr = first;
+	Node<T>* curr = head;
 	// make pointer curr point to last node
 	while (curr->next != nullptr)
 		curr = curr->next;
@@ -256,7 +256,7 @@ bool List<T>::remove(int i) {
 template<typename T>
 void List<T>::Union(List<T>& L2) {
 	// union of two lists & store the result in *this
-	Node<T>* curr = L2.first->next;
+	Node<T>* curr = L2.head->next;
 	T x;
 	while (curr != nullptr) {
 		x = curr->data;
@@ -269,7 +269,7 @@ void List<T>::Union(List<T>& L2) {
 template<typename T>
 void List<T>::Intersection(List<T>& L2) {
 	// intersection of two lists & store the result in *this
-	Node<T>* curr = first->next, *prev = first;
+	Node<T>* curr = head->next, *prev = head;
 	T x;
 	while (curr != nullptr) {
 		x = curr->data;
@@ -289,7 +289,7 @@ void List<T>::Intersection(List<T>& L2) {
 
 template<typename T>
 void List<T>::input() {
-	if (first->next != nullptr) {					// this list has at least one node
+	if (head->next != nullptr) {					// this list has at least one node
 		std::cout << "Warning, the list is not null. Input new data will cover the original data\n";
 		std::cout << "Are you sure to go on?('y' or 'n')\n";
 		char c;
@@ -303,7 +303,7 @@ void List<T>::input() {
 		// else execute following instructions
 	}
 	clear();										// erase all existing nodes
-	Node<T>* curr = first;
+	Node<T>* curr = head;
 	T tmp;
 	std::cout << "Please input data. (end up with Ctrl+Z)" << std::endl;
 	std::cin.clear();								// reset the iostate of cin to good
@@ -316,7 +316,7 @@ void List<T>::input() {
 
 template<typename T>
 void List<T>::output()const {
-	Node<T>* curr = first->next;
+	Node<T>* curr = head->next;
 	int i = 1;
 	while (curr != nullptr) {
 		std::cout << "#" << i++ << ": " << curr->data << std::endl;
@@ -326,7 +326,7 @@ void List<T>::output()const {
 
 template<typename T>
 void List<T>::Import(const std::string& filename, const std::string& mode_selection_text_or_binary) {
-	if (first->next != nullptr) {					// this list has at least one node
+	if (head->next != nullptr) {					// this list has at least one node
 		std::cout << "Warning, the list is not null. Input new data will cover the original data\n";
 		std::cout << "Are you sure to go on?('y' or 'n')\n";
 		char c;
@@ -353,7 +353,7 @@ void List<T>::Import(const std::string& filename, const std::string& mode_select
 		}
 
 		// read data		
-		T tmp; Node<T>* curr = first;		
+		T tmp; Node<T>* curr = head;		
 		while (ifs >> tmp) {
 			curr->next = new Node<T>(tmp);
 			if (curr->next == nullptr) { std::cerr << "Memory allocation error!" << std::endl; exit(1); }
@@ -384,7 +384,7 @@ void List<T>::Import(const std::string& filename, const std::string& mode_select
 			}
 
 			// read data
-			T tmp; Node<T>* curr = first;
+			T tmp; Node<T>* curr = head;
 			while (ifs.read((char*)&tmp, sizeof(tmp))) {
 				curr->next = new Node<T>(tmp);
 				if (curr->next == nullptr) { std::cerr << "Memory allocation error!" << std::endl; exit(1); }
@@ -423,7 +423,7 @@ void List<T>::Export(const std::string& filename, const std::string& mode_select
 		}
 
 		// write data
-		Node<T>* curr = first->next;
+		Node<T>* curr = head->next;
 		while (curr != nullptr) {
 			ofs << curr->data << '\n';
 			curr = curr->next;
@@ -443,7 +443,7 @@ void List<T>::Export(const std::string& filename, const std::string& mode_select
 			}
 
 			// write data
-			Node<T>* curr = first->next;
+			Node<T>* curr = head->next;
 			while (curr != nullptr) {
 				ofs.write((char*) &(curr->data), sizeof(curr->data));
 				curr = curr->next;
