@@ -273,7 +273,6 @@ void SeqList<T>::input() {
 	std::cout << "Please input data.  (Attention: to end up with Ctrl+Z)" << std::endl;
 	int i = 0;
 	last = -1;
-	std::cin.clear();								// reset the iostate of cin to good
 	while (std::cin >> data[i++]) {
 		++last;
 		if (last == maxSize - 1) {
@@ -281,13 +280,17 @@ void SeqList<T>::input() {
 			break;
 		}
 	}
+	std::cin.clear();								// reset the iostate of cin to good
 	std::cout << "You have input " << last + 1 << " data item(s)." << std::endl;
 }
 
 template<typename T>
 void SeqList<T>::output()const {
-	for (int i = 0; i <= last; ++i)
-		std::cout << "#" << i + 1 << ": " << data[i] << std::endl;
+	for (int i = 0; i <= last; ++i) {
+		// modify here for aesthetic according to practical lenth of the list
+		printf("#%4d:", i+1);
+		std::cout << data[i] << std::endl;
+	}		
 }
 
 template<typename T>
