@@ -306,12 +306,12 @@ void List<T>::input() {
 	Node<T>* curr = head;
 	T tmp;
 	std::cout << "Please input data. (end up with Ctrl+Z)" << std::endl;
-	std::cin.clear();								// reset the iostate of cin to good
 	while (std::cin >> tmp) {
 		curr->next = new Node<T>(tmp);
 		if (curr->next == nullptr) { std::cerr << "Memory allocation error!" << std::endl; exit(1); }
 		curr = curr->next;
-	}	
+	}
+	std::cin.clear();								// reset the iostate of cin to good	
 }
 
 template<typename T>
