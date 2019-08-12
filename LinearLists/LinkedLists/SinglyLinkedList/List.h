@@ -319,7 +319,9 @@ void List<T>::output()const {
 	Node<T>* curr = head->next;
 	int i = 1;
 	while (curr != nullptr) {
-		std::cout << "#" << i++ << ": " << curr->data << std::endl;
+		// modify here for aesthetic according to practical lenth of the list
+		printf("#%4d", i++);
+		std::cout << ": " << curr->data << '\n';
 		curr = curr->next;
 	}
 }
