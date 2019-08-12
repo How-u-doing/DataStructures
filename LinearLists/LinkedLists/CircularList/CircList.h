@@ -48,6 +48,7 @@ public:
 	// new functions in derived class CircList
 	void clear();									// erase all
 	CLLNode<T>* getHead()const { return head; }		// get the pointer to head node
+	CLLNode<T>* getTail()const { return tail; }		// get the pointer to tail node
 	void setHead(CLLNode<T>* p);					// make head pointer point to some node that is also pointed by p
 	CLLNode<T>* locate(int i)const;					// locate the i-th item	and return the pointer to this node	
 	CLLNode<T>* find(const T& x)const;				// find specified item x and return the pointer to this node
@@ -356,8 +357,7 @@ void CircList<T>::input() {
 	clear();										// erase all existing nodes
 	CLLNode<T>* curr = head;
 	T tmp;
-	std::cout << "Please input data. (end up with Ctrl+Z)" << std::endl;
-	std::cin.clear();								// reset the iostate of cin to good
+	std::cout << "Please input data. (end up with Ctrl+Z)" << std::endl;	
 	while (std::cin >> tmp) {
 		curr->next = new CLLNode<T>(tmp);
 		if (curr->next == nullptr) { std::cerr << "Memory allocation error!" << std::endl; exit(1); }
@@ -366,6 +366,7 @@ void CircList<T>::input() {
 	// after the loop, curr points to the last node	
 	tail = curr;
 	tail->next = head;
+	std::cin.clear();								// reset the iostate of cin to good
 }
 
 template<typename T>
@@ -373,10 +374,9 @@ void CircList<T>::output()const {
 	CLLNode<T>* curr = head->next;
 	int i = 1;
 	while (curr != head) {
-		std::cout << "#";	
-		std::cout.setf(std::ios::left);
-		std::cout.width(4);							// modify here for aesthetic according to practical lenth of the list
-		std::cout << i++ << ": " << curr->data << '\n';
+		// modify here for aesthetic according to practical lenth of the list
+		printf("#%4d", i++);
+		std::cout << ": " << curr->data << '\n';
 		curr = curr->next;
 	}
 }
