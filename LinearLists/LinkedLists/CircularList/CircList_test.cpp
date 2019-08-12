@@ -69,7 +69,9 @@ int main()
 	ls.output();
 
 	// getVal() & operator[] test 
-	cout << ls.getVal(3).name << " once had a huge crush on " << ls[5].name << endl;	
+	cout << ls.getVal(3).name << " once had a huge crush on " << ls[5].name << endl;
+	// No.17 is equal to 17-12-1=4, i.e. #4: Nancy
+	cout << "No.17: "<<ls.locate(17)->data << endl;
 
 	// copy constructor test
 	// here = is not overloaded, and it is calling copy constructor CircList(CircList<T>& L) 

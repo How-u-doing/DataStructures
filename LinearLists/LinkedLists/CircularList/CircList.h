@@ -168,7 +168,7 @@ template<typename T>
 CLLNode<T>* CircList<T>::locate(int i)const {
 	/* locate the i-th node & return its pointer, i>=0
 	 * In particular,	 i=0,	  return head(i.e. the pointer to head node)
-	 *				  i>length(), i <= i-length(), then go on and on like this
+	 *				  i>length(), i := i-length()-1, then go on and on like this
 	 *---------------------------------------------------------------------------------------
 	 * Still, something's worth noting: If i is too large, it will go on loop again and again
 	 * until 0<=i<=length(), which does effortless work & consumes a little bit CPU resource
@@ -213,7 +213,7 @@ int CircList<T>::search(const T& x)const {
 template<typename T>
 T& CircList<T>::getVal(int i)const {
 	// return the value of i-th item, i>=0.  i=0,     return head node info(may be null)
-    //								      i>length(), i<=i-length(), go on and on like this
+    //								      i>length(), i:=i-length()-1, go on and on like this
 	return locate(i)->data;
 }
 
@@ -226,7 +226,7 @@ bool CircList<T>::getVal(int i, T& x)const {
 
 template<typename T>
 void CircList<T>::setVal(int i, const T& x) {
-	// set i-th item the value x. If i>length(), i<=i-length(), go on and on like this
+	// set i-th item the value x. If i>length(), i:=i-length()-1, go on and on like this
 	locate(i)->data = x;
 }
 
@@ -340,7 +340,7 @@ void CircList<T>::Intersection(CircList<T>& L2) {
 
 template<typename T>
 void CircList<T>::input() {
-	if (head->next != head) {					// this list has at least one node
+	if (head->next != head) {						// this list has at least one node
 		std::cout << "Warning, the list is not null. Input new data will cover the original data\n";
 		std::cout << "Are you sure to go on?('y' or 'n')\n";
 		char c;
@@ -363,9 +363,9 @@ void CircList<T>::input() {
 		if (curr->next == nullptr) { std::cerr << "Memory allocation error!" << std::endl; exit(1); }
 		curr = curr->next;
 	}
-	// after the loop, curr points to the last node
-	curr->next = head;
+	// after the loop, curr points to the last node	
 	tail = curr;
+	tail->next = head;
 }
 
 template<typename T>
@@ -383,7 +383,7 @@ void CircList<T>::output()const {
 
 template<typename T>
 void CircList<T>::Import(const std::string& filename, const std::string& mode_selection_text_or_binary) {
-	if (head->next != head) {					// this list has at least one node
+	if (head->next != head) {						// this list has at least one node
 		std::cout << "Warning, the list is not null. Input new data will cover the original data\n";
 		std::cout << "Are you sure to go on?('y' or 'n')\n";
 		char c;
@@ -420,9 +420,9 @@ void CircList<T>::Import(const std::string& filename, const std::string& mode_se
 		tail->next = head;
 
 		// roughly tell if read correctly & error handling
-		if (ifs.eof())									// finish reading the file(successfully)
-			ifs.clear();								// reset the iostate of ifs to good
-		else {											// file readed may not match with the data type
+		if (ifs.eof())								// finish reading the file(successfully)
+			ifs.clear();							// reset the iostate of ifs to good
+		else {										// file readed may not match with the data type
 			std::cerr << "Error in reading file " << "\"" << filename << "\"!\n"
 				<< "The file you're trying to read may not match the data type." << std::endl;
 			exit(1);
@@ -453,9 +453,9 @@ void CircList<T>::Import(const std::string& filename, const std::string& mode_se
 			tail->next = head;
 
 			// roughly tell if read correctly & error handling
-			if (ifs.eof())									// finish reading the file(successfully)
-				ifs.clear();								// reset the iostate of ifs to good
-			else {											// file readed may not match with the data type
+			if (ifs.eof())							// finish reading the file(successfully)
+				ifs.clear();						// reset the iostate of ifs to good
+			else {									// file readed may not match with the data type
 				std::cerr << "Error in reading file " << "\"" << filename << "\"!\n"
 					<< "The file you're trying to read may not match the data type." << std::endl;
 				exit(1);
