@@ -2,7 +2,6 @@
 #pragma once
 #ifndef NODE_H
 #define NODE_H
-#endif // !NODE_H
 
 #include<iostream>
 using namespace std;
@@ -52,3 +51,5 @@ struct Nodeptr {
 	Node<T>* operator->() { return ptr; }			// dereference to access member
 	Node<T>& operator*() { return *ptr; }			// dereference to access whole object
 };
+
+#endif // !NODE_H
