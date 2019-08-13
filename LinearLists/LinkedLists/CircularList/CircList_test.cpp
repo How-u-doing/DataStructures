@@ -76,7 +76,7 @@ int main()
 	cout << "No.17: "<<ls.locate(17)->data << endl;
 
 	// setHead() test
-	ls.setHead(ls.locate(7));					// now circluar list starts from No.9
+	ls.setHead(ls.locate(7));					// now circluar list starts from No.7
 	cout << "\nNow output LS starting from No.7:\n";
 	ls.output();
 
