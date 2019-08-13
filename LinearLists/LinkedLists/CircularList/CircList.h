@@ -49,7 +49,7 @@ public:
 	void clear();									// erase all
 	CLLNode<T>* getHead()const { return head; }		// get the pointer to head node
 	CLLNode<T>* getTail()const { return tail; }		// get the pointer to tail node
-	void setHead(CLLNode<T>* p);					// make head pointer point to some node that is also pointed by p
+	void setHead(CLLNode<T>* p);				    // make head->next point to some node that is also pointed by p
 	CLLNode<T>* locate(int i)const;					// locate the i-th item	and return the pointer to this node	
 	CLLNode<T>* find(const T& x)const;				// find specified item x and return the pointer to this node
 	T& operator[](int index);						// access list items via []
@@ -133,12 +133,18 @@ T& CircList<T>::operator[](int index) {
 
 template<typename T>
 void CircList<T>::setHead(CLLNode<T>* p) {
-	// make head pointer point to some node that is also pointed by p
-	head = tail = p;
-	// make tail pointer point to the changed last node	
-	while (tail->next != head)
-		tail = tail->next;
-	// after the loop, we have: tail->next = head
+	// make head->next point to some node that is also pointed by p
+	if (p == head)									// the same, no need to change
+		return;
+	// else reset head node
+	tail->next = head->next;						// take out head node	
+	
+	// make tail pointer point to the changed last node(the node previous to p)	
+	for (tail = p; tail->next != p; tail = tail->next);
+
+	// insert head node between tail and p
+	tail->next = head;
+	head->next = p;
 }
 
 template<typename T>

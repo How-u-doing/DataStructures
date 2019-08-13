@@ -8,9 +8,9 @@ struct Student {
 	 * the class(struct) object in binary form while without designing carefully
 	 * for writing or reading the string members into or from a file.
 	 * Reason: (copied from Page 1133 in "C++ Primer Plus 6th Edition")
-	 * The problem is that a string object doesn¡¯t actually contain the string
+	 * The problem is that a string object doesn't actually contain the string
 	 * within itself; instead, it contains a pointer to the memory location where
-	 * the string is stored. So if you copy the structure to a file, you don¡¯t copy
+	 * the string is stored. So if you copy the structure to a file, you don't copy
 	 * the string data, you just copy the address of where the string was stored.
 	 * When you run the program again, that address is meaningless(& if you try to
 	 * read it, it will cause memory access violation which is dead dangerous).
@@ -23,7 +23,9 @@ struct Student {
 	char city[15];
 	friend ostream& operator<<(ostream& os, Student& s) {		
 		os.width(15);
-		os << s.name << '\t' << s.num << '\t' << s.sex << '\t' << s.city;
+		os.setf(ios::left);
+		os << s.name << '\t' << s.num << '\t' << s.sex << '\t';
+		os << s.city;
 		return os;
 	}
 	friend ofstream& operator<<(ofstream& ofs, Student& s) {
@@ -72,6 +74,11 @@ int main()
 	cout << ls.getVal(3).name << " once had a huge crush on " << ls[5].name << endl;
 	// No.17 is equal to 17-12-1=4, i.e. #4: Nancy
 	cout << "No.17: "<<ls.locate(17)->data << endl;
+
+	// setHead() test
+	ls.setHead(ls.locate(7));					// now circluar list starts from No.9
+	cout << "\nNow output LS starting from No.7:\n";
+	ls.output();
 
 	// copy constructor test
 	// here = is not overloaded, and it is calling copy constructor CircList(CircList<T>& L) 
