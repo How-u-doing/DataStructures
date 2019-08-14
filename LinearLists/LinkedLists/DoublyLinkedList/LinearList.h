@@ -21,9 +21,9 @@ public:
 	virtual bool isFull()const = 0;							// Tell if the list is full
 	virtual void sort() = 0;								// Sort the list in a specific manner
 	virtual void input() = 0;								// Input data
-	virtual void Import(const std::string& filename) = 0;	// Import corresponding data from a local host file
 	virtual void output()const = 0;							// Output data
-	virtual void Export(const std::string& filename)const = 0;// Export corresponding data into a local host file	
+	virtual void Import(const std::string& filename, const std::string& mode_selection_text_or_binary) = 0;	    // Read corresponding data from a local host file
+	virtual void Export(const std::string& filename, const std::string& mode_selection_text_or_binary)const = 0;// Write corresponding data into a local host file	
 };
 #endif // !LINEARLIST_H
 
