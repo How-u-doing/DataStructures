@@ -74,6 +74,7 @@ List<T>::List(const List<T>& L) {
 template<typename T>
 List<T>& List<T>::operator=(const List<T>& L) {
 	// assignment operator= overloading
+	if (head->next != nullptr) clear();				// erase all nodes but head node if list is not null
 	Node<T>* srcptr = L.getHead();
 	Node<T>* desptr = head = new Node<T>;
 	if (head == nullptr) { std::cerr << "Memory allocation error!" << std::endl; exit(1); }
