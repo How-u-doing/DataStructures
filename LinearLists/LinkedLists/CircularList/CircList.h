@@ -98,6 +98,7 @@ CircList<T>::CircList(const CircList<T>& L) {
 template<typename T>
 CircList<T>& CircList<T>::operator=(const CircList<T>& L) {
 	// assignment operator= overloading
+	if (head->next != head) clear();				// erase all nodes but head node if list is not null
 	CLLNode<T>* srcptr = L.getHead();
 	CLLNode<T>* desptr = head = new CLLNode<T>;
 	if (head == nullptr) { std::cerr << "Memory allocation error!" << std::endl; exit(1); }
