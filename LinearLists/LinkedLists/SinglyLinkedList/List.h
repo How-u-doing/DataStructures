@@ -22,8 +22,8 @@ class List: public LinearList<T> {
 public:	
 	List() { head = new Node<T>; }					// constructor with no infomation in data zone of head node
 	List(const T& Info_for_head_node) { head = new Node<T>(Info_for_head_node); }	// constructor, & store info in head node
-	List(List<T>& L); 								// copy constructor
-	List<T>& operator=(List<T>& L);					// assignment operator= overloading	
+	List(const List<T>& L); 						// copy constructor
+	List<T>& operator=(const List<T>& L);			// assignment operator= overloading	
 	virtual ~List() { clear(); delete head; }		// virtual destructor		
 	virtual int size()const { return length(); }	// get the size of the list
 	virtual int length()const;						// get the number of pactical existing items	
@@ -56,7 +56,7 @@ private:
 
 
 template<typename T>
-List<T>::List(List<T>& L) {
+List<T>::List(const List<T>& L) {
 	// copy constructor
 	Node<T>* srcptr = L.getHead();
 	Node<T>* desptr = head = new Node<T>;
@@ -72,7 +72,7 @@ List<T>::List(List<T>& L) {
 }
 
 template<typename T>
-List<T>& List<T>::operator=(List<T>& L) {
+List<T>& List<T>::operator=(const List<T>& L) {
 	// assignment operator= overloading
 	Node<T>* srcptr = L.getHead();
 	Node<T>* desptr = head = new Node<T>;
