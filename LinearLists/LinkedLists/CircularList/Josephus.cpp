@@ -92,16 +92,13 @@ void Josephus(int n, int m, CircList<Student> lst)
 	// now head node is no longer useful, but we can't delete it
 	// since the list destructor will be called & it needs it
 	del->next = del;						// make head pointer point to head node(null list)
-
-	// move (m-2) nodes backward each time to locate the node that is previous to the one to be out
-	m = m - 2;
+		
 	int i = 1;								// i-th round
-
 	cout << "\n\n---------------Records of people to be out----------------------\n";
 	// loop until only one left
 	while (n-- > 1) {
-		// move (m-2) nodes backward
-		for (int j = 1; j <= m; ++j)
+		// move (m-2) nodes backward each time to locate the node that is to be out
+		for (int j = 1; j <= m - 2; ++j)
 			p = p->next;
 		// now p->next is to be out
 		del = p->next;
