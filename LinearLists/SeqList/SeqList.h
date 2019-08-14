@@ -28,8 +28,8 @@ public:
 	virtual bool append(const T& x);			 	// Add value x at the end of list
 	virtual bool remove(int i, T& x);				// Remove the i-th item & store the removed value
 	virtual bool remove(int i);						// Remove the i-th item without storing the removed value	
-	virtual void Union(SeqList<T>& L2);				// Union of two lists, and store the result in *this
-	virtual void Intersection(SeqList<T>& L2);		// Intersection of two lists, and store the result in *this
+	virtual void Union(const SeqList<T>& L2);		// Union of two lists, and store the result in *this
+	virtual void Intersection(const SeqList<T>& L2);// Intersection of two lists, and store the result in *this
 	virtual void input();							// Input data via the console window	
 	virtual void output()const;						// Output data via the console window
 	virtual void Import(const std::string& filename, const std::string& mode_selection_text_or_binary);	    // Read corresponding data from a local host file
@@ -229,7 +229,7 @@ bool SeqList<T>::remove(int i) {
 }
 
 template<typename T>
-void SeqList<T>::Union(SeqList<T>& L2) {
+void SeqList<T>::Union(const SeqList<T>& L2) {
 	int m = L2.length();
 	T x;
 	for (int i = 1; i <= m; ++i) {
@@ -240,7 +240,7 @@ void SeqList<T>::Union(SeqList<T>& L2) {
 }
 
 template<typename T>
-void SeqList<T>::Intersection(SeqList<T>& L2) {
+void SeqList<T>::Intersection(const SeqList<T>& L2) {
 	int n = last + 1, i = 1;
 	T x;
 	while (i <= n) {
