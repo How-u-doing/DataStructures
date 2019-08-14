@@ -33,8 +33,8 @@ public:
 	virtual bool append(const T& x);			 	// add value x at the end of list
 	virtual bool remove(int i, T& x);				// remove the i-th item & store the removed value
 	virtual bool remove(int i);						// remove the i-th item without storing the removed value	
-	virtual void Union(CircList<T>& L2);			// union of two lists, and store the result in *this
-	virtual void Intersection(CircList<T>& L2);		// intersection of two lists, and store the result in *this
+	virtual void Union(const CircList<T>& L2);		// union of two lists, and store the result in *this
+	virtual void Intersection(const CircList<T>& L2);// intersection of two lists, and store the result in *this
 	virtual void input();							// input data via the console window
 	virtual void output()const;						// output data via the console window	
 	virtual bool isFull()const { return false; }	// function derived from base class LinearList, no practical meaning in linked list
@@ -309,7 +309,7 @@ bool CircList<T>::remove(int i) {
 }
 
 template<typename T>
-void CircList<T>::Union(CircList<T>& L2) {
+void CircList<T>::Union(const CircList<T>& L2) {
 	// union of two lists & store the result in *this
 	CLLNode<T>* curr = L2.head->next;
 	T x;
@@ -322,7 +322,7 @@ void CircList<T>::Union(CircList<T>& L2) {
 }
 
 template<typename T>
-void CircList<T>::Intersection(CircList<T>& L2) {
+void CircList<T>::Intersection(const CircList<T>& L2) {
 	// intersection of two lists & store the result in *this
 	CLLNode<T>* curr = head->next, *prev = head;
 	T x;
