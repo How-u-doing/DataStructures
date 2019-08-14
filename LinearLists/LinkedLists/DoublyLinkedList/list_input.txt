@@ -1,0 +1,11 @@
+Tony 1009  M NewYork
+Sam 1010 M Seattle
+Ben 1011 M Boston
+Alice 1012 W LosAngeles
+Jacob 1013 M Chicago
+Richard 1014 M Sydney
+Sophia 1015 W Pairs
+Jack 1016 M HongKong
+Janny 1017 W Washington
+Elizabeth 1018 W London
+
