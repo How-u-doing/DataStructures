@@ -23,8 +23,8 @@ class CircList : public LinearList<T> {
 public:
 	CircList();										// constructor with no infomation in data zone of head node
 	CircList(const T& Info_for_head_node);			// constructor, & store info in head node
-	CircList(CircList<T>& L); 						// copy constructor
-	CircList<T>& operator=(CircList<T>& L);			// assignment operator= overloading	
+	CircList(const CircList<T>& L); 				// copy constructor
+	CircList<T>& operator=(const CircList<T>& L);	// assignment operator= overloading	
 	virtual ~CircList() { clear(); delete head; }	// virtual destructor		
 	virtual int size()const { return length(); }	// get the size of the list
 	virtual int length()const;						// get the number of pactical existing items	
@@ -76,7 +76,7 @@ CircList<T>::CircList(const T& Info_for_head_node) {
 }
 
 template<typename T>
-CircList<T>::CircList(CircList<T>& L) {
+CircList<T>::CircList(const CircList<T>& L) {
 	// copy constructor
 	CLLNode<T>* srcptr = L.getHead();
 	CLLNode<T>* desptr = head = new CLLNode<T>;
@@ -96,7 +96,7 @@ CircList<T>::CircList(CircList<T>& L) {
 }
 
 template<typename T>
-CircList<T>& CircList<T>::operator=(CircList<T>& L) {
+CircList<T>& CircList<T>::operator=(const CircList<T>& L) {
 	// assignment operator= overloading
 	CLLNode<T>* srcptr = L.getHead();
 	CLLNode<T>* desptr = head = new CLLNode<T>;
