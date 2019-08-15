@@ -1,4 +1,4 @@
-// singly linked list(with head node) header
+// singly linked list (with head node) header
 #pragma once
 #ifndef LIST_H
 #define LIST_H
@@ -32,8 +32,8 @@ public:
 	virtual bool append(const T& x);			 	// add value x at the end of list
 	virtual bool remove(int i, T& x);				// remove the i-th item & store the removed value
 	virtual bool remove(int i);						// remove the i-th item without storing the removed value	
-	virtual void Union(const List<T>& L2);			// union of two lists, and store the result in *this
-	virtual void Intersection(const List<T>& L2);	// intersection of two lists, and store the result in *this
+	virtual void clear();							// erase all items
+	virtual T& operator[](int index)const;			// access list items via []
 	virtual void input();							// input data via the console window
 	virtual void output()const;						// output data via the console window	
 	virtual bool isFull()const { return false; }	// function derived from base class LinearList, no practical meaning in linked list
@@ -42,14 +42,18 @@ public:
 	virtual T& getVal(int i)const;
 	virtual bool getVal(int i, T& x)const;
 	virtual void setVal(int i, const T& x);
+	virtual void swap(int i, int j);				// exchange the value of i-th item with that of j-th item 
 	virtual void Import(const std::string& filename, const std::string& mode_selection_text_or_binary);	    // Read corresponding data from a local host file
 	virtual void Export(const std::string& filename, const std::string& mode_selection_text_or_binary)const;// Write corresponding data into a local host file	
-	// new functions in derived class List
-	void clear();									// erase all
+	
+	// new functions in derived class List	
+	void Union(const List<T>& L2);					// union of two lists, and store the result in *this
+	void Intersection(const List<T>& L2);			// intersection of two lists, and store the result in *this
 	Node<T>* getHead()const { return head; }		// get the pointer to head node
 	Node<T>* locate(int i)const;					// locate the i-th item	and return the pointer to this node	
 	Node<T>* find(const T& x)const;					// find specified item x and return the pointer to this node
-	T& operator[](int index);						// access list items via []
+	Node<T>* shift(Node<T>* ptr, int distance);		// move backward "distance" nodes after ptr
+
 private:
 	Node<T>* head;									// pointer to the head node of the list 	
 };
@@ -74,7 +78,7 @@ List<T>::List(const List<T>& L) {
 template<typename T>
 List<T>& List<T>::operator=(const List<T>& L) {
 	// assignment operator= overloading
-	if (head->next != nullptr) clear();				// erase all nodes but head node if list is not null
+	clear();										// clear existing nodes
 	Node<T>* srcptr = L.getHead();
 	Node<T>* desptr = head = new Node<T>;
 	if (head == nullptr) { std::cerr << "Memory allocation error!" << std::endl; exit(1); }
@@ -89,7 +93,7 @@ List<T>& List<T>::operator=(const List<T>& L) {
 }
 
 template<typename T>
-T& List<T>::operator[](int index) {	
+T& List<T>::operator[](int index)const {
 	// access list items via [], 0<=index<=length(), equivalent to getVal(int i)
 	// i=0, return head node info(may be null)
 	if (index < 0) { std::cerr << "Using operator[] error! Reason: Invalid argument index, index must be no less than 0." << std::endl; exit(1); }
@@ -102,7 +106,46 @@ T& List<T>::operator[](int index) {
 		}
 	}
 	return curr->data;
-}						
+}
+
+template<typename T>
+Node<T>* List<T>::shift(Node<T>* ptr, int distance) {
+	/* Please make sure that ptr is valid ( I mean it points to a
+	 * particular node in the list) before invoking this function.
+	 * Why create this function?
+	 * Say you have already located the 900-th node, now you need to
+	 * swap the data with the 1000-th node. Of course you can invoke
+	 * locate(1000), but it does a lot of duplicate work-locating from
+	 * 0 to 900. Using shift(locate(900), 1000-900) does it in a more
+	 * effective way.
+	**/
+	Node<T>* curr = ptr;
+	while (distance--)
+		curr = curr->next;
+	return curr;
+}
+
+template<typename T>
+void List<T>::swap(int i, int j) {
+	/* exchange the value of i-th item with that of j-th item, 
+	 * implementation by exchanging their links while not their values
+	**/
+	if (i < 1 || j < 1) {
+		std::cerr << "Invalid arguments, i & j must be no less than 1." << std::endl;
+		exit(1);
+	}
+	if (i == j) return;								// no need to swap
+	if (i > j) { int tmp = i; i = j; j = tmp; }		// make j the larger one
+	Node<T>* prev_i = locate(i - 1), 
+		*prev_j = shift(prev_i, j - i),				/* i.e. *prev_j = locate(j - 1); */
+		*ptr_j = prev_j->next, *next_i = prev_i->next->next;
+
+	prev_j->next = prev_i->next;
+	prev_i->next->next = ptr_j->next;
+
+	prev_i->next = ptr_j;
+	ptr_j->next = next_i;	   
+}
 
 template<typename T>
 void List<T>::clear() {
@@ -292,7 +335,7 @@ template<typename T>
 void List<T>::input() {
 	if (head->next != nullptr) {					// this list has at least one node
 		std::cout << "Warning, the list is not null. Input new data will cover the original data\n";
-		std::cout << "Are you sure to go on?('y' or 'n')\n";
+		std::cout << "Are you sure to go on?(y or n)\n";
 		char c;
 		// clear stdin buffer to avoid cin extracting '\n' for c
 		std::cin.clear();
@@ -331,7 +374,7 @@ template<typename T>
 void List<T>::Import(const std::string& filename, const std::string& mode_selection_text_or_binary) {
 	if (head->next != nullptr) {					// this list has at least one node
 		std::cout << "Warning, the list is not null. Input new data will cover the original data\n";
-		std::cout << "Are you sure to go on?('y' or 'n')\n";
+		std::cout << "Are you sure to go on?(y or n)\n";
 		char c;
 		// clear stdin buffer to avoid cin extracting '\n' for c
 		std::cin.clear();

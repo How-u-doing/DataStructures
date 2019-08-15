@@ -88,6 +88,11 @@ int main()
 	cout << "\nLS3, intersection of LS & LS1: " << endl;
 	ls3.output();
 
+	// swap() test
+	ls.swap(2, 5);
+	cout << "\n\nAfter swapping member 2 & member 5 of LS:\n";
+	ls.output();
+
 	// Export(), Import() test
 	ls.input();								// input with existing data test 
 	ls.output();
