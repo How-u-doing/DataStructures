@@ -1,4 +1,4 @@
-// circular singly linked list(with head node) header
+// circular singly linked list (with head node) header
 #pragma once
 #ifndef CIRCLIST_H
 #define CIRCLIST_H
@@ -33,8 +33,6 @@ public:
 	virtual bool append(const T& x);			 	// add value x at the end of list
 	virtual bool remove(int i, T& x);				// remove the i-th item & store the removed value
 	virtual bool remove(int i);						// remove the i-th item without storing the removed value	
-	virtual void Union(const CircList<T>& L2);		// union of two lists, and store the result in *this
-	virtual void Intersection(const CircList<T>& L2);// intersection of two lists, and store the result in *this
 	virtual void input();							// input data via the console window
 	virtual void output()const;						// output data via the console window	
 	virtual bool isFull()const { return false; }	// function derived from base class LinearList, no practical meaning in linked list
@@ -43,16 +41,22 @@ public:
 	virtual T& getVal(int i)const;
 	virtual bool getVal(int i, T& x)const;
 	virtual void setVal(int i, const T& x);
+	virtual void clear();							// erase all items
+	virtual T& operator[](int index)const;			// access list items via []
+	virtual void swap(int i, int j);				// exchange the value of i-th item with that of j-th item 
 	virtual void Import(const std::string& filename, const std::string& mode_selection_text_or_binary);	    // Read corresponding data from a local host file
 	virtual void Export(const std::string& filename, const std::string& mode_selection_text_or_binary)const;// Write corresponding data into a local host file	
+	
 	// new functions in derived class CircList
-	void clear();									// erase all
+	void Union(const CircList<T>& L2);				// union of two lists, and store the result in *this
+	void Intersection(const CircList<T>& L2);		// intersection of two lists, and store the result in *this
+	void setHead(CLLNode<T>* p);				    // make head->next point to some node that is also pointed by p
 	CLLNode<T>* getHead()const { return head; }		// get the pointer to head node
 	CLLNode<T>* getTail()const { return tail; }		// get the pointer to tail node
-	void setHead(CLLNode<T>* p);				    // make head->next point to some node that is also pointed by p
 	CLLNode<T>* locate(int i)const;					// locate the i-th item	and return the pointer to this node	
 	CLLNode<T>* find(const T& x)const;				// find specified item x and return the pointer to this node
-	T& operator[](int index);						// access list items via []
+	CLLNode<T>* shift(CLLNode<T>* ptr, int distance);// move backward "distance" nodes after ptr
+
 private:
 	CLLNode<T>* head;								// pointer to the head node of the list 
 	CLLNode<T>* tail;								// pointer to the last node of the list
@@ -98,7 +102,7 @@ CircList<T>::CircList(const CircList<T>& L) {
 template<typename T>
 CircList<T>& CircList<T>::operator=(const CircList<T>& L) {
 	// assignment operator= overloading
-	if (head->next != head) clear();				// erase all nodes but head node if list is not null
+	clear();										// clear existing nodes
 	CLLNode<T>* srcptr = L.getHead();
 	CLLNode<T>* desptr = head = new CLLNode<T>;
 	if (head == nullptr) { std::cerr << "Memory allocation error!" << std::endl; exit(1); }
@@ -117,7 +121,7 @@ CircList<T>& CircList<T>::operator=(const CircList<T>& L) {
 }
 
 template<typename T>
-T& CircList<T>::operator[](int index) {
+T& CircList<T>::operator[](int index)const {
 	// access list items via [], 0<=index<=length(), equivalent to getVal(int i)
 	// i=0, return head node info(may be null)
 	if (index < 0) { std::cerr << "Using operator[] error! Reason: Invalid argument index, index must be no less than 0." << std::endl; exit(1); }
@@ -187,6 +191,46 @@ CLLNode<T>* CircList<T>::locate(int i)const {
 	if (i < 0) { std::cerr << "Locating error! Reason: Invalid argument i, i must be no less than 0." << std::endl; exit(1); }
 	CLLNode<T>* curr = head;
 	while (i--)
+		curr = curr->next;
+	return curr;
+}
+
+
+template<typename T>
+void CircList<T>::swap(int i, int j) {
+	/* exchange the value of i-th item with that of j-th item,
+	 * implementation by exchanging their links while not their values
+	**/
+	if (i < 1 || j < 1) {
+		std::cerr << "Invalid arguments, i & j must be no less than 1." << std::endl;
+		exit(1);
+	}
+	if (i == j) return;								// no need to swap
+	if (i > j) { int tmp = i; i = j; j = tmp; }		// make j the larger one
+	CLLNode<T>* prev_i = locate(i - 1),
+		*prev_j = shift(prev_i, j - i),				/* i.e. *prev_j = locate(j - 1); */
+		*ptr_j = prev_j->next, *next_i = prev_i->next->next;
+
+	prev_j->next = prev_i->next;
+	prev_i->next->next = ptr_j->next;
+
+	prev_i->next = ptr_j;
+	ptr_j->next = next_i;
+}
+
+template<typename T>
+CLLNode<T>* CircList<T>::shift(CLLNode<T>* ptr, int distance) {
+	/* Please make sure that ptr is valid ( I mean it points to a
+	 * particular node in the list) before invoking this function.
+	 * Why create this function?
+	 * Say you have already located the 900-th node, now you need to
+	 * swap the data with the 1000-th node. Of course you can invoke
+	 * locate(1000), but it does a lot of duplicate work-locating from
+	 * 0 to 900. Using shift(locate(900), 1000-900) does it in a more
+	 * effective way.
+	**/
+	CLLNode<T>* curr = ptr;
+	while (distance--)
 		curr = curr->next;
 	return curr;
 }
@@ -350,7 +394,7 @@ template<typename T>
 void CircList<T>::input() {
 	if (head->next != head) {						// this list has at least one node
 		std::cout << "Warning, the list is not null. Input new data will cover the original data\n";
-		std::cout << "Are you sure to go on?('y' or 'n')\n";
+		std::cout << "Are you sure to go on?(y or n)\n";
 		char c;
 		// clear stdin buffer to avoid cin extracting '\n' for c
 		std::cin.clear();
@@ -392,7 +436,7 @@ template<typename T>
 void CircList<T>::Import(const std::string& filename, const std::string& mode_selection_text_or_binary) {
 	if (head->next != head) {						// this list has at least one node
 		std::cout << "Warning, the list is not null. Input new data will cover the original data\n";
-		std::cout << "Are you sure to go on?('y' or 'n')\n";
+		std::cout << "Are you sure to go on?(y or n)\n";
 		char c;
 		// clear stdin buffer to avoid cin extracting '\n' for c
 		std::cin.clear();

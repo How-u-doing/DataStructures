@@ -1,5 +1,4 @@
 #include<iostream>
-#include<string>
 #include "CircList.h"
 using namespace std;
 
@@ -77,7 +76,7 @@ int main()
 
 	// setHead() test
 	ls.setHead(ls.locate(7));					// now circluar list starts from No.7
-	cout << "\nNow output LS starting from No.7:\n";
+	cout << "\nNow LS starts from No.7:\n";
 	ls.output();
 
 	// copy constructor test
@@ -103,6 +102,11 @@ int main()
 	ls3.Intersection(ls);
 	cout << "\nLS3, intersection of LS & LS1: " << endl;
 	ls3.output();
+
+	// swap() test
+	ls.swap(2, 5);
+	cout << "\n\nAfter swapping member 2 & member 5 of LS:\n";
+	ls.output();
 
 	// Export(), Import() test
 	//ls.input();								// input with existing data test 
