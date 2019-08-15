@@ -1,4 +1,4 @@
-// circular doubly linked list(with head node) header
+// circular doubly linked list (with head node) header
 #pragma once
 #ifndef DBLLIST_H
 #define DBLLIST_H
@@ -33,6 +33,9 @@ public:
 	DblList<T>& operator=(const List<T>& L);		// assign via class List<T>
 	DblList<T>& operator=(const CircList<T>& L);	// assign via class CircList<T>
 	virtual ~DblList() { clear(); delete head; }	// virtual destructor
+	virtual void clear();							// erase all
+	virtual T& operator[](int index)const;			// access list items via []
+	virtual void swap(int i, int j);				// exchange the value of i-th item with that of j-th item 
 	virtual int size()const { return length(); }	// get the size of the list
 	virtual int length()const;						// get the number of pactical existing items	
 	virtual int search(const T& x)const;			// search specified item x and return its logical sequence number 	
@@ -40,8 +43,6 @@ public:
 	virtual bool append(const T& x);			 	// add value x at the end of list
 	virtual bool remove(int i, T& x);				// remove the i-th item & store the removed value
 	virtual bool remove(int i);						// remove the i-th item without storing the removed value	
-	virtual void Union(const DblList<T>& L2);		// union of two lists, and store the result in *this
-	virtual void Intersection(const DblList<T>& L2);// intersection of two lists, and store the result in *this
 	virtual void input();							// input data via the console window
 	virtual void output()const;						// output data via the console window	
 	virtual bool isFull()const { return false; }	// function derived from base class LinearList, no practical meaning in linked list
@@ -52,17 +53,19 @@ public:
 	virtual void setVal(int i, const T& x);
 	virtual void Import(const std::string& filename, const std::string& mode_selection_text_or_binary);	    // Read corresponding data from a local host file
 	virtual void Export(const std::string& filename, const std::string& mode_selection_text_or_binary)const;// Write corresponding data into a local host file	
-	// new functions in derived class DblList
-	void clear();									// erase all
+		
+	void Union(const DblList<T>& L2);				// union of two lists, and store the result in *this
+	void Union(const List<T>& L2);					// union of List L2 and DblList "this", & store the result in *this
+	void Union(const CircList<T>& L2);				// union of CircList L2 and DblList "this", & store the result in *this
+	void Intersection(const DblList<T>& L2);		// intersection of two lists, and store the result in *this
+	void Intersection(const List<T>& L2);			// intersection of List L2 and DblList "this", & store the result in *this
+	void Intersection(const CircList<T>& L2);		// intersection of CircList L2 and DblList "this", & store the result in *this
 	DLLNode<T>* getHead()const { return head; }		// get the pointer to head node
 	void setHead(DLLNode<T>* p);					// make head pointer point to some node that is also pointed by p
 	DLLNode<T>* locate(int i)const;					// locate the i-th item	and return the pointer to this node	
 	DLLNode<T>* find(const T& x)const;				// find specified item x and return the pointer to this node
-	T& operator[](int index);						// access list items via []
-	void Union(const List<T>& L2);					// union of List L2 and DblList "this", & store the result in *this
-	void Union(const CircList<T>& L2);				// union of CircList L2 and DblList "this", & store the result in *this
-	void Intersection(const List<T>& L2);			// intersection of List L2 and DblList "this", & store the result in *this
-	void Intersection(const CircList<T>& L2);		// intersection of CircList L2 and DblList "this", & store the result in *this
+	DLLNode<T>* shift(DLLNode<T>* ptr, int distance);// move backward "distance" nodes after ptr
+
 private:
 	DLLNode<T>* head;								// pointer to the head node of the list 
 };
@@ -160,7 +163,7 @@ DblList<T>::DblList(const List<T>& L) {
 template<typename T>
 DblList<T>& DblList<T>::operator=(const DblList<T>& L) {
 	/* assignment operator= overloading */
-	if (head->next != head) clear();				// erase all nodes but head node if list is not null
+	clear();										// clear existing nodes
 	DLLNode<T>* srcptr = L.getHead();
 	DLLNode<T>* desptr = head = new DLLNode<T>;
 	if (head == nullptr) { std::cerr << "Memory allocation error!" << std::endl; exit(1); }
@@ -185,7 +188,7 @@ DblList<T>& DblList<T>::operator=(const DblList<T>& L) {
 template<typename T>
 DblList<T>& DblList<T>::operator=(const CircList<T>& L) {
 	/* assign via class CircList<T> */
-	if (head->next != head) clear();				// erase all nodes but head node if list is not null
+	clear();										// clear existing nodes
 	CLLNode<T>* srcptr = L.getHead(), *L_head = srcptr;
 	DLLNode<T>* desptr = head = new DLLNode<T>;
 	if (head == nullptr) { std::cerr << "Memory allocation error!" << std::endl; exit(1); }
@@ -210,7 +213,7 @@ DblList<T>& DblList<T>::operator=(const CircList<T>& L) {
 template<typename T>
 DblList<T>& DblList<T>::operator=(const List<T>& L) {
 	/* assign via class List<T> */
-	if (head->next != head) clear();				// erase all nodes but head node if list is not null
+	clear();										// clear existing nodes
 	Node<T>* srcptr = L.getHead();
 	DLLNode<T>* desptr = head = new DLLNode<T>;
 	if (head == nullptr) { std::cerr << "Memory allocation error!" << std::endl; exit(1); }
@@ -233,7 +236,7 @@ DblList<T>& DblList<T>::operator=(const List<T>& L) {
 }
 
 template<typename T>
-T& DblList<T>::operator[](int index) {
+T& DblList<T>::operator[](int index)const {
 	/* access list items via [], 0<=index<=length(), equivalent to getVal(int i)
 	 * i=0, return head node info(may be null)
 	**/
@@ -247,6 +250,49 @@ T& DblList<T>::operator[](int index) {
 		}
 	}
 	return curr->data;
+}
+
+template<typename T>
+void DblList<T>::swap(int i, int j) {
+	/* exchange the value of i-th item with that of j-th item,
+	 * implementation by exchanging their links while not their values
+	**/
+	if (i < 1 || j < 1) {
+		std::cerr << "Invalid arguments, i & j must be no less than 1." << std::endl;
+		exit(1);
+	}
+	if (i == j) return;								// no need to swap
+	if (i > j) { int tmp = i; i = j; j = tmp; }		// make j the larger one
+	DLLNode<T>* ptr_i = locate(i),
+		*ptr_j = shift(ptr_i, j - i),				/* i.e. *ptr_j = locate(j); */
+		*prev_j = ptr_j->prev, *next_j = ptr_j->next;
+
+	ptr_i->prev->next = ptr_j;
+	ptr_j->prev = ptr_i->prev;
+	ptr_j->next = ptr_i->next;
+	ptr_i->next->prev = ptr_j;
+
+	prev_j->next = ptr_i;
+	ptr_i->prev = prev_j;
+	ptr_i->next = next_j;
+	next_j->prev = ptr_i;
+}
+
+template<typename T>
+DLLNode<T>* DblList<T>::shift(DLLNode<T>* ptr, int distance) {
+	/* Please make sure that ptr is valid ( I mean it points to a
+	 * particular node in the list) before invoking this function.
+	 * Why create this function?
+	 * Say you have already located the 900-th node, now you need to
+	 * swap the data with the 1000-th node. Of course you can invoke
+	 * locate(1000), but it does a lot of duplicate work-locating from
+	 * 0 to 900. Using shift(locate(900), 1000-900) does it in a more
+	 * effective way.
+	**/
+	DLLNode<T>* curr = ptr;
+	while (distance--)
+		curr = curr->next;
+	return curr;
 }
 
 template<typename T>
