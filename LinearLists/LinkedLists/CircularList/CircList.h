@@ -211,11 +211,22 @@ void CircList<T>::swap(int i, int j) {
 		*prev_j = shift(prev_i, j - i),				/* i.e. *prev_j = locate(j - 1); */
 		*ptr_j = prev_j->next, *next_i = prev_i->next->next;
 
-	prev_j->next = prev_i->next;
-	prev_i->next->next = ptr_j->next;
+	if (j - i != 1) {
+		// when j=i+1, i.e. prev_j = ptr_i =  prev_i->next, 
+		// executing  "prev_j->next = prev_i->next"  means: 
+		// ptr_i->next = ptr_i, endless loop!!
+		prev_j->next = prev_i->next;
+		prev_i->next->next = ptr_j->next;
 
-	prev_i->next = ptr_j;
-	ptr_j->next = next_i;
+		prev_i->next = ptr_j;
+		ptr_j->next = next_i;
+	}
+	else {
+		// case: ptr_i->next = ptr_j
+		prev_i->next->next = ptr_j->next;
+		ptr_j->next = prev_i->next;
+		prev_i->next = ptr_j;
+	}
 }
 
 template<typename T>
