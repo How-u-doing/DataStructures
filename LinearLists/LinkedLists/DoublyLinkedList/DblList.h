@@ -267,15 +267,31 @@ void DblList<T>::swap(int i, int j) {
 		*ptr_j = shift(ptr_i, j - i),				/* i.e. *ptr_j = locate(j); */
 		*prev_j = ptr_j->prev, *next_j = ptr_j->next;
 
-	ptr_i->prev->next = ptr_j;
-	ptr_j->prev = ptr_i->prev;
-	ptr_j->next = ptr_i->next;
-	ptr_i->next->prev = ptr_j;
+	if (j - i != 1) {
+		// when j = i + 1,  i.e. ptr_j = ptr_i->next,
+		// executing   "ptr_j->next = ptr_i->next"
+		// means: ptr_j->next = ptr_j, endless loop!! 
+		ptr_j->next = ptr_i->next;
+		ptr_i->next->prev = ptr_j;
+		ptr_j->prev = ptr_i->prev;
+		ptr_i->prev->next = ptr_j;
 
-	prev_j->next = ptr_i;
-	ptr_i->prev = prev_j;
-	ptr_i->next = next_j;
-	next_j->prev = ptr_i;
+		ptr_i->next = next_j;
+		next_j->prev = ptr_i;
+		ptr_i->prev = prev_j;
+		prev_j->next = ptr_i;	
+	}
+	else {
+		// case: ptr_j = ptr_i->next
+		ptr_i->prev->next = ptr_j;
+		ptr_j->prev = ptr_i->prev;
+		
+		ptr_j->next = prev_j;
+		prev_j->prev = ptr_j;
+
+		prev_j->next = next_j;
+		next_j->prev = prev_j;
+	}	
 }
 
 template<typename T>
