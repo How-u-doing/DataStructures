@@ -87,7 +87,7 @@ bool Calculator::isOper(char ch) {
 std::string Calculator::infix_to_postfix(const std::string& Infix) {
 	std::string infix = eatWhitespace(Infix);	// kill all whitesapces
 	infix += '=';	// add '=' for stopping sign
-	SeqStack<char> s;
+	LinkedStack<char> s;
 	char ch = '=';	// push '=' onto stack bottom
 	s.push(ch);
 	std::string postfix{};

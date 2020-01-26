@@ -3,7 +3,7 @@
 #ifndef CALCULATOR
 #define CALCULATOR
 
-#include "SeqStack.h"
+#include "LinkedStack.h"
 
 class Calculator {
 public:
@@ -16,7 +16,7 @@ public:
 	std::string infix_to_postfix(const std::string& Infix);
 
 private:
-	SeqStack<double> stack;
+	LinkedStack<double> stack;
 	void get2Operands(double& left, double& right);
 	void doOperator(char op);
 	bool isOper(char ch);
