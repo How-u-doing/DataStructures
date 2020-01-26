@@ -29,7 +29,9 @@ void Calculator::doOperator(char op) {
 }
 
 void Calculator::readInfixExpr(std::string& infix) {
-	std::getline(std::cin, infix);
+	getline(std::cin, infix);
+	while (infix.length() == 0)		// kill blank line(s)
+		getline(std::cin, infix);
 }
 
 // execute a postfix expression, e.g. ABCD-*+EF/- (i.e. infix: A+B*(C-D)-E/F)

@@ -15,7 +15,11 @@ int main()
 	string infix{}, postfix;
 
 	char doAgain = 'y';
+	bool isFirstTime = true;
 	while (doAgain == 'y' || doAgain == 'Y') {
+		if (!isFirstTime) {
+			std::cout << "Please input your expression: -->";
+		}
 
 		try {
 			calc.readInfixExpr(infix);
@@ -30,9 +34,9 @@ int main()
 			cout << e << endl;
 		}
 
-		cout << "Would you like to do it again (y or n)?\n";
-		//while (char kill = getchar() != '\n');
-		cin >> doAgain;
+		isFirstTime = false;
+		cout << "\nWould you like to do it again (y or n)?\n";
+		cin >> doAgain;		
 	}
 
 	return 0;
