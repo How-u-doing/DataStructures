@@ -129,7 +129,7 @@ void LinkedStack<T>::clear() { // erase all elements
 template<typename T>
 std::ostream& operator<<(std::ostream& os, const LinkedStack<T>& s) { // print all elements from top to bottom
 	int i = s.size();
-	if (i == 0) os << "The stack is empty, no element to print\n";
+	if (i == 0) { os << "The stack is empty, no element to print\n"; return; }
 	else
 		os << "There are " << i << " element(s) in this stack, from top to bottom they are:\n";
 
