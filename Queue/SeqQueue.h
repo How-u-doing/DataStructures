@@ -4,8 +4,9 @@
 #define SEQQUEUE_H
 
 #include "Queue.h"
+#include <iostream>
 
-const int defaultSize = 20;
+const size_t defaultSize = 20;
 
 template<typename T>
 class SeqQueue :public Queue<T> {
@@ -18,12 +19,14 @@ public:
 	virtual void pop();
 	virtual T& front()const;
 	virtual T& back()const;
-	virtual size_t size()const { return (maxSize + Back - Front) % maxSize; }
-	virtual void clear() { Front = Back = 0; }
+	virtual inline size_t size()const { return (maxSize + Back - Front) % maxSize; }
+	virtual inline size_t capacity()const { return maxSize - 1; }
+	virtual inline void clear() { Front = Back = 0; }
 	virtual inline bool isEmpty()const { return Front == Back ? true : false; }
 	inline bool isFull()const { return (Back + 1) % maxSize == Front ? true : false; }
 	void resize(size_t newSize = maxSize * 2);	// double it by default
-	virtual size_t capacity()const { return maxSize - 1; }
+	template<typename T>
+	friend std::ostream& operator<< (std::ostream& os, const SeqQueue<T>& que);
 
 private:	
 	size_t Front, Back;	// element scope: [Front, Back)
@@ -115,5 +118,12 @@ T& SeqQueue<T>::back() const { // get the rear element
 	if (isEmpty()) throw "fun@back: queue_underflow\n";
 	return elem[(Back - 1 + maxSize) % maxSize];
 	// or return elem[(Back - 1 + Back == 0 ? maxSize : 0];
+}
+
+template<typename T>
+std::ostream& operator<< (std::ostream& os, const SeqQueue<T>& que) {
+	for (auto i = que.Front; i != que.Back; i = (i + 1) % que.maxSize)
+		os << i << ": " << que.elem[i] << std::endl;
+	return os;
 }
 #endif // !SEQQUEUE_H
