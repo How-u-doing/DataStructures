@@ -20,10 +20,10 @@ public:
 	virtual T& front()const;
 	virtual T& back()const;
 	virtual inline size_t size()const { return (maxSize + Back - Front) % maxSize; }
-	virtual inline size_t capacity()const { return maxSize - 1; }
 	virtual inline void clear() { Front = Back = 0; }
 	virtual inline bool isEmpty()const { return Front == Back ? true : false; }
 	inline bool isFull()const { return (Back + 1) % maxSize == Front ? true : false; }
+	inline size_t capacity()const { return maxSize - 1; }
 	void resize(size_t newSize = maxSize * 2);	// double it by default
 	template<typename T>
 	friend std::ostream& operator<< (std::ostream& os, const SeqQueue<T>& que);
