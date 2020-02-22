@@ -58,7 +58,7 @@ int Calculator::isp(char op){
 	case '(':			return 1;
 	case '+':case '-':	return 3;
 	case '*':case '/':	return 5;
-	case '^':			return 7;
+	case '^':			return 6;
 	case ')':			return 8;
 	default: throw "fun@isp: Invalid_operator\n";
 	}
@@ -71,7 +71,7 @@ int Calculator::icp(char op) {
 	case ')':			return 1;
 	case '+':case '-':	return 2;
 	case '*':case '/':	return 4;
-	case '^':			return 6;
+	case '^':			return 7;
 	case '(':			return 8;
 	default: throw "fun@icp: Invalid_operator\n";
 	}
