@@ -1,4 +1,5 @@
 #include"Polynomial.h"
+#include<cassert>
 
 Polynomial::Polynomial(const Polynomial& polyn) {
 	/* copy constructor */
@@ -15,8 +16,10 @@ Polynomial::Polynomial(const char str[]) {
 	/* constructor by a char string, e.g. Polynomial polyn("x^2-x+0.2") */
 	head = new Term;
 	std::string polyn = str;
-	if (has_ws(polyn))
+	/* if (has_ws(polyn))
 		polyn = erase_ws(polyn);				// standardize polynomial string
+	*/
+	polyn = erase_ws(polyn);
 	str2polyn(polyn);
 }
 
@@ -24,8 +27,10 @@ Polynomial::Polynomial(const std::string& str) {
 	/* constructor by a string, e.g. Polynomial polyn("x^2-x+0.2") */
 	head = new Term;
 	std::string polyn = str;
-	if (has_ws(polyn))
+	/* if (has_ws(polyn))
 		polyn = erase_ws(polyn);				// standardize polynomial string
+	*/
+	polyn = erase_ws(polyn);
 	str2polyn(polyn);
 }
 
@@ -51,8 +56,10 @@ void Polynomial::assign(const char str[]) {
 	/* assign via a char string */
 	clear();
 	std::string polyn = str;
-	if (has_ws(polyn))
-		polyn = erase_ws(polyn);			// standardize polynomial string
+	/* if (has_ws(polyn))
+		polyn = erase_ws(polyn);				// standardize polynomial string
+	*/
+	polyn = erase_ws(polyn);
 	str2polyn(polyn);
 }
 
@@ -66,8 +73,10 @@ void Polynomial::assign(const std::string& str) {
 	/* assign via string */
 	clear();
 	std::string polyn = str;
-	if (has_ws(polyn))
-		polyn = erase_ws(polyn);			// standardize polynomial string
+	/* if (has_ws(polyn))
+		polyn = erase_ws(polyn);				// standardize polynomial string
+	*/
+	polyn = erase_ws(polyn);
 	str2polyn(polyn);
 }
 
@@ -329,7 +338,10 @@ void Polynomial::sort() {
 void Polynomial::insert_after(Term* ptr, float coefficient, int exponent) {
 	/* insert a term after ptr */
 	Term* curr = new Term(coefficient, exponent);
-	if (curr == nullptr) { std::cerr << "Memory allocation error!" << std::endl; exit(1); }
+	
+	//if (curr == nullptr) { std::cerr << "Memory allocation error!" << std::endl; exit(1); }	
+	assert(curr!=nullptr);	// to be included <cassert>
+	
 	curr->next = ptr->next;
 	ptr->next = curr;
 }
@@ -339,8 +351,10 @@ std::istream& operator>>(std::istream& is, Polynomial& polyn) {
 	if (polyn.head->next != nullptr) polyn.clear();
 	std::string str;
 	std::getline(is, str);
-	if (polyn.has_ws(str))
+	/*if (polyn.has_ws(str))
 		str = polyn.erase_ws(str);				// standardize polynomial string
+	*/
+	str = polyn.erase_ws(str);
 	polyn.str2polyn(str);
 	return is;
 }

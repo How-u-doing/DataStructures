@@ -1,6 +1,8 @@
-#include<iostream>
 #include"Polynomial.h"
+#include<iostream>
+
 using namespace std;
+
 int main() 
 {
 	

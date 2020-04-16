@@ -21,6 +21,8 @@ public:
 	Polynomial(const Polynomial& polyn);
 	Polynomial(const char str[]);
 	Polynomial(const std::string& str);						// constructor by a string, e.g. Polynomial polyn("x^2-x+0.2")
+	~Polynomial() { clear(); }
+
 	int order()const;										// max order of the polynomial
 	Term* getHead()const { return head; }					// gain the pointer to the head node	
 	void insert_after(Term* ptr, float coefficient, int exponent);
