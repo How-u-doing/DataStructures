@@ -2,7 +2,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
-#include <algorithm>
+#include <cassert>
 
 using namespace std;
 
@@ -40,10 +40,6 @@ public:
 		return os;
 	}
 
-	friend bool operator<(const stu& a, const stu& b) {
-		return a.get_sum() < b.get_sum();
-	}
-
 	float calc_sum()const { return Math + English + Computer; }
 	float get_sum()const { return total_score; }
 };
@@ -65,18 +61,33 @@ void kill_extra_char()
 #endif // defined _WIN32 || defined _WIN64
 }
 
+void sort_by_mode(vector<stu>& vs, int a[], int mode) {
+	assert(0 <= mode && mode <= 10);
+	auto Mode = static_cast<mySortingAlgo::Mode>(mode);
+
+	// sort in descending order
+	mySortingAlgo::sort(vs.begin(), vs.end(), [](const stu& s1, const stu& s2) {
+		return s1.get_sum() > s2.get_sum();
+		}, Mode);
+
+	// sort in ascending order
+	mySortingAlgo::sort(a, a + 9, [](const int a, const int b) {
+		return a < b;
+		}, Mode);
+}
+
 int main()
 {
 	vector<stu> vs;
 
 	vs.push_back(stu(10170401,82,79,91));
-	vs.push_back(stu(10170402, 61.5, 70, 61));
+	vs.push_back(stu(10170402, 61, 70, 61));
 	vs.push_back(stu(10170403, 92, 89, 98));
-	vs.push_back(stu(10170404, 70, 94, 90));
+	vs.push_back(stu(10170404, 70, 94.5, 90));
 	vs.push_back(stu(10170405, 83, 76, 93));
 	vs.push_back(stu(10170406, 78, 79, 81.5));
 	vs.push_back(stu(10170407, 92, 97, 100));
-	vs.push_back(stu(10170408, 65, 90.5, 79));
+	vs.push_back(stu(10170408, 82, 91, 79));
 	vs.push_back(stu(10170409, 90, 69, 71));
 
 	cout << "Original list\n";
@@ -107,134 +118,24 @@ int main()
 	cout << "** Radix Sort --------------------------- 10 \n";
 	cout << "Enter your option (0-10) here: ";
 
-	char isValid = 'y';
 	int mode{};
-	while (isValid == 'y')
-	{		
+	while (true)
+	{
 		cin >> mode;
-		while (cin.fail()) {// possibly a formatting error, e.g. inputed a non-digit first
+		while (cin.fail()) {// possibly a formatting error, e.g. inputed a non-digit first, say w#@9, a7, etc.
 			cin.clear();
 			kill_extra_char();
 			cout << "Invalid char detected! Please input your option (0-10) again: ";
 			cin >> mode;
 		}
 
-		switch (mode)
-		{
-		case 0: mySortingAlgo::sort(vs.begin(), vs.end(), [](const stu& s1, const stu& s2) {
-			return s1.get_sum() > s2.get_sum();
-			}, mySortingAlgo::Mode::InsertionSort);
-
-			mySortingAlgo::sort(a, a + 9, [](const int a, const int b) {
-				return a < b;
-				}, mySortingAlgo::Mode::InsertionSort);
-
-			isValid = 'n'; break;
-
-		case 1: mySortingAlgo::sort(vs.begin(), vs.end(), [](const stu& s1, const stu& s2) {
-			return s1.get_sum() > s2.get_sum();
-			}, mySortingAlgo::Mode::SelectionSort);
-
-			mySortingAlgo::sort(a, a + 9, [](const int a, const int b) {
-				return a < b;
-				}, mySortingAlgo::Mode::SelectionSort);
-
-			isValid = 'n'; break;
-
-		case 2: mySortingAlgo::sort(vs.begin(), vs.end(), [](const stu& s1, const stu& s2) {
-			return s1.get_sum() > s2.get_sum();
-			}, mySortingAlgo::Mode::MergeSort);
-
-			mySortingAlgo::sort(a, a + 9, [](const int a, const int b) {
-				return a < b;
-				}, mySortingAlgo::Mode::MergeSort);
-
-			isValid = 'n'; break;
-
-		case 3: mySortingAlgo::sort(vs.begin(), vs.end(), [](const stu& s1, const stu& s2) {
-			return s1.get_sum() > s2.get_sum();
-			}, mySortingAlgo::Mode::Heapsort);
-
-			mySortingAlgo::sort(a, a + 9, [](const int a, const int b) {
-				return a < b;
-				}, mySortingAlgo::Mode::Heapsort);
-
-			isValid = 'n'; break;
-
-		case 4: mySortingAlgo::sort(vs.begin(), vs.end(), [](const stu& s1, const stu& s2) {
-			return s1.get_sum() > s2.get_sum();
-			}, mySortingAlgo::Mode::Quicksort);
-
-			mySortingAlgo::sort(a, a + 9, [](const int a, const int b) {
-				return a < b;
-				}, mySortingAlgo::Mode::Quicksort);
-
-			isValid = 'n'; break;
-
-		case 5: mySortingAlgo::sort(vs.begin(), vs.end(), [](const stu& s1, const stu& s2) {
-			return s1.get_sum() > s2.get_sum();
-			}, mySortingAlgo::Mode::Shellsort);
-
-			mySortingAlgo::sort(a, a + 9, [](const int a, const int b) {
-				return a < b;
-				}, mySortingAlgo::Mode::Shellsort);
-
-			isValid = 'n'; break;
-
-		case 6: mySortingAlgo::sort(vs.begin(), vs.end(), [](const stu& s1, const stu& s2) {
-			return s1.get_sum() > s2.get_sum();
-			}, mySortingAlgo::Mode::BubbleSort);
-
-			mySortingAlgo::sort(a, a + 9, [](const int a, const int b) {
-				return a < b;
-				}, mySortingAlgo::Mode::BubbleSort);
-
-			isValid = 'n'; break;
-
-		case 7: mySortingAlgo::sort(vs.begin(), vs.end(), [](const stu& s1, const stu& s2) {
-			return s1.get_sum() > s2.get_sum();
-			}, mySortingAlgo::Mode::CombSort);
-
-			mySortingAlgo::sort(a, a + 9, [](const int a, const int b) {
-				return a < b;
-				}, mySortingAlgo::Mode::CombSort);
-
-			isValid = 'n'; break;
-
-		case 8: mySortingAlgo::sort(vs.begin(), vs.end(), [](const stu& s1, const stu& s2) {
-			return s1.get_sum() > s2.get_sum();
-			}, mySortingAlgo::Mode::CountingSort);
-
-			mySortingAlgo::sort(a, a + 9, [](const int a, const int b) {
-				return a < b;
-				}, mySortingAlgo::Mode::CountingSort);
-
-			isValid = 'n'; break;
-
-		case 9: mySortingAlgo::sort(vs.begin(), vs.end(), [](const stu& s1, const stu& s2) {
-			return s1.get_sum() > s2.get_sum();
-			}, mySortingAlgo::Mode::BucketSort);
-
-			mySortingAlgo::sort(a, a + 9, [](const int a, const int b) {
-				return a < b;
-				}, mySortingAlgo::Mode::BucketSort);
-
-			isValid = 'n'; break;
-
-		case 10: mySortingAlgo::sort(vs.begin(), vs.end(), [](const stu& s1, const stu& s2) {
-			return s1.get_sum() > s2.get_sum();
-			}, mySortingAlgo::Mode::RadixSort);
-
-			mySortingAlgo::sort(a, a + 9, [](const int a, const int b) {
-				return a < b;
-				}, mySortingAlgo::Mode::RadixSort);
-
-			isValid = 'n'; break;
-
-		default:
+		if (0 <= mode && mode <= 10) {
+			sort_by_mode(vs, a, mode);
+			break;
+		}
+		else {
 			cout << "Invalid option! Please input your option (0-10) again: ";
 			kill_extra_char();
-			break;
 		}
 	}
 
@@ -265,8 +166,15 @@ int main()
 	/*std::sort(vs.begin(), vs.end(), [](const stu& s1, const stu& s2) {
 		return s1.get_sum() > s2.get_sum();
 		});*/
-	// bad, invalid comparator, return value can be only true(!= 0) or false(== 0)
+
+	// Not allowed. The types [Type1] and [Type2] must be such that an object of type 
+	// RandomIt can be dereferenced and then implicitly converted to both of them.
 	// see also <https://en.cppreference.com/w/cpp/algorithm/sort>
+	/*std::sort(vs.begin(), vs.end(), [](const stu* s1, const stu* s2) {
+		return s1->get_sum() > s2->get_sum();
+		});*/
+
+	// bad, invalid comparator, return value can be only true(!= 0) or false(== 0)
 	/*std::sort(vs.begin(), vs.end(), [](const stu& s1, const stu& s2) {
 		if (s1.get_sum() > s2.get_sum()) return 1;
 		else if (s1.get_sum() < s2.get_sum()) return -1;

@@ -1,7 +1,7 @@
 #pragma once
 #ifndef MYSORT_H
 #define MYSOER_H
-
+#include <cassert>
 
 namespace mySortingAlgo{
 
@@ -26,6 +26,9 @@ template<typename RandomIt, typename Compare>
 class sortingMethods {
 public:
 	static void InsertionSort(RandomIt first, RandomIt last, Compare comp);
+	// auxiliary function for insertion sort
+	static RandomIt binary_search(RandomIt first, RandomIt last, RandomIt target, Compare comp);
+
 	static void SelectionSort(RandomIt first, RandomIt last, Compare comp);
 	static void MergeSort(RandomIt first, RandomIt last, Compare comp);
 	static void Heapsort(RandomIt first, RandomIt last, Compare comp);
@@ -84,13 +87,13 @@ void sort(RandomIt first, RandomIt last, Compare comp, Mode mode = Mode::Quickso
 	}
 }
 
-// This one has a drawback that cannot call lambda function
+//// This one has a drawback that cannot call lambda function
 //template<class RandomIt, class U>
 //void sort(RandomIt first, RandomIt last, bool (*comp)(const U& a, const U& b), Mode mode = Mode::Quicksort)
 //{
 //	// implementation...
 //}
-// Or like this using only one template argument via decltype
+//// Or like this using only one template argument via decltype
 //template<class RandomIt>
 //void sort(RandomIt first, RandomIt last, bool (*comp)(const decltype(*first)& a, const decltype(*first)& b), Mode mode = Mode::Quicksort)
 //{
@@ -100,85 +103,60 @@ void sort(RandomIt first, RandomIt last, Compare comp, Mode mode = Mode::Quickso
 template<typename RandomIt, typename Compare>
 void sortingMethods<RandomIt, Compare>::InsertionSort(RandomIt first, RandomIt last, Compare comp)
 {
+//#define DIRECT_INSERTION_SORT
 	// see also <https://en.wikipedia.org/wiki/Insertion_sort>
+#if defined DIRECT_INSERTION_SORT
 	// direct insertion sort
-	/*int len = last - first;
+	int len = last - first;
 	for (int i = 1; i < len; ++i) {
 		for (int j = i; j > 0 && comp(*(first + j), *(first + j - 1)); --j) {
 			swap_content(first + j, first + j - 1);
 		}
-	}*/
+}
+#else	// When we have massive data items, we can save some comparison time by using binary search.
 
-	//=========================================================================
-	//=========================================================================
+	for (auto it = first + 1; it != last; ++it) {
+		auto pos = binary_search(first, it, it, comp);
+		if (pos == it)
+			continue;
 
-	// When we have massive data items, we can save some comparison time by
-	// using binary search, see <https://en.wikipedia.org/wiki/Binary_search_algorithm>.
-	// determine the sorting order: ascending or descending
-	// of course, overloading operator< prior to comparison is needed
-	int order{ 0 };
-	if (last - first > 1) {
-		if (*first < *(first + 1)) {
-			if (comp(*first, *(first + 1)))
-				order = 1;		// ascending
+		// insert *it before position 'pos', move by block
+		auto tmp = *it;
+		for (auto iter = it; iter != pos; --iter)
+			*iter = *(iter - 1);
+		*pos = tmp;
+	}
+
+#endif // defined DIRECT_INSERTION_SORT
+}
+
+// return the position where target should INSERT_BEFORE in scope [first, last)
+template<typename RandomIt, typename Compare>
+RandomIt sortingMethods<RandomIt, Compare>::binary_search(RandomIt first, RandomIt last, RandomIt target, Compare comp)
+{
+	// see also <https://en.wikipedia.org/wiki/Binary_search_algorithm>
+	decltype(first) L{ first }, R{ last - 1 }, M{ }; 
+	while (L <= R) {
+		M = L + (R - L) / 2;	// how about M=(L+R)/2 ?
+		if (comp(*target, *M)) {
+			if (M > first)
+				R = M - 1;	// Beautiful. Two cases - ascending or descending (operator< or operator>), but with uniform expression.
 			else
-				order = -1;		// descending
+				break;
 		}
-		else {// *first >= *(first + 1)
-			if (comp(*first, *(first + 1)))
-				order = -1;		// descending
-			else
-				order = 1;		// ascending
-		}
-	}
-	else
-		return;
+		else if (comp(*M, *target))
+			L = M + 1;
+		else { // *M == *target, to keep this insertion sort stable, we should insert target after M.
+			   // Note that there may have more than 1 element that is equal to *M.
+			auto it{ M + 1 };
+			while (!comp(*M, *it) && !comp(*it, *M)) // *M == *it
+				++it;
 
-	decltype(first) L{ }, R{ }, M{ };
-	// we can decrease the times of comparison of sorting
-	// order to 1 with the cost of somewhat repetitive code
-	if (order == 1) {// in ascending order
-		for (auto it = first + 1; it != last; ++it) {
-			L = first; R = it - 1;
-			while (L <= R) {
-				M = L + (R - L) / 2;	// how about M=(L+R)/2 ?
-				if (*it < *M) {
-					if (M == first)
-						break;
-					else
-						R = M - 1;
-				}
-				else
-					L = M + 1;
-			}
-			// insert *it right at position L, move by block
-			auto tmp = *it;
-			for (auto iter = it; iter != L; --iter)
-				*iter = *(iter - 1);
-			*L = tmp;
+			return it;
 		}
 	}
-	else {// in descending order
-		for (auto it = first + 1; it != last; ++it) {
-			L = first; R = it - 1;
-			while (L <= R) {
-				M = L + (R - L) / 2;
-				if (*M < *it) {
-					if (M == first)
-						break;
-					else
-						R = M - 1;
-				}
-				else
-					L = M + 1;
-			}
-			// insert *it right at position L, move by block
-			auto tmp = *it;
-			for (auto iter = it; iter != L; --iter)
-				*iter = *(iter - 1);
-			*L = tmp;
-		}
-	}
+
+	return L;
 }
 
 template<typename RandomIt, typename Compare>
