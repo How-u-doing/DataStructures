@@ -1,7 +1,6 @@
 #pragma once
 #ifndef MYSORT_H
 #define MYSOER_H
-#include <cassert>
 
 namespace mySortingAlgo{
 
@@ -33,6 +32,9 @@ public:
 	static void MergeSort(RandomIt first, RandomIt last, Compare comp);
 	static void Heapsort(RandomIt first, RandomIt last, Compare comp);
 	static void Quicksort(RandomIt first, RandomIt last, Compare comp);
+	// auxiliary function for quicksort
+	static RandomIt partition(RandomIt low, RandomIt high, Compare comp);
+
 	static void Shellsort(RandomIt first, RandomIt last, Compare comp);
 	static void BubbleSort(RandomIt first, RandomIt last, Compare comp);
 	static void CombSort(RandomIt first, RandomIt last, Compare comp);
@@ -135,9 +137,9 @@ template<typename RandomIt, typename Compare>
 RandomIt sortingMethods<RandomIt, Compare>::binary_search(RandomIt first, RandomIt last, RandomIt target, Compare comp)
 {
 	// see also <https://en.wikipedia.org/wiki/Binary_search_algorithm>
-	decltype(first) L{ first }, R{ last - 1 }, M{ }; 
+	RandomIt L{ first }, R{ last - 1 }, M{ }; 
 	while (L <= R) {
-		M = L + (R - L) / 2;	// how about M=(L+R)/2 ?
+		M = L + ((R - L) >> 1);	// M=L+(R-L)/2;
 		if (comp(*target, *M)) {
 			if (M > first)
 				R = M - 1;	// Beautiful. Two cases - ascending or descending (operator< or operator>), but with uniform expression.
@@ -162,7 +164,16 @@ RandomIt sortingMethods<RandomIt, Compare>::binary_search(RandomIt first, Random
 template<typename RandomIt, typename Compare>
 void sortingMethods<RandomIt, Compare>::SelectionSort(RandomIt first, RandomIt last, Compare comp)
 {
-
+	// see also <https://en.wikipedia.org/wiki/Selection_sort>
+	for (auto i = first; i != last - 1; ++i) {
+		auto jM = i;	// jMax or jMin
+		for (auto j = i + 1; j != last; ++j) {
+			if (comp(*j, *jM))
+				jM = j;
+		}
+		if (jM != i)
+			swap_content(jM, i);
+	}
 }
 
 template<typename RandomIt, typename Compare>
@@ -173,12 +184,65 @@ void sortingMethods<RandomIt, Compare>::MergeSort(RandomIt first, RandomIt last,
 template<typename RandomIt, typename Compare>
 void sortingMethods<RandomIt, Compare>::Heapsort(RandomIt first, RandomIt last, Compare comp)
 {
-
 }
 
+// quicksort elements in [first, last-1]
 template<typename RandomIt, typename Compare>
 void sortingMethods<RandomIt, Compare>::Quicksort(RandomIt first, RandomIt last, Compare comp)
 {
+	// see also <https://en.wikipedia.org/wiki/Quicksort>
+	if (last - first > 1) {
+		auto pivot = partition(first, last - 1, comp);
+		Quicksort(first, pivot, comp);		// [first, pivot-1]
+		Quicksort(pivot + 1, last, comp);	// [pivot+1, last-1]
+	}
+}
+
+// partition ranging [left, right]
+template<typename RandomIt, typename Compare>
+RandomIt sortingMethods<RandomIt, Compare>::partition(RandomIt low, RandomIt high, Compare comp)
+{
+// define your partition scheme
+//#define Lomuto_partition
+#define Hoare_partition
+
+#if defined Lomuto_partition
+	// see 'CLRS-3e' p171-172 (illustration, Fig7.1)
+	// we can also choose a random iterator in [lo, hi] as pivot (i.e. k=RANDOM(lo,hi)), then swap(k, hi) if k!=hi.
+	// see also <https://en.wikipedia.org/wiki/Quicksort#Lomuto_partition_scheme>
+	auto pivot = *high;	 // choose the right most element as pivot
+	auto i = low;	// [low...i-1] < pivot, [i...high] >= pivot. (operator<, ascending)
+	for (auto j = low; j != high; ++j) {
+		if (comp(*j, pivot)) {
+			if (i != j)
+				swap_content(i, j);
+			++i;
+		}
+	}
+	swap_content(i, high);
+	return i;
+
+#elif defined Hoare_partition
+	// see also <https://en.wikipedia.org/wiki/Quicksort#Hoare_partition_scheme>
+	auto pivot = *(low + ((high - low) >> 1));	// pivot=*(low+(high-low)/2);
+	auto i = low, j = high;	// [low...i-1] < pivot, [i...high] >= pivot. (operator<, ascending)
+	while (true) {
+		while (comp(*i, pivot)) {
+			++i;
+		}
+		while (comp(pivot, *j)) {
+			--j;
+		}
+		if (i >= j) {
+			return i;
+		}
+		swap_content(i, j);
+	}
+
+#endif // defined Lomuto_partition
+
+	
+
 }
 
 template<typename RandomIt, typename Compare>
