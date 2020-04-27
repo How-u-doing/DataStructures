@@ -193,8 +193,17 @@ void sortingMethods<RandomIt, Compare>::Quicksort(RandomIt first, RandomIt last,
 	// see also <https://en.wikipedia.org/wiki/Quicksort>
 	if (last - first > 1) {
 		auto pivot = partition(first, last - 1, comp);
+// define your partition scheme
+//#define Lomuto_partition
+//#define Hoare_partition
+#define Hoare_partition
+#if defined Lomuto_partition
 		Quicksort(first, pivot, comp);		// [first, pivot-1]
 		Quicksort(pivot + 1, last, comp);	// [pivot+1, last-1]
+#elif defined Hoare_partition
+		Quicksort(first, pivot + 1, comp);	// [frist, pivot]
+		Quicksort(pivot + 1, last, comp);	// [pivot+1, last-1]
+#endif // defined Lomuto_partition
 	}
 }
 
@@ -202,10 +211,6 @@ void sortingMethods<RandomIt, Compare>::Quicksort(RandomIt first, RandomIt last,
 template<typename RandomIt, typename Compare>
 RandomIt sortingMethods<RandomIt, Compare>::partition(RandomIt low, RandomIt high, Compare comp)
 {
-// define your partition scheme
-//#define Lomuto_partition
-#define Hoare_partition
-
 #if defined Lomuto_partition
 	// see 'CLRS-3e' p171-172 (illustration, Fig7.1)
 	// we can also choose a random iterator in [lo, hi] as pivot (i.e. k=RANDOM(lo,hi)), then swap(k, hi) if k!=hi.
@@ -234,10 +239,11 @@ RandomIt sortingMethods<RandomIt, Compare>::partition(RandomIt low, RandomIt hig
 			--j;
 		}
 		if (i >= j) {
-			return i;
+			return j;
 		}
-		swap_content(i, j);
+		swap_content(i++, j--);
 	}
+
 
 #endif // defined Lomuto_partition
 
