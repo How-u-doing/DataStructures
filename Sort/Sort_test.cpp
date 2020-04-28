@@ -1,8 +1,18 @@
-#include "mySort.h"
 #include <iostream>
 #include <vector>
 #include <string>
 #include <cassert>
+
+#define Quick3way_partition
+
+//#define DIRECT_INSERTION_SORT
+//#define QUICK_INSERTION_SORT
+
+//#define Lomuto_partition
+//#define Median3_partition
+//#define Hoare_partition
+
+#include "mySort.h"
 
 using namespace std;
 
@@ -71,7 +81,7 @@ void sort_by_mode(vector<stu>& vs, int a[], int mode) {
 		}, Mode);
 
 	// sort in ascending order
-	mySortingAlgo::sort(a, a + 9, [](const int a, const int b) {
+	mySortingAlgo::sort(a, a + 16, [](const int a, const int b) {
 		return a < b;
 		}, Mode);
 }
@@ -97,10 +107,11 @@ int main()
 	}
 
 	// test build-in array	
-	int a[square(3)] = { 4,9,1,3,5,7,2,8,6 };
+	int a[square(4)] = { 4,9,1,3,3,4,7,2,4,56,14,7,2,4,36 };
+	//int a[square(4)] = { };
 	cout << "\nOriginal int array\n";
-	for (int i = 0; i < 9; ++i) {
-		i < 8 ? cout << a[i] << ", " : cout << a[i] << '\n';
+	for (int i = 0; i < 16; ++i) {
+		i < 15 ? cout << a[i] << ", " : cout << a[i] << '\n';
 	}
 
 
@@ -152,8 +163,8 @@ int main()
 	}
 
 	cout << "\n**Build-in array** --> After sorting in ascending order\n";
-	for (int i = 0; i < 9; ++i) {
-		i < 8 ? cout << a[i] << ", " : cout << a[i] << '\n';
+	for (int i = 0; i < 16; ++i) {
+		i < 15 ? cout << a[i] << ", " : cout << a[i] << '\n';
 	}
 
 	cout << "\nPress any key to leave...\n";
