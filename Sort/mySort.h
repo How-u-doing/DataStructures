@@ -4,7 +4,7 @@
 
 namespace mySortingAlgo{
 
-	const int ISORT_MAX = 32;	// maximum size for insertion sort
+	const int ISORT_MAX = 4;	// maximum size for insertion sort, 32 will be appropriate. For test, we set it 4 here
 
 /* Some popular sorting algorithms */
 enum class Mode
@@ -108,14 +108,14 @@ template<typename RandomIt, typename Compare>
 void sortingMethods<RandomIt, Compare>::InsertionSort(RandomIt first, RandomIt last, Compare comp)
 {
 	// see also <https://en.wikipedia.org/wiki/Insertion_sort>
-#if defined DIRECT_INSERTION_SORT
+#if !defined BINARY_INSERTION_SORT	// DIRECT_INSERTION_SORT
 	// direct insertion sort
 	int len = last - first;
 	for (int i = 1; i < len; ++i) {
 		for (int j = i; j > 0 && comp(*(first + j), *(first + j - 1)); --j) {
 			swap_content(first + j, first + j - 1);
 		}
-}
+	}
 #else	// BINARY_INSERTION_SORT
 	// When we have massive data items, we can save some comparison time by using binary search.
 	for (auto it = first + 1; it != last; ++it) {
@@ -130,7 +130,7 @@ void sortingMethods<RandomIt, Compare>::InsertionSort(RandomIt first, RandomIt l
 		*pos = tmp;
 	}
 
-#endif // defined DIRECT_INSERTION_SORT
+#endif // !defined BINARY_INSERTION_SORT
 }
 
 // return the position where target should INSERT_BEFORE in scope [first, last)
@@ -195,9 +195,21 @@ void sortingMethods<RandomIt, Compare>::Quicksort(RandomIt first, RandomIt last,
 	// Define your partition scheme  before including this header,
 	// e.g. #define Median3_partition \NewLine #include "mySort.h".
 
+	if (last - first < 2) return;
+//#define QUICK_INSERTION_SORT	// uncomment this to set it default for performance
+#if defined QUICK_INSERTION_SORT
+	if (last - first <= ISORT_MAX) { // hybrid with insertion sort
+		sortingMethods::InsertionSort(first, last, comp);
+		return;
+	}
+#endif
 #if defined Quick3way_partition
-	// see also 'Algorithms-4e' p298-299
-	if (last - first <= 1) return;
+	// see also 'Algorithms-4e' p298-299. 3-way Quicksort is based on Dutch National Flag algorithm 
+	// (see also <https://www.geeksforgeeks.org/sort-an-array-of-0s-1s-and-2s/>).
+	// Dijkstra's solution is based on a single left-to-right pass through the array that maintains a 
+	// pointer lt such that a[lo..lt-1] is less than v, a pointer gt such that a[gt+1..hi] is greater 
+	// than v, and a pointer i such that a[lt..i-1] are equal to v, and a[i..gt] are not yet examined.
+		
 	auto lt = first, i = first + 1, gt = last - 1;
 	auto pivot = *first;
 	while (i <= gt) {
@@ -209,30 +221,86 @@ void sortingMethods<RandomIt, Compare>::Quicksort(RandomIt first, RandomIt last,
 		}
 		else	++i;
 	}	// Now a[lo..lt-1] < pivot = a[lt..gt] < a[gt+1..hi].
-	Quicksort(first, lt, comp);
-	Quicksort(gt + 1, last, comp);
+	Quicksort(first, lt, comp);		// sort a[lo..lt-1]
+	Quicksort(gt + 1, last, comp);	// sort a[gt+1..hi]
 
-#elif  defined QUICK_INSERTION_SORT	// hybrid with insertion sort
-	if (last - first <= ISORT_MAX) {
-		sortingMethods::InsertionSort(first, last, comp);
+#elif defined Fast3way_partition // by J. Bentley and D. McIlroy
+	// See also 'Algorithms-4e' p306 CREATIVE PROBLEMS 2.3.22
+	// Note that this partitioning scheme does extra swaps for keys equal to the partitioning item’s key,
+	// while Quick3way does extra swaps for keys that are NOT equal to the partitioning item’s key.
+
+	// see also <https://www.geeksforgeeks.org/3-way-quicksort-dutch-national-flag/>
+	int p = -1;          // p points to left last one that is equal to pivot
+	auto q = last - 1;   // q points to right last one that is equal to pivot
+	int i = -1;          // a[p+1..i-1] < pivot, a[lo..p]==pivot
+	auto j = last - 1;   // a[j+1..q-1] > pivot, a[q..hi]==pivot
+	auto pivot = *q; //*(last - 1)
+	while (true) {
+		// increment i until it encounters first one that is less than pivot
+		while (comp(*(first + (++i)), pivot));
+
+		// decrement j until it meets first one that is greater than pivot
+		while (comp(pivot, *(--j)))
+			if (j == first)
+				break;
+
+		// stop when iterators cross
+		if (first + i >= j) break;
+
+		// swap, so that smaller goes on left and greater goes on right 
+		swap_content(first + i, j);
+
+		// move all same left occurrence of pivot to beginning of array
+		if (!comp(*(first + i), pivot) && !comp(pivot, *(first + i))) {
+			swap_content(first + (++p), first + i);
+		}
+
+		// move all same right occurrence of pivot to end of array
+		if (!comp(pivot, *j) && !comp(*j, pivot)) {
+			swap_content(j, --q);
+		}
 	}
-	else { // last - first > ISORT_MAX
-#else // Lomuto_partition, Lomuto_partition, or Hoare_partition
-	if (last - first > 1) {
+
+	// move pivot element to its correct index
+	if (comp(pivot, *(first + i)))	// *(first+i)>=pivot
+		swap_content(first + i, last - 1);
+
+	// move all left same occurrences from beginning to adjacent to a[i]
+	if (i >= 1)
+		j = first + i - 1;
+	else
+		j = first;
+
+	for (int k = 0; k <= p; ++k) {
+		swap_content(first + k, j);
+		if (j > first)
+			--j;
+		else
+			break;
+	}
+
+	// move all right same occurrences from end to adjacent to a[i]
+	i = i + 1;
+	for (auto k = last - 2; k >= q; --k, ++i)
+		swap_content(first + i, k);
+
+	// sort the rest non-equal area on both sides
+	Quicksort(first, j + 1, comp);    // sort a[lo..j]
+	Quicksort(first + i, last, comp); // sort a[i..hi]
+
 #endif // defined QUICK_INSERTION_SORT
 
+// Lomuto_partition, Median3_partition, or Hoare_partition
 #if defined Lomuto_partition || defined Median3_partition
-		auto pivot = partition(first, last - 1, comp);
-		Quicksort(first, pivot, comp);		// [first, pivot-1]
-		Quicksort(pivot + 1, last, comp);	// [pivot+1, last-1]
-	}
+	auto pivot = partition(first, last - 1, comp);
+	Quicksort(first, pivot, comp);		// sort a[first, pivot-1]
+	Quicksort(pivot + 1, last, comp);	// sort a[pivot+1, last-1]
 #elif defined Hoare_partition
-		auto pivot = partition(first, last - 1, comp);
-		Quicksort(first, pivot + 1, comp);	// [frist, pivot]
-		Quicksort(pivot + 1, last, comp);	// [pivot+1, last-1]
-
-	}
+	auto pivot = partition(first, last - 1, comp);
+	Quicksort(first, pivot + 1, comp);	// sort a[frist, pivot]
+	Quicksort(pivot + 1, last, comp);	// sort a[pivot+1, last-1]
 #endif // defined Lomuto_partition || defined Median3_partition
+
 }
 
 // partition ranging [left, right]
@@ -240,9 +308,6 @@ template<typename RandomIt, typename Compare>
 RandomIt sortingMethods<RandomIt, Compare>::partition(RandomIt low, RandomIt high, Compare comp)
 {
 #if defined Lomuto_partition || defined Median3_partition
-	// See 'CLRS-3e' p171-172 (illustration, Fig7.1).
-	// We can also choose a random iterator in [lo, hi] as pivot (i.e. k=RANDOM(lo,hi)), then swap(k, hi) if k!=hi.
-	// See also <https://en.wikipedia.org/wiki/Quicksort#Lomuto_partition_scheme>.
 #if defined Median3_partition	// Median-of-3 partition
 	// Choose the median of the first, middle, and last element of the partition for the pivot.
 	// See also <https://en.wikipedia.org/wiki/Quicksort#Choice_of_pivot>.
@@ -259,7 +324,9 @@ RandomIt sortingMethods<RandomIt, Compare>::partition(RandomIt low, RandomIt hig
 	// Now *high is the median of *low, *mid, and *high.
 
 #endif
-
+	// See 'CLRS-3e' p171-172 (illustration, Fig7.1).
+	// We can also choose a random iterator in [lo, hi] as pivot (i.e. k=RANDOM(lo,hi)), then swap(k, hi) if k!=hi.
+	// See also <https://en.wikipedia.org/wiki/Quicksort#Lomuto_partition_scheme>.
 	auto pivot = *high;	 // choose the rightmost element as pivot
 	auto i = low;
 	for (auto j = low; j != high; ++j) {
@@ -271,7 +338,7 @@ RandomIt sortingMethods<RandomIt, Compare>::partition(RandomIt low, RandomIt hig
 	}
 	swap_content(i, high);
 	return i;
-	// Now [low...i-1] <= pivot, *i==pivot, [i+1...high] >= pivot. (operator<, ascending)
+	// Now [lo..i-1] <= pivot, *i==pivot, [i+1..hi] >= pivot. (operator<, ascending)
 	// Then quicksort [lo..i-1] & [i+1..hi] respectively.
 
 #elif defined Hoare_partition
@@ -291,7 +358,7 @@ RandomIt sortingMethods<RandomIt, Compare>::partition(RandomIt low, RandomIt hig
 		swap_content(i++, j--);
 	}
 
-	// After return, [low...j] <= pivot, [j+1...high] >= pivot. (operator<, ascending)
+	// After return, [lo..j] <= pivot, [j+1..hi] >= pivot. (operator<, ascending)
 	// You can imagine that &pivot < i = j-1, *i>pivot, *j<pivot. The follow-up is to 
 	// swap(i,j), ++i & --j such that j=i-1, [low...j] <= pivot, [j...high] >= pivot.
 	// Afterward, what we need to do is to quicksort [lo..j] & [j+1..hi] respectively.

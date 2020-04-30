@@ -3,11 +3,13 @@
 #include <string>
 #include <cassert>
 
-#define Quick3way_partition
 
-//#define DIRECT_INSERTION_SORT
+//#define BINARY_INSERTION_SORT	  // binary search for insertion sort
+
+// define quciksort partition scheme
 //#define QUICK_INSERTION_SORT
-
+//#define Quick3way_partition
+#define Fast3way_partition
 //#define Lomuto_partition
 //#define Median3_partition
 //#define Hoare_partition
@@ -71,7 +73,7 @@ void kill_extra_char()
 #endif // defined _WIN32 || defined _WIN64
 }
 
-void sort_by_mode(vector<stu>& vs, int a[], int mode) {
+void sort_by_mode(vector<stu>& vs, int a[], int b[], int c[], int d[], int n, int mode) {
 	assert(0 <= mode && mode <= 10);
 	auto Mode = static_cast<mySortingAlgo::Mode>(mode);
 
@@ -81,9 +83,37 @@ void sort_by_mode(vector<stu>& vs, int a[], int mode) {
 		}, Mode);
 
 	// sort in ascending order
-	mySortingAlgo::sort(a, a + 16, [](const int a, const int b) {
-		return a < b;
+	mySortingAlgo::sort(a, a + n, [](const int x_1, const int x_2) {
+		return x_1 < x_2;
 		}, Mode);
+	mySortingAlgo::sort(b, b + n, [](const int x_1, const int x_2) {
+		return x_1 < x_2;
+		}, Mode);
+	mySortingAlgo::sort(c, c + n, [](const int x_1, const int x_2) {
+		return x_1 < x_2;
+		}, Mode);
+	mySortingAlgo::sort(d, d + n, [](const int x_1, const int x_2) {
+		return x_1 < x_2;
+		}, Mode);
+}
+
+void printArr(int a[], int b[], int c[], int d[], int n) {
+	cout << "no repeat --> a[n]:   ";
+	for (int i = 0; i < n; ++i) {
+		i < n - 1 ? cout << a[i] << ", " : cout << a[i] << '\n';
+	}
+	cout << "all equal --> b[n]:   ";
+	for (int i = 0; i < n; ++i) {
+		i < n - 1 ? cout << b[i] << ", " : cout << b[i] << '\n';
+	}
+	cout << "some repeat --> c[n]: ";
+	for (int i = 0; i < n; ++i) {
+		i < n - 1 ? cout << c[i] << ", " : cout << c[i] << '\n';
+	}
+	cout << "only 012 --> d[n]:    ";
+	for (int i = 0; i < n; ++i) {
+		i < n - 1 ? cout << d[i] << ", " : cout << d[i] << '\n';
+	}
 }
 
 int main()
@@ -106,13 +136,16 @@ int main()
 		cout << item << '\n';
 	}
 
-	// test build-in array	
-	int a[square(4)] = { 4,9,1,3,3,4,7,2,4,56,14,7,2,4,36 };
-	//int a[square(4)] = { };
-	cout << "\nOriginal int array\n";
-	for (int i = 0; i < 16; ++i) {
-		i < 15 ? cout << a[i] << ", " : cout << a[i] << '\n';
-	}
+	// test build-in array
+	constexpr int n = square(4);
+	//int a[n] = { 4, 9, 1, 3, 3, 4, 7, 2, 4 };
+	int a[n] = { 3,15,14,9,1,16,4,12,6,2,11,7,8,5,13,10 }; // no repeat
+	int b[n] = {}; // test for all equal elements
+	int c[n] = { 4,9,1,3,3,4,37,2,4,56,14,7,2,4,36,37 }; // random, some repeating numbers
+	int d[n] = { 0, 1, 1, 0, 1, 2, 1, 2, 0, 1, 0, 1, 2, 0, 0, 1 }; // only have 0, 1, 2
+
+	cout << "\nOriginal int arrays\n";
+	printArr(a, b, c, d, n);
 
 
 	cout << "\nPlease choose sorting algorithm\n";
@@ -141,7 +174,7 @@ int main()
 		}
 
 		if (0 <= mode && mode <= 10) {
-			sort_by_mode(vs, a, mode);
+			sort_by_mode(vs, a, b, c, d, n, mode);
 			break;
 		}
 		else {
@@ -153,7 +186,7 @@ int main()
 	string method[]{ "Insertion Sort", "Selection Sort", "Merge Sort", "Heapsort", "Quicksort", "Shellsort", 
 					 "Bubble Sort", "Comb Sort", "Counting Sort", "Bucket Sort", "Radix Sort"};
 
-	string print_msg = "The student list and build-in int array sorted by \"" + method[mode] + "\" are as follows\n";
+	string print_msg = "The student list and build-in int arrays sorted by \"" + method[mode] + "\" are as follows\n";
 	cout << print_msg;
 
 	cout << "\n**Student** --> After sorting by total score in descending order\n";
@@ -162,10 +195,8 @@ int main()
 		cout << item << '\n';
 	}
 
-	cout << "\n**Build-in array** --> After sorting in ascending order\n";
-	for (int i = 0; i < 16; ++i) {
-		i < 15 ? cout << a[i] << ", " : cout << a[i] << '\n';
-	}
+	cout << "\n**Build-in arrays** --> After sorting in ascending order\n";
+	printArr(a, b, c, d, n);
 
 	cout << "\nPress any key to leave...\n";
 	char wait;
