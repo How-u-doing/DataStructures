@@ -32,6 +32,9 @@ public:
 
 	static void SelectionSort(RandomIt first, RandomIt last, Compare comp);
 	static void MergeSort(RandomIt first, RandomIt last, Compare comp);
+	// auxiliary function for merge sort. merge a[lo..mid] & a[mid+1..hi]
+	static void merge(RandomIt low, RandomIt mid, RandomIt high, Compare comp);
+
 	static void Heapsort(RandomIt first, RandomIt last, Compare comp);
 	static void Quicksort(RandomIt first, RandomIt last, Compare comp);
 	// auxiliary function for quicksort
@@ -112,6 +115,7 @@ void sortingMethods<RandomIt, Compare>::InsertionSort(RandomIt first, RandomIt l
 	// direct insertion sort
 	int len = last - first;
 	for (int i = 1; i < len; ++i) {
+		// insert a[i] into the sorted sequence a[0..i-1]
 		for (int j = i; j > 0 && comp(*(first + j), *(first + j - 1)); --j) {
 			swap_content(first + j, first + j - 1);
 		}
@@ -180,6 +184,36 @@ void sortingMethods<RandomIt, Compare>::SelectionSort(RandomIt first, RandomIt l
 template<typename RandomIt, typename Compare>
 void sortingMethods<RandomIt, Compare>::MergeSort(RandomIt first, RandomIt last, Compare comp)
 {
+	// see also <https://en.wikipedia.org/wiki/Merge_sort>
+	if (last - first < 2) return;
+	auto mid = first + ((last - 1 - first) >> 1);
+	MergeSort(first, mid + 1, comp);	// sort a[lo..mid]
+	MergeSort(mid + 1, last, comp);		// sort a[mid+1..hi]
+	merge(first, mid, last - 1, comp);
+}
+
+// merge a[lo..mid] & a[mid+1..hi]
+template<typename RandomIt, typename Compare>
+void sortingMethods<RandomIt, Compare>::merge(RandomIt low, RandomIt mid, RandomIt high, Compare comp)
+{
+	int m = mid - low + 1;
+	//auto b = new decltype(*low)[m] {};	// error, *low is a reference, array of reference is not allowed
+	auto obj = *low;	// an object for decltype
+	auto b = new decltype(obj)[m] {};	// auxiliary array for swap
+
+	auto it = low;
+	for (int i = 0; i < m; ++i) {// copy a[lo..mid] to b[0..m-1]
+		b[i] = *it++;
+	}
+
+	int i = 0, k = 0, j = m, n = high - low + 1;
+	while (i < m && j < n) {
+		*(low + k++) = comp(*(low + j), b[i]) ? *(low + j++) : b[i++];
+	}
+
+	while (i < m) {
+		*(low + k++) = b[i++];
+	}	
 }
 
 template<typename RandomIt, typename Compare>
@@ -231,7 +265,7 @@ void sortingMethods<RandomIt, Compare>::Quicksort(RandomIt first, RandomIt last,
 
 	// see also <https://www.geeksforgeeks.org/3-way-quicksort-dutch-national-flag/>
 	int p = -1;          // p points to left last one that is equal to pivot
-	auto q = last - 1;   // q points to right last one that is equal to pivot
+	auto q = last - 1;   // q points to right first one that is equal to pivot
 	int i = -1;          // a[p+1..i-1] < pivot, a[lo..p]==pivot
 	auto j = last - 1;   // a[j+1..q-1] > pivot, a[q..hi]==pivot
 	auto pivot = *q; //*(last - 1)
@@ -369,6 +403,18 @@ RandomIt sortingMethods<RandomIt, Compare>::partition(RandomIt low, RandomIt hig
 template<typename RandomIt, typename Compare>
 void sortingMethods<RandomIt, Compare>::Shellsort(RandomIt first, RandomIt last, Compare comp)
 {
+	// see also <https://en.wikipedia.org/wiki/Shellsort>
+	int len = last - first;
+	int gap = len;
+	while (gap > 1) {
+		gap = gap / 3 + 1;	// gap by Donald E. Knuth
+		for (int i = gap; i < len; i += gap) {
+			// insert a[i] into the sorted sequence a[0..i-1] (every gap count 1)
+			for (int j = i; j > 0 && comp(*(first + j), *(first + j - gap)); j -= gap) {
+				swap_content(first + j, first + j - gap);
+			}
+		}	
+	}
 }
 
 template<typename RandomIt, typename Compare>
