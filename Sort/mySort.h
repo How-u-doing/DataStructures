@@ -438,6 +438,25 @@ void sortingMethods<RandomIt, Compare>::BubbleSort(RandomIt first, RandomIt last
 template<typename RandomIt, typename Compare>
 void sortingMethods<RandomIt, Compare>::CombSort(RandomIt first, RandomIt last, Compare comp)
 {
+	// see also <https://en.wikipedia.org/wiki/Comb_sort>
+	// the main idea is like Shellsort, but based on bubble sort (Shellsort is based on insertion sort)
+	int n = last - first;	// unsorted length
+	int gap = n;
+	auto shrink = 1.3;	// gap shrink factor. 1.3 has been suggested
+	bool sorted = false;
+	while (sorted == false) {
+		gap = int(gap / shrink);
+		if (gap < 1) {
+			gap = 1;
+			sorted = true;
+		}
+		for (int i = 0; i + gap < n; ++i) {
+			if (comp(*(first + i + gap), *(first + i))) {
+				swap_content(first + i + gap, first + i);
+				sorted = false;
+			}
+		}
+	}
 }
 
 template<typename RandomIt, typename Compare>
