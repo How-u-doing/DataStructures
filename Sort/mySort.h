@@ -422,6 +422,10 @@ void sortingMethods<RandomIt, Compare>::BubbleSort(RandomIt first, RandomIt last
 {	
 #if defined Cocktail_shaker_sort
 	// see also <https://en.wikipedia.org/wiki/Cocktail_shaker_sort>
+	// Example: list (2,3,4,5,1), which would only need to go through one pass (indeed 1.5 pass, one
+	// more left-to-rigth comparison) of cocktail sort to become sorted, but if using an ascending 
+	// bubble sort would take four passes. However one cocktail sort pass should be counted as two 
+	// bubble sort passes. Typically cocktail sort is less than two times faster than bubble sort.
 	int n = last - first;
 	int m = 1;
 	int lastLeftSwappedIndex;	// index of last left-side sorted
@@ -436,6 +440,9 @@ void sortingMethods<RandomIt, Compare>::BubbleSort(RandomIt first, RandomIt last
 			}
 		}
 		n = lastRightSwappedIndex;
+
+		if (n == 0)	// no swap, no need to compare right-to-left back
+			return;
 
 		for (int j = n - 1; j >= m; --j) {
 			if (comp(*(first + j), *(first + j - 1))) {
@@ -511,7 +518,7 @@ inline void sortingMethods<RandomIt, Compare>::swap(RandomIt it_1, RandomIt it_2
 	*it_2 = tmp;
 
 	// or we should change the two nodes' links when swapping data is expensive
-
+	// changing links operations...
 }
 
 }
