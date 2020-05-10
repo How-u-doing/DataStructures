@@ -47,7 +47,7 @@ public:
 	static void BucketSort(RandomIt first, RandomIt last, Compare comp);
 	static void RadixSort(RandomIt first, RandomIt last, Compare comp);
 
-	static inline void swap_content(RandomIt it_1, RandomIt it_2);
+	static inline void swap(RandomIt it_1, RandomIt it_2);
 };
 
 /* Sort an array (or a list) ranging [first, last) */ 
@@ -117,7 +117,7 @@ void sortingMethods<RandomIt, Compare>::InsertionSort(RandomIt first, RandomIt l
 	for (int i = 1; i < len; ++i) {
 		// insert a[i] into the sorted sequence a[0..i-1]
 		for (int j = i; j > 0 && comp(*(first + j), *(first + j - 1)); --j) {
-			swap_content(first + j, first + j - 1);
+			swap(first + j, first + j - 1);
 		}
 	}
 #else	// BINARY_INSERTION_SORT
@@ -177,7 +177,7 @@ void sortingMethods<RandomIt, Compare>::SelectionSort(RandomIt first, RandomIt l
 				jM = j;
 		}
 		if (jM != i)
-			swap_content(jM, i);
+			swap(jM, i);
 	}
 }
 
@@ -199,7 +199,7 @@ void sortingMethods<RandomIt, Compare>::merge(RandomIt low, RandomIt mid, Random
 	int m = mid - low + 1;
 	//auto b = new decltype(*low)[m] {};	// error, *low is a reference, array of reference is not allowed
 	auto obj = *low;	// an object for decltype
-	auto b = new decltype(obj)[m] {};	// auxiliary array for swap
+	auto b = new decltype(obj)[m] {};	// auxiliary array for temporary storage and comparison
 
 	auto it = low;
 	for (int i = 0; i < m; ++i) {// copy a[lo..mid] to b[0..m-1]
@@ -248,10 +248,10 @@ void sortingMethods<RandomIt, Compare>::Quicksort(RandomIt first, RandomIt last,
 	auto pivot = *first;
 	while (i <= gt) {
 		if (comp(*i, pivot)) {
-			swap_content(lt++, i++);
+			swap(lt++, i++);
 		}
 		else if (comp(pivot, *i)) {
-			swap_content(i, gt--);
+			swap(i, gt--);
 		}
 		else	++i;
 	}	// Now a[lo..lt-1] < pivot = a[lt..gt] < a[gt+1..hi].
@@ -282,22 +282,22 @@ void sortingMethods<RandomIt, Compare>::Quicksort(RandomIt first, RandomIt last,
 		if (first + i >= j) break;
 
 		// swap, so that smaller goes on left and greater goes on right 
-		swap_content(first + i, j);
+		swap(first + i, j);
 
 		// move all same left occurrence of pivot to beginning of array
 		if (!comp(*(first + i), pivot) && !comp(pivot, *(first + i))) {
-			swap_content(first + (++p), first + i);
+			swap(first + (++p), first + i);
 		}
 
 		// move all same right occurrence of pivot to end of array
 		if (!comp(pivot, *j) && !comp(*j, pivot)) {
-			swap_content(j, --q);
+			swap(j, --q);
 		}
 	}
 
 	// move pivot element to its correct index
 	if (comp(pivot, *(first + i)))	// *(first+i)>=pivot
-		swap_content(first + i, last - 1);
+		swap(first + i, last - 1);
 
 	// move all left same occurrences from beginning to adjacent to a[i]
 	if (i >= 1)
@@ -306,7 +306,7 @@ void sortingMethods<RandomIt, Compare>::Quicksort(RandomIt first, RandomIt last,
 		j = first;
 
 	for (int k = 0; k <= p; ++k) {
-		swap_content(first + k, j);
+		swap(first + k, j);
 		if (j > first)
 			--j;
 		else
@@ -316,7 +316,7 @@ void sortingMethods<RandomIt, Compare>::Quicksort(RandomIt first, RandomIt last,
 	// move all right same occurrences from end to adjacent to a[i]
 	i = i + 1;
 	for (auto k = last - 2; k >= q; --k, ++i)
-		swap_content(first + i, k);
+		swap(first + i, k);
 
 	// sort the rest non-equal area on both sides
 	Quicksort(first, j + 1, comp);    // sort a[lo..j]
@@ -347,13 +347,13 @@ RandomIt sortingMethods<RandomIt, Compare>::partition(RandomIt low, RandomIt hig
 	// See also <https://en.wikipedia.org/wiki/Quicksort#Choice_of_pivot>.
 	auto mid = low + ((high - low) >> 1);
 	if (comp(*mid, *low)) { // after this, *low <= *mid (operator<) or *low >= *mid (operator>)
-		swap_content(low, mid);
+		swap(low, mid);
 	}
 	if (comp(*high, *low)) { // after this, *low <= *high (operator<) or *low >= *high (operator>)
-		swap_content(low, high);
+		swap(low, high);
 	}
 	if (comp(*mid, *high)) { // insure the median is at the rightmost position
-		swap_content(mid, high);
+		swap(mid, high);
 	}
 	// Now *high is the median of *low, *mid, and *high.
 
@@ -366,11 +366,11 @@ RandomIt sortingMethods<RandomIt, Compare>::partition(RandomIt low, RandomIt hig
 	for (auto j = low; j != high; ++j) {
 		if (comp(*j, pivot)) {
 			if (i != j)
-				swap_content(i, j);
+				swap(i, j);
 			++i;
 		}
 	}
-	swap_content(i, high);
+	swap(i, high);
 	return i;
 	// Now [lo..i-1] <= pivot, *i==pivot, [i+1..hi] >= pivot. (operator<, ascending)
 	// Then quicksort [lo..i-1] & [i+1..hi] respectively.
@@ -389,7 +389,7 @@ RandomIt sortingMethods<RandomIt, Compare>::partition(RandomIt low, RandomIt hig
 		if (i >= j) {	// possibly j=i-1
 			return j;
 		}
-		swap_content(i++, j--);
+		swap(i++, j--);
 	}
 
 	// After return, [lo..j] <= pivot, [j+1..hi] >= pivot. (operator<, ascending)
@@ -411,7 +411,7 @@ void sortingMethods<RandomIt, Compare>::Shellsort(RandomIt first, RandomIt last,
 		for (int i = gap; i < len; i += gap) {
 			// insert a[i] into the sorted sequence a[0..i-1] (every gap count 1)
 			for (int j = i; j > 0 && comp(*(first + j), *(first + j - gap)); j -= gap) {
-				swap_content(first + j, first + j - gap);
+				swap(first + j, first + j - gap);
 			}
 		}	
 	}
@@ -419,7 +419,34 @@ void sortingMethods<RandomIt, Compare>::Shellsort(RandomIt first, RandomIt last,
 
 template<typename RandomIt, typename Compare>
 void sortingMethods<RandomIt, Compare>::BubbleSort(RandomIt first, RandomIt last, Compare comp)
-{
+{	
+#if defined Cocktail_shaker_sort
+	// see also <https://en.wikipedia.org/wiki/Cocktail_shaker_sort>
+	int n = last - first;
+	int m = 1;
+	int lastLeftSwappedIndex;	// index of last left-side sorted
+	int lastRightSwappedIndex;	// index of first right-side sorted
+	while (n > m) {
+		lastLeftSwappedIndex = n - 1;
+		lastRightSwappedIndex = 0;
+		for (int i = m; i < n; ++i) {
+			if (comp(*(first + i), *(first + i - 1))) {
+				swap(first + i, first + i - 1);
+				lastRightSwappedIndex = i;
+			}
+		}
+		n = lastRightSwappedIndex;
+
+		for (int j = n - 1; j >= m; --j) {
+			if (comp(*(first + j), *(first + j - 1))) {
+				swap(first + j, first + j - 1);
+				lastLeftSwappedIndex = j;
+			}
+		}
+		m = lastLeftSwappedIndex;
+	}
+
+#else	// just left-to-right bubble sort
 	// see also <https://en.wikipedia.org/wiki/Bubble_sort#Optimizing_bubble_sort>
 	int n = last - first;	// unsorted length
 	int lastSwappedIndex = 0;
@@ -427,12 +454,13 @@ void sortingMethods<RandomIt, Compare>::BubbleSort(RandomIt first, RandomIt last
 		lastSwappedIndex = 0;
 		for (int i = 1; i < n; ++i) {
 			if (comp(*(first + i), *(first + i - 1))) {
-				swap_content(first + i, first + i - 1);
+				swap(first + i, first + i - 1);
 				lastSwappedIndex = i;
 			}
 		}
 		n = lastSwappedIndex;
 	}
+#endif // defined Cocktail_shaker_sort
 }
 
 template<typename RandomIt, typename Compare>
@@ -452,7 +480,7 @@ void sortingMethods<RandomIt, Compare>::CombSort(RandomIt first, RandomIt last, 
 		}
 		for (int i = 0; i + gap < n; ++i) {
 			if (comp(*(first + i + gap), *(first + i))) {
-				swap_content(first + i + gap, first + i);
+				swap(first + i + gap, first + i);
 				sorted = false;
 			}
 		}
@@ -475,11 +503,15 @@ void sortingMethods<RandomIt, Compare>::RadixSort(RandomIt first, RandomIt last,
 }
 
 template<typename RandomIt, typename Compare>
-inline void sortingMethods<RandomIt, Compare>::swap_content(RandomIt it_1, RandomIt it_2)
+inline void sortingMethods<RandomIt, Compare>::swap(RandomIt it_1, RandomIt it_2)
 {
+	// swap content of two objects that are pointed by iterator (pointer) it_1 & it_2 respectively
 	auto tmp = *it_1;
 	*it_1 = *it_2;
 	*it_2 = tmp;
+
+	// or we should change the two nodes' links when swapping data is expensive
+
 }
 
 }

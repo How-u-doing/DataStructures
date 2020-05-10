@@ -14,6 +14,8 @@
 //#define Median3_partition
 //#define Hoare_partition
 
+#define Cocktail_shaker_sort // define bubble sort method
+
 #include "mySort.h"
 
 using namespace std;
@@ -201,7 +203,7 @@ int main()
 	cout << "\nPress any key to leave...\n";
 	char wait;
 	kill_extra_char();
-	cin >> wait;	
+	cin >> noskipws >> wait;
 	return 0;
 
 	// Appendix: using std sorting algorithm (Quicksort)
