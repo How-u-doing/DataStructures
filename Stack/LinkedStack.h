@@ -29,8 +29,9 @@ public:
 	void clear();
 	bool isEmpty()const { return _top == nullptr; }
 	int size()const;
-	//template<typename T>	// uncomment this line under a Linux/gcc compiler
-	friend std::ostream& operator<<(std::ostream& os, const LinkedStack<T>& stack);
+
+	template<typename U>	// note that a new different template argument (differ from T) is required
+	friend std::ostream& operator<<(std::ostream& os, const LinkedStack<U>& stack);
 	
 private:
 	Node<T>* _top;
@@ -66,7 +67,7 @@ LinkedStack<T>& LinkedStack<T>::operator=(const LinkedStack<T>& stack) { // copy
 		assert(_top != nullptr);
 		srcptr = srcptr->next;
 	}
-	else { _top = nullptr;	return; }
+	else { _top = nullptr;	return *this; }
 
 	while (srcptr != nullptr) {
 		desptr->next = new Node<T>(srcptr->data);
@@ -85,7 +86,7 @@ void LinkedStack<T>::push(const T& x) { // add a new element at the top of the s
 
 template<typename T>
 void LinkedStack<T>::pop(T& x) { // pop off the top element of the stack & get its value via x
-	if (isEmpty()) throw "fun@pop: stack_underflow\n";
+	assert(!isEmpty());
 	x = _top->data;
 	Node<T>* del = _top;
 	_top = _top->next;
@@ -94,7 +95,7 @@ void LinkedStack<T>::pop(T& x) { // pop off the top element of the stack & get i
 
 template<typename T>
 void LinkedStack<T>::pop() { // pop off the top element of the stack
-	if (isEmpty()) throw "fun@pop: stack_underflow\n";
+	assert(!isEmpty());
 	Node<T>* del = _top;
 	_top = _top->next;
 	delete del;
@@ -102,7 +103,7 @@ void LinkedStack<T>::pop() { // pop off the top element of the stack
 
 template<typename T>
 T& LinkedStack<T>::top()const { // get the top element
-	if (isEmpty()) throw "fun@top: stack_underflow\n";
+	assert(!isEmpty());
 	return _top->data;
 }
 
@@ -127,14 +128,14 @@ void LinkedStack<T>::clear() { // erase all elements
 	}
 }
 
-template<typename T>
-std::ostream& operator<<(std::ostream& os, const LinkedStack<T>& s) { // print all elements from top to bottom
+template<typename U>
+std::ostream& operator<<(std::ostream& os, const LinkedStack<U>& s) { // print all elements from top to bottom
 	int i = s.size();
-	if (i == 0) { os << "The stack is empty, no element to print\n"; return; }
+	if (i == 0) { os << "The stack is empty, no element to print\n"; return os; }
 	else
 		os << "There are " << i << " element(s) in this stack, from top to bottom they are:\n";
 
-	Node<T>* curr = s._top;
+	Node<U>* curr = s._top;
 	while (curr != nullptr) {
 		printf("#%2d: ", i--);
 		os << curr->data << '\n';
