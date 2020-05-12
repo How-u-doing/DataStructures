@@ -652,7 +652,7 @@ void DblList<T>::Import(const std::string& filename, const std::string& mode_sel
 		// read in ASCII text format
 
 		// open file
-		std::ifstream ifs(filename, ios_base::in);
+		std::ifstream ifs(filename, std::ios_base::in);
 		if (!ifs) {
 			std::cerr << "Error in opening file for reading! Can't find file \"" << filename << "\".\n"
 				<< "Please check the validity of its directory or filename." << std::endl;
@@ -686,7 +686,7 @@ void DblList<T>::Import(const std::string& filename, const std::string& mode_sel
 			// read in binary format
 
 			// open file
-			std::ifstream ifs(filename, ios_base::in | ios_base::binary);
+			std::ifstream ifs(filename, std::ios_base::in | std::ios_base::binary);
 			if (!ifs) {
 				std::cerr << "Error in opening file for reading! Can't find file \"" << filename << "\".\n"
 					<< "Please check the validity of its directory or filename." << std::endl;
@@ -729,7 +729,7 @@ void DblList<T>::Export(const std::string& filename, const std::string& mode_sel
 		// write in ASCII text format
 
 		// open file
-		std::ofstream ofs(filename, ios_base::out | std::ios::_Noreplace);
+		std::ofstream ofs(filename, std::ios_base::out | std::ios::_Noreplace);
 		if (!ofs) {
 			std::cerr << "Error in opening file for writing! File \"" << filename << "\" has already existed." << std::endl;
 			exit(1);
@@ -749,7 +749,7 @@ void DblList<T>::Export(const std::string& filename, const std::string& mode_sel
 			// write in binary format
 
 			// open file
-			std::ofstream ofs(filename, ios_base::out | ios_base::binary | std::ios::_Noreplace);
+			std::ofstream ofs(filename, std::ios_base::out | std::ios_base::binary | std::ios::_Noreplace);
 			if (!ofs) {
 				std::cerr << "Error in opening file for writing! File \"" << filename << "\" has already existed." << std::endl;
 				exit(1);
