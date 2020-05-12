@@ -1,5 +1,5 @@
 #include "PriorityQueue.h"
-#include<iostream>
+#include <iostream>
 
 using namespace std;
 
@@ -18,7 +18,16 @@ int main()
 
 		b = a;
 
-		cout << "priority queue a:\n";
+		cout << "a.push(10);\n";
+		cout << "a.push(20);\n";
+		cout << "a.push(15);\n";
+		cout << "a.push(90);\n";
+		cout << "a.push(100);\n";
+		cout << "a.push(5);\n";
+		cout << "a.push(60);\n";
+		cout << "b = a;\n";
+
+		cout << "\npriority queue a:\n";
 		while (!a.isEmpty()) {
 			cout << a.top() << ' ';
 			a.pop();
@@ -29,8 +38,14 @@ int main()
 		b.pop();
 		b.pop();
 		b.push(1024);
+		b.push(17);
 
-		cout << "priority queue b:\n";
+		cout << "\n\nb.pop();\n";
+		cout << "b.pop();\n";
+		cout << "b.push(1024);\n";
+		cout << "b.push(17);\n";
+
+		cout << "\npriority queue b:\n";
 		while (!b.isEmpty()) {
 			cout << b.top() << ' ';
 			b.pop();
@@ -39,6 +54,10 @@ int main()
 	catch (const char* e) {
 		cout << e << endl;
 	}
+
+	cout << "\n\n\nPress any key to leave...\n";
+	char wait;
+	cin >> noskipws >> wait;
 
 	return 0;
 }

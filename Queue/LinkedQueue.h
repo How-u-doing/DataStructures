@@ -5,6 +5,7 @@
 
 #include "Queue.h"
 #include <iostream>
+#include <cassert>
 
 template<typename T>
 struct Node {
@@ -26,7 +27,7 @@ public:
 	virtual T& front()const;
 	virtual T& back()const;
 	virtual void clear();
-	virtual bool isEmpty()const { return Front == nullptr ? true : false; }
+	virtual bool isEmpty()const { return Front == nullptr; }
 	virtual size_t size()const;
 	template<typename T>
 	friend std::ostream& operator<< (std::ostream& os, const LinkedQueue<T>& que);
@@ -40,14 +41,14 @@ LinkedQueue<T>::LinkedQueue(const LinkedQueue<T>& que) { // copy constructor
 	Node<T>* srcptr = que.Front, * desptr;
 	if (srcptr != nullptr) {
 		desptr = Front = new Node<T>(srcptr->data);
-		if (Front == nullptr) throw "memory_allocation_failure\n";
+		assert(Front != nullptr);
 		srcptr = srcptr->next;
 	}
 	else { Front = Back = nullptr;	return; }
 
 	while (srcptr != nullptr) {
 		desptr->next = new Node<T>(srcptr->data);
-		if (desptr->next == nullptr) throw "memory_allocation_failure\n";
+		assert(desptr->next != nullptr);
 		desptr = desptr->next;
 		srcptr = srcptr->next;
 	}
@@ -61,14 +62,14 @@ LinkedQueue<T>& LinkedQueue<T>::operator=(const LinkedQueue<T>& que) { // copy a
 	Node<T>* srcptr = que.Front, * desptr;
 	if (srcptr != nullptr) {
 		desptr = Front = new Node<T>(srcptr->data);
-		if (Front == nullptr) throw "memory_allocation_failure\n";
+		assert(Front != nullptr);
 		srcptr = srcptr->next;
 	}
 	else { Front = Back = nullptr;	return *this; }
 
 	while (srcptr != nullptr) {
 		desptr->next = new Node<T>(srcptr->data);
-		if (desptr->next == nullptr) throw "memory_allocation_failure\n";
+		assert(desptr->next != nullptr);
 		desptr = desptr->next;
 		srcptr = srcptr->next;
 	}
@@ -80,17 +81,17 @@ template<typename T>
 void LinkedQueue<T>::push(const T& x) { // add a new element at rear
 	if (Front == nullptr) {
 		Front = Back = new Node<T>(x, nullptr);
-		if (Front == nullptr) throw "memory_allocation_failure\n";
+		assert(Front != nullptr);
 		return;
 	}
 	Back->next = new Node<T>(x, nullptr);
-	if (Back->next == nullptr) throw "memory_allocation_failure\n";
+	assert(Back->next != nullptr);
 	Back = Back->next;	
 }
 
 template<typename T>
 void LinkedQueue<T>::pop() { // pop off the front element
-	if (isEmpty()) throw "fun@pop: queue_underflow\n";
+	assert(!isEmpty());
 	Node<T>* del = Front;
 	Front = Front->next;
 	delete del;
@@ -98,13 +99,13 @@ void LinkedQueue<T>::pop() { // pop off the front element
 
 template<typename T>
 T& LinkedQueue<T>::front()const { // get the front element
-	if (isEmpty()) throw "fun@front: queue_underflow\n";
+	assert(!isEmpty());
 	return Front->data;
 }
 
 template<typename T>
 T& LinkedQueue<T>::back()const { // get the rear element
-	if (isEmpty()) throw "fun@back: queue_underflow\n";
+	assert(!isEmpty());
 	return Back->data;
 }
 

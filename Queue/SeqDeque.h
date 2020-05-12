@@ -5,6 +5,7 @@
 
 #include "Deque.h"
 #include <iostream>
+#include <cassert>
 
 template<typename T>
 class SeqDeque :public Deque<T> {
@@ -21,8 +22,8 @@ public:
 	virtual T& back()const;
 	virtual inline size_t size()const { return (maxSize + Back - Front) % maxSize; }
 	virtual inline void clear() { Front = Back = 0; }
-	virtual inline bool isEmpty()const { return Front == Back ? true : false; }
-	inline bool isFull()const { return (Back + 1) % maxSize == Front ? true : false; }
+	virtual inline bool isEmpty()const { return Front == Back; }
+	inline bool isFull()const { return (Back + 1) % maxSize == Front; }
 	inline size_t capacity()const { return maxSize - 1; }
 	void resize(size_t newSize = maxSize * 2);	// double it by default
 	template<typename T>
@@ -39,7 +40,7 @@ SeqDeque<T>::SeqDeque(size_t sz) {	// construct an empty queue with a size of sz
 	Front = Back = 0;
 	maxSize = sz;
 	elem = new T[maxSize];
-	if (elem == nullptr) throw "memory_allocation_failure\n";
+	assert(elem != nullptr);
 }
 
 template<typename T>
@@ -48,7 +49,7 @@ SeqDeque<T>::SeqDeque(const SeqDeque<T>& que) { // copy constructor
 	Back = que.Back;
 	maxSize = que.maxSize;
 	elem = new T[maxSize];
-	if (elem == nullptr) throw "memory_allocation_failure\n";
+	assert(elem != nullptr);
 	size_t i = Front;
 	while (i != Back) {
 		elem[i] = que.elem[i];
@@ -64,7 +65,7 @@ SeqDeque<T>& SeqDeque<T>::operator=(const SeqDeque<T>& que) { // copy assignment
 	Back = que.Back;
 	maxSize = que.maxSize;
 	elem = new T[maxSize];
-	if (elem == nullptr) throw "memory_allocation_failure\n";
+	assert(elem != nullptr);
 	size_t i = Front;
 	while (i != Back) {
 		elem[i] = que.elem[i];
@@ -75,13 +76,13 @@ SeqDeque<T>& SeqDeque<T>::operator=(const SeqDeque<T>& que) { // copy assignment
 
 template<typename T>
 T& SeqDeque<T>::front() const { // get the first element
-	if (isEmpty()) throw "fun@front: queue_underflow\n";
+	assert(!isEmpty());
 	return elem[Front];
 }
 
 template<typename T>
 T& SeqDeque<T>::back() const { // get the last element
-	if (isEmpty()) throw "fun@back: queue_underflow\n";
+	assert(!isEmpty());
 	return elem[(Back - 1 + maxSize) % maxSize];
 	// or return elem[(Back - 1 + Back == 0 ? maxSize : 0];
 }
@@ -104,7 +105,7 @@ template<typename T>
 void SeqDeque<T>::resize(size_t newSize) { // expanding the queue's size
 	if (newSize <= maxSize)	return;		   // do NOT shrink	
 	T* newArray = new T[newSize];
-	if (newArray == nullptr) throw "memory_allocation_failure\n";
+	assert(newArray != nullptr);
 
 	// copy start from Front
 	size_t i = Front, j = i;
@@ -122,13 +123,13 @@ void SeqDeque<T>::resize(size_t newSize) { // expanding the queue's size
 
 template<typename T>
 void SeqDeque<T>::pop_front() { // pop off the front element
-	if (isEmpty()) throw "fun@pop: queue_underflow\n";
+	assert(!isEmpty());
 	Front = (Front + 1) % maxSize;
 }
 
 template<typename T>
 void SeqDeque<T>::pop_back() {
-	if (isEmpty()) throw "fun@pop_back: queue_underflow\n";
+	assert(!isEmpty());
 	Back = (Back - 1 + maxSize) % maxSize;
 }
 
