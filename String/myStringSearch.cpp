@@ -1,4 +1,5 @@
 #include "myStringSearch.h"
+#include <iostream>
 #include <cmath>
 
 // Brute-force string search algorithm
@@ -43,7 +44,7 @@ std::vector<int> FL_search(std::string pat, std::string txt)
 }
 
 
-// Knuth–Morris–Pratt (KMP) string-searching algorithm
+// Knuth-Morris-Pratt (KMP) string-searching algorithm
 // see also <https://en.wikipedia.org/wiki/Knuth-Morris-Pratt_algorithm>
 std::vector<int> KMP_search(std::string pat, std::string txt) 
 {
@@ -101,6 +102,6 @@ void KMP_table(int pi[], std::string P, int m)
 // the standard benchmark for practical string-search literature
 std::vector<int> BM_search(std::string pat, std::string txt)
 {
-
+	std::cout << "This algorithm is to be implemented.\n";
 	return std::vector<int>();
 }
