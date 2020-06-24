@@ -1,0 +1,86 @@
+\usepackage[margin=1in]{geometry}
+\usepackage[utf8x]{inputenc}
+\usepackage{babel} %avoids breaking words of at the end of lines
+%\usepackage[numbib]{tocbibind} %Adds "References" to the table of contents
+%\usepackage[toc]{appendix}
+\usepackage{afterpage}
+\usepackage{xcolor}
+\usepackage{pdfpages}
+\usepackage{wrapfig}
+\usepackage{graphicx}
+\usepackage{subfig}
+\usepackage{caption}
+
+\usepackage{expl3}
+\expandafter\def\csname ver@l3regex.sty\endcsname{}
+\usepackage{coloremoji}
+
+%New colors defined below for code
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolor}{rgb}{0.95,0.95,0.92}
+
+%\usepackage{mdframed}
+\usepackage[outputdir=./tmp,newfloat]{minted} % need to call 
+%<pdflatex -shell-escape>
+% minted lineno style
+\renewcommand{\theFancyVerbLine}{\sffamily
+	\textcolor{codegray}{\scriptsize% \oldstylenums
+		{\arabic{FancyVerbLine}}}}
+\setminted{
+%	mathescape=true,
+%	escapeinside=|<>|,
+	linenos=true,
+	numbersep=1.5mm,
+	autogobble,
+	breaklines,	breakanywhere,
+	fontsize=\footnotesize,
+	style=xcode,
+	bgcolor=backcolor
+}
+% Create a new environment for breaking code listings across pages.
+\newenvironment{longlisting}{\captionsetup{type=listing}}{}
+
+
+%% by overleaf %%
+\usepackage{listings}
+%Code listing style named "mystyle"
+\lstdefinestyle{mystyle}{
+	backgroundcolor=\color{backcolor},
+	commentstyle=\color{codegreen},
+	keywordstyle=\color{magenta},
+	numberstyle=\tiny\color{codegray},
+	stringstyle=\color{codepurple},
+	basicstyle=\ttfamily\footnotesize,
+	breakatwhitespace=false,         
+	breaklines=true,             
+	captionpos=b,                    
+	keepspaces=true,                 
+	numbers=left,                    
+	numbersep=5pt,                  
+	showspaces=false,                
+	showstringspaces=flase,
+	showtabs=false,                  
+	tabsize=2
+}
+%"mystyle" code listing set
+\lstset{style=mystyle}
+
+
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{} 	% it clears the header and footer of default "plain" page style
+\lhead{\leftmark}
+\rhead{\thepage}
+\chead{\hyperlink{Contents}{Contents}}
+
+\usepackage{hyperref}
+\hypersetup{
+	colorlinks=true,
+	citecolor=red,
+	linkcolor=orange,
+	urlcolor=magenta
+}
+
+\linespread{1.1}

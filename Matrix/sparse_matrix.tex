@@ -1,0 +1,93 @@
+\documentclass{article}
+\input{preamble}
+
+\begin{document}
+	\input{cover}
+	
+	\title{Sparse Matrix\footnote{
+			This article was typeset by Mark Taylor using 
+	the \protect\LaTeX{}
+			document processing system. }}
+	
+	\author{10170437 Mark Taylor}
+	
+	\date{June 24, 2020}
+	
+	\maketitle
+		
+	\hypertarget{Contents}{}  % Make an anchor to the toc
+	\tableofcontents
+	
+%	\clearpage
+	
+	\section{Problems}
+	\begin{figure}[!hb]
+		\centering
+		\includegraphics[width=0.7\linewidth]{img/problems}
+		\caption*{}
+		\label{fig:problem}
+	\end{figure}
+	
+	\section{Code}
+	💻💻💻
+	\subsection{SMatrix.h}
+%	\lstinputlisting[language=c++, 
+%	caption={Sparse Matrix header} ,
+%	label=SMatrix.h
+%	]{src/SMatrix.h}
+	
+	\begin{longlisting}
+		\inputminted{c++}{src/SMatrix.h}
+		\caption{Sparse Matrix header}
+		\label{SMatrix.h}
+	\end{longlisting}
+	
+	\subsection{SMatrix\_test.cpp}
+%	\lstinputlisting[language=c++, 
+%	caption={Sparse Matrix test} ,
+%	label=SMatrix_test.cpp
+%	]{src/SMatrix_test.cpp}	
+	
+	\begin{longlisting}
+		\inputminted{c++}{src/SMatrix_test.cpp}
+		\caption{Sparse Matrix test}
+		\label{SMatrix_test.cpp}
+	\end{longlisting}
+
+	\subsection{mySort.h}
+	This is a large file, see it in the \emph{src} folder,
+	or view it online \href{
+	https://github.com/How-u-doing/DataStructures/blob/master/Sort/mySort.h}
+	{here}.
+		
+		
+	\clearpage
+	\section{Output}
+	\subsection{Win10}
+	\begin{figure}[!hb]
+		\centering
+		\includegraphics[width=0.75\linewidth]{img/sparse_matrix_tests_win10}
+		\caption{Sparse Matrix test results in Win10}
+		\label{fig:sparsematrixtestswin10}
+	\end{figure}
+	
+	\clearpage
+	\subsection{Linux}
+	\begin{figure}[!hb]
+		\centering
+		\includegraphics[width=0.75\linewidth]{img/sparse_matrix_tests_centos}
+		\caption{Sparse Matrix test results in Linux (CentOS)}
+		\label{fig:sparsematrixtestscentos}
+	\end{figure}
+	
+
+	\section{Appendix}
+	\begin{figure}[!hb]
+		\centering
+		\includegraphics[width=1\linewidth]{\string"img/The 
+			Beatles\string".jpg}
+		\caption*{Hello from the Beatles.😃}
+		\label{fig:the-beatles}
+	\end{figure}
+	
+\end{document}

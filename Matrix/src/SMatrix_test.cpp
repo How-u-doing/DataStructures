@@ -30,5 +30,8 @@ int main()
 	cout << "\nE = A + D:\n"
 		 << E << "\n";
 
+	cout << "Press any key to leave...\n";
+	char wait;
+	cin >> noskipws >> wait;
 	return 0;
 }

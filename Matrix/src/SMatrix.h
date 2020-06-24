@@ -8,7 +8,6 @@
 
 #define use_mySort
 #if defined use_mySort
-#define QUICK_INSERTION_SORT
 #define Fast3way_partition
 #define QUICK_INSERTION_SORT
 #include "mySort.h"
@@ -201,7 +200,7 @@ SMatrix<T> SMatrix<T>::fast_transpose()const
 }
 
 template<typename T>
-inline SMatrix<T> SMatrix<T>::add(const SMatrix<T>& B)const
+SMatrix<T> SMatrix<T>::add(const SMatrix<T>& B)const
 {
 	assert(_rows == B._rows && _cols == B._cols);
 	size_t i = 0, j = 0; // position of A, B
