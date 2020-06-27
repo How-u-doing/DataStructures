@@ -1,0 +1,79 @@
+\documentclass{article}
+\input{preamble}
+
+\begin{document}
+	\input{cover}
+	
+	\title{Tree\footnote{
+			This article was typeset by Mark Taylor using 
+	the \protect\LaTeX{}
+			document processing system. }}
+	
+	\author{10170437 Mark Taylor}
+	
+	\date{June 26, 2020}
+	
+	\maketitle
+		
+	\hypertarget{Contents}{}  % Make an anchor to the toc
+	\tableofcontents
+	
+%	\clearpage
+	
+	\section{Problems}
+	\begin{figure}[!hb]
+		\centering
+		\includegraphics[width=0.7\linewidth]{img/problems}
+		\caption*{}
+		\label{fig:problem}
+	\end{figure}
+	
+	\section{Code}
+	💻💻💻
+	\subsection{Tree.h}		
+	\begin{longlisting}
+		\inputminted{c++}{src/Tree.h}
+		\caption{Tree header}
+		\label{Tree.h}
+	\end{longlisting}
+	
+	\subsection{Tree\_test.cpp}	
+	\begin{longlisting}
+		\inputminted{c++}{src/Tree_test.cpp}
+		\caption{Tree test}
+		\label{Tree_test.cpp}
+	\end{longlisting}
+
+	\subsection{SeqStack.h}	
+	\begin{longlisting}
+		\inputminted{c++}{src/SeqStack.h}
+		\caption{Sequential stack header}
+		\label{SeqStack.h}
+	\end{longlisting}
+
+	\subsection{Stack.h}	
+	\begin{longlisting}
+		\inputminted{c++}{src/Stack.h}
+		\caption{Stack header}
+		\label{Stack.h}
+	\end{longlisting}
+	
+	\section{Output}
+	\begin{figure}[!hb]
+		\centering
+		\includegraphics[width=0.79\linewidth]{img/tree_test}
+		\caption{Tree test}
+		\label{fig:treetestwin10}
+	\end{figure}
+	
+	\clearpage
+	\section{Appendix}
+	\begin{figure}[!hb]
+		\centering
+		\includegraphics[width=1\linewidth]{\string"img/The 
+			Beatles\string".jpg}
+		\caption*{Hello from the Beatles.😃}
+		\label{fig:the-beatles}
+	\end{figure}
+	
+\end{document}
