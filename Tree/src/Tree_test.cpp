@@ -3,16 +3,18 @@
 
 using namespace std;
 
-int main()
+void tree_operations()
 {
 	Tree<char> tree;
-	auto root = tree.get_root();
+	auto root{ tree.get_root() };
 	//tree.create_tree(root);	// to be added
-	//          A
-	//        / | \	
-	//       B  C  D
-	//       |    / \
-	//       E    F  G
+	/*
+	            A
+	          / | \
+	         B  C  D
+	         |    / \
+	         E    F  G
+	*/
 	cout <<
 		"            A\n"
 		"          / | \\     \n"
@@ -20,19 +22,17 @@ int main()
 		"         |    / \\   \n"
 		"         E   F   G   \n";
 
-
-	root = new TreeNode<char>('A');
-	root->_first_child = new TreeNode<char>('B');
-	root->_first_child->_first_child=new TreeNode<char>('E');
-
-	root->_first_child->_next_sibling = new TreeNode<char>('C');
-	root->_first_child->_next_sibling->_next_sibling = new TreeNode<char>('D');
+	root = make_shared<TreeNode<char>>('A');
+	root->_first_child = make_shared<TreeNode<char>>('B');
+	root->_first_child->_first_child = make_shared<TreeNode<char>>('E');;
+	root->_first_child->_next_sibling = make_shared<TreeNode<char>>('C');
+	root->_first_child->_next_sibling->_next_sibling = make_shared<TreeNode<char>>('D');
 
 	root->_first_child->_next_sibling->_next_sibling
-		->_first_child = new TreeNode<char>('F');
+		->_first_child = make_shared<TreeNode<char>>('F');
 
 	root->_first_child->_next_sibling->_next_sibling
-		->_first_child->_next_sibling = new TreeNode<char>('G');
+		->_first_child->_next_sibling = make_shared<TreeNode<char>>('G');
 
 	cout << "All paths from root to leaves are as follows:\n";
 	tree.print_path(root);
@@ -40,7 +40,12 @@ int main()
 	cout << "number of tree leaves: " << tree.count_leaves(root) << '\n';
 	cout << "depth:  " << tree.depth(root) << '\n';
 	cout << "preorder: "; tree.preorder(root); cout << '\n';
-	cout << "postorder: "; tree.postorder(root);
+	cout << "postorder: "; tree.postorder(root); cout << '\n';
+}
+
+int main()
+{
+	tree_operations();
 
 	cout << "\n\nPress any key to leave...\n";
 	char wait;
