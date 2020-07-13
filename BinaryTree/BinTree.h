@@ -29,6 +29,7 @@ public:
 	void create_tree(std::istream& is) { create_tree(is, _root); }
 	void print_tree(std::ostream& os) const { print_tree(os, _root); }
 	void create_tree(std::istream& is, node_ptr& subtree);
+	node_ptr create_tree(const T* preorder, const T* inorder, size_t n);
 	void print_tree(std::ostream& os, node_ptr subtree) const;
 	node_ptr duplicate(node_ptr subtree);
 	void destroy_tree(node_ptr subtree);
@@ -78,6 +79,18 @@ BinTree<T>::BinTree(const BinTree<T>& tree)
 template<typename T>
 void BinTree<T>::create_tree(std::istream& is, node_ptr& subtree)
 {
+}
+
+template<typename T>
+BinNode<T>* BinTree<T>::create_tree(const T* preorder, const T* inorder, size_t n)
+{
+	if (n == 0) return nullptr;
+	size_t root_pos = 0;
+	while (preorder[0] != inorder[root_pos]) ++root_pos;
+	node_ptr p = new BinNode<T>(preorder[0]);
+	p->_lchild = create_tree(preorder + 1, inorder, root_pos);
+	p->_rchild = create_tree(preorder + root_pos + 1, inorder + root_pos + 1, n - root_pos - 1);
+	return p;
 }
 
 // create a tree: input via generalized list or preorder 

@@ -33,6 +33,11 @@ int main()
 	cout << "constructing left subtree: " << tree_L << "\n\n";
 	cout << "constructing right subtree: " << tree_R << "\n\n";
 	
+	BinTree<char> tree_2;
+	tree_2.set_root(tree_2.create_tree("ABDEGCF", "DBEGAFC", 7));
+	cout << "\ntree_2 constructed with \"ABDEGCF\" as preorder & \"DBEGAFC\" "
+		<< "as inorder is: " << tree_2 << "\n\n";
+
 #if defined _WIN32 || _WIN64
 	cout << "Press any key to leave...\n";
 	char wait;
