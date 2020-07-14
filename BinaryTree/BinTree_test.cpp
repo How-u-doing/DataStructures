@@ -11,7 +11,7 @@ void kill_extra_char()
 	cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 }
 
-int main()
+void binary_tree_operations()
 {
 	BinTree<char> tree, tree_L, tree_R;
 	// say input: A(B(D, E(, G)), C(F, ))#
@@ -20,6 +20,7 @@ int main()
 	cin >> tree;
 
 	cout << "\ntree input via console is: " << tree << "\n\n"
+		<< "All paths from root to leaves are as follows:\n"; tree.print_path(); cout << '\n'
 		<< "tree.size()=" << tree.size() << '\n'
 		<< "tree.leaves_count()=" << tree.leaves_count() << '\n'
 		<< "tree.depth()=" << tree.depth() << "\n\n"
@@ -32,11 +33,16 @@ int main()
 	tree_R.set_root(tree.get_root()->_rchild);
 	cout << "constructing left subtree: " << tree_L << "\n\n";
 	cout << "constructing right subtree: " << tree_R << "\n\n";
-	
+
 	BinTree<char> tree_2;
 	tree_2.set_root(tree_2.create_tree("ABDEGCF", "DBEGAFC", 7));
 	cout << "\ntree_2 constructed with \"ABDEGCF\" as preorder & \"DBEGAFC\" "
 		<< "as inorder is: " << tree_2 << "\n\n";
+}
+
+int main()
+{
+	binary_tree_operations();
 
 #if defined _WIN32 || _WIN64
 	cout << "Press any key to leave...\n";

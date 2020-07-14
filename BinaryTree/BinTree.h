@@ -1,7 +1,7 @@
 // binary tree header
 #ifndef BINARYTREE_H
 #define BINARYTREE_H
-#include <stack>
+#include "SeqStack.h"
 #include <queue>
 #include <iostream>
 #include <cassert>
@@ -17,7 +17,7 @@ struct BinNode {
 };
 
 template <typename T>
-class BinTree final {
+class BinTree {
 public:
 	using node_ptr = BinNode<T>*;
 	using node_ref = BinNode<T>&;
@@ -28,9 +28,11 @@ public:
 
 	void create_tree(std::istream& is) { create_tree(is, _root); }
 	void print_tree(std::ostream& os) const { print_tree(os, _root); }
+	void print_path() const { print_path(std::cout, _root); }
 	void create_tree(std::istream& is, node_ptr& subtree);
 	node_ptr create_tree(const T* preorder, const T* inorder, size_t n);
 	void print_tree(std::ostream& os, node_ptr subtree) const;
+	void print_path(std::ostream& os, node_ptr subtree) const;
 	node_ptr duplicate(node_ptr subtree);
 	void destroy_tree(node_ptr subtree);
 	BinTree& operator=(const BinTree<T>& tree);
@@ -112,7 +114,7 @@ void BinTree<char>::create_tree(std::istream& is, node_ptr& subtree)
 	}
 #else	// by generalized list
 	int LR{};	// input left or right node: 1 or 2
-	std::stack<node_ptr> s; // one pointer for each level (except farthest level)
+	SeqStack<node_ptr> s; // one pointer for each level (except farthest level)
 	node_ptr curr{};		// pointer to new node
 	node_ptr parent{};		// pointer to previous built parent node
 	char ch;
@@ -156,6 +158,24 @@ void BinTree<T>::print_tree(std::ostream& os, node_ptr subtree) const
 			os << ')';
 		}
 	}
+}
+
+// print all paths from root to leaves
+template<typename T>
+void BinTree<T>::print_path(std::ostream& os, node_ptr subtree) const
+{
+	if (subtree == nullptr) return;
+	static SeqStack<T> s;
+	s.push(subtree->_data);
+	if (subtree->_lchild == nullptr && subtree->_rchild == nullptr) {
+		s.bottom_up_traverse();
+		os << '\n';
+	}
+	else {
+		print_path(os, subtree->_lchild);
+		print_path(os, subtree->_rchild);
+	}
+	s.pop();
 }
 
 // return a pointer to a node that is the
@@ -259,7 +279,7 @@ void BinTree<T>::preorder(node_ptr subtree, void(*visit)(node_ptr))
 {
 	if (subtree != nullptr) {
 #ifdef nonrecursive_visit
-		std::stack<node_ptr> s;
+		SeqStack<node_ptr> s;
 		node_ptr p = subtree;
 		s.push(p);
 		while (!s.empty()) {
@@ -283,7 +303,7 @@ void BinTree<T>::inorder(node_ptr subtree, void(*visit)(node_ptr))
 {
 	if (subtree != nullptr) {
 #ifdef nonrecursive_visit
-		std::stack<node_ptr> s;
+		SeqStack<node_ptr> s;
 		node_ptr p = subtree;
 		while (p != nullptr || !s.empty()) {
 			if (p != nullptr) {
@@ -309,7 +329,7 @@ void BinTree<T>::postorder(node_ptr subtree, void(*visit)(node_ptr))
 {	
 	if (subtree != nullptr) {
 #ifdef nonrecursive_visit
-		std::stack<node_ptr> s;
+		SeqStack<node_ptr> s;
 		node_ptr p = subtree, q = subtree;
 		while (p != nullptr) {
 			while (p->_lchild != nullptr) {
