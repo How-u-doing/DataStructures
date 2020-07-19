@@ -1,6 +1,8 @@
 #pragma once
 #ifndef MYSORT_H
 #define MYSOER_H
+#include <functional> // std::less<T>
+#include <utility>	  // std::move
 
 namespace mySortingAlgo{
 
@@ -198,8 +200,9 @@ void sortingMethods<RandomIt, Compare>::merge(RandomIt low, RandomIt mid, Random
 {
 	int m = mid - low + 1;
 	//auto b = new decltype(*low)[m] {};	// error, *low is a reference, array of reference is not allowed
-	auto obj = *low;	// an object for decltype
-	auto b = new decltype(obj)[m] {};	// auxiliary array for temporary storage and comparison
+	//auto obj = *low;	// an object for decltype
+	//auto b = new decltype(obj)[m] {};	// auxiliary array for temporary storage and comparison
+	auto b = new typename std::iterator_traits<RandomIt>::value_type[m]{};
 
 	auto it = low;
 	for (int i = 0; i < m; ++i) {// copy a[lo..mid] to b[0..m-1]
@@ -213,12 +216,124 @@ void sortingMethods<RandomIt, Compare>::merge(RandomIt low, RandomIt mid, Random
 
 	while (i < m) {
 		*(low + k++) = b[i++];
-	}	
+	}
+
+	delete[] b;
 }
+
+
+namespace myHeap {
+	// implementation of stl-like func: make_heap, push_heap, etc. 
+	// see <https://en.cppreference.com/w/cpp/algorithm/push_heap>
+	// see relative algorithms at CLRS-3e - Heapsort
+	// see also <https://en.wikipedia.org/wiki/Heapsort>
+
+	template <typename T>
+	void swap(T& a, T& b) {
+		T tmp{ a };
+		a = std::move(b);
+		b = std::move(tmp);
+	}
+
+	template <typename RandIt, typename Compare>
+	void sift_down(size_t pos, RandIt A, size_t n, Compare comp) {
+		auto left = 2 * pos + 1;
+		size_t LS{ pos };	// largest or smallest among {parent, left, right}
+		while (left < n) {
+			if (comp(*(A + pos), *(A + left)))
+				LS = left;
+			if (left + 1 < n && comp(*(A + LS), *(A + left + 1))) // has right child
+				LS = left + 1;
+
+			if (LS == pos)
+				return;
+			else {
+				swap(*(A + pos), *(A + LS));
+				pos = LS;
+				left = 2 * pos + 1;
+			}
+		}
+	}
+
+	// Construct a heap in the range [first, last)
+	template <typename RandIt, typename Compare = std::less<typename std::iterator_traits<RandIt>::value_type>>
+	void make_heap(RandIt first, RandIt last, Compare comp = Compare{}) {
+		//========================================================================================================
+		//
+		// About the template argument deduction see
+		// <https://en.cppreference.com/w/cpp/language/template_argument_deduction> &
+		// <https://stackoverflow.com/questions/24277974/couldnt-deduce-template-parameter-from-function-parameters-default-argument>
+		// When we want to deduce template arg for default arg,  set the template arg (i.e. type) default 
+		// rather than function parameter, as there might be numerious template arg types can attain such
+		// goal. e.g. Compare_type_1 = long,   comp = std::less<int>,
+		//            Compare_type_2 = string, comp = std::less<int>, 
+		//            ...	   (don't forget template specialization)
+		// the compiler has so many choices to select, and it's getting confused!
+		//
+		//========================================================================================================
+
+		auto n{ last - first };	// number of nodes
+		auto i{ (n - 1) >> 1 }; // parent node of last leaf
+		while (i >= 0) {
+			sift_down(i--, first, n, comp);
+		}
+	}
+
+	template <typename RandIt, typename Compare>
+	void sift_up(size_t pos, RandIt A, size_t n, Compare comp) {
+		if (pos == 0) return;
+		size_t parent = (pos - 1) >> 1;
+		while (pos > 0) {
+			if (comp(*(A + parent), *(A + pos))) {
+				swap(*(A + parent), *(A + pos));
+				pos = parent;
+				parent = (pos - 1) >> 1;
+			}
+			else
+				return;
+		}
+	}
+
+	// Insert the element at the position last-1 into the
+	// heap defined by the range [first, last-1)
+	template <typename RandIt, typename Compare = std::less<typename std::iterator_traits<RandIt>::value_type>>
+	void push_heap(RandIt first, RandIt last, Compare comp = Compare{}) {
+		sift_up(last - first - 1, first, last - first, comp);
+	}
+
+	// Swap the value in the pos first and the value in the pos
+	// last-1 and make the subrange [first, last-1) into a heap
+	template <typename RandIt, typename Compare = std::less<typename std::iterator_traits<RandIt>::value_type>>
+	void pop_heap(RandIt first, RandIt last, Compare comp = Compare{}) {
+		swap(*first, *(last - 1));
+		sift_down(0, first, last - first - 1, comp);
+	}
+
+	// Convert the heap [first, last) into a sorted range in ascending/descending order
+	template <typename RandIt, typename Compare = std::less<typename std::iterator_traits<RandIt>::value_type>>
+	void sort_heap(RandIt first, RandIt last, Compare comp = Compare{}) {
+		// move root node (the largest/smallest) to the end
+		while (last - first > 1) {
+			pop_heap(first, last--, comp);
+		}
+	}
+
+	template <typename RandIt, typename Compare = std::less<typename std::iterator_traits<RandIt>::value_type>>
+	void heapsort(RandIt first, RandIt last, Compare comp = Compare{}) {
+		// build a heap
+		make_heap(first, last, comp);
+
+		// move root node (the largest/smallest) to the end
+		while (last - first > 1) {
+			pop_heap(first, last--, comp);
+		}
+	}
+}// namespace myHeap
 
 template<typename RandomIt, typename Compare>
 void sortingMethods<RandomIt, Compare>::Heapsort(RandomIt first, RandomIt last, Compare comp)
 {
+	myHeap::heapsort(first, last, comp);
 }
 
 // quicksort elements in [first, last-1]
@@ -394,7 +509,7 @@ RandomIt sortingMethods<RandomIt, Compare>::partition(RandomIt low, RandomIt hig
 
 	// After return, [lo..j] <= pivot, [j+1..hi] >= pivot. (operator<, ascending)
 	// You can imagine that &pivot < i = j-1, *i>pivot, *j<pivot. The follow-up is to 
-	// swap(i,j), ++i & --j such that j=i-1, [low...j] <= pivot, [j...high] >= pivot.
+	// swap(i,j), ++i & --j such that j=i-1, [low..j] <= pivot, [j..high] >= pivot.
 	// Afterward, what we need to do is to quicksort [lo..j] & [j+1..hi] respectively.
 
 #endif // defined Lomuto_partition || defined Median3_partition	
@@ -513,9 +628,9 @@ template<typename RandomIt, typename Compare>
 inline void sortingMethods<RandomIt, Compare>::swap(RandomIt it_1, RandomIt it_2)
 {
 	// swap content of two objects that are pointed by iterator (pointer) it_1 & it_2 respectively
-	auto tmp = *it_1;
-	*it_1 = *it_2;
-	*it_2 = tmp;
+	auto tmp{ std::move(*it_1) };
+	*it_1 = std::move(*it_2);
+	*it_2 = std::move(tmp);
 
 	// or we should change the two nodes' links when swapping data is expensive
 	// changing links operations...
