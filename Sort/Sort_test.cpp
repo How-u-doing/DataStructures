@@ -1,3 +1,4 @@
+#include <limits> // for std::numeric_limits
 #include <iostream>
 #include <vector>
 #include <string>
@@ -68,11 +69,7 @@ constexpr int square(int n) {
 
 void kill_extra_char()
 {
-#if defined _WIN32 || defined _WIN64
 	cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-#else  // on Linux/Unix
-	cin.ignore(1024, '\n');
-#endif // defined _WIN32 || defined _WIN64
 }
 
 void sort_by_mode(vector<stu>& vs, int a[], int b[], int c[], int d[], int n, int mode) {
@@ -200,10 +197,13 @@ int main()
 	cout << "\n**Build-in arrays** --> After sorting in ascending order\n";
 	printArr(a, b, c, d, n);
 
+#if defined _WIN32 ||  _WIN64
 	cout << "\nPress any key to leave...\n";
 	char wait;
 	kill_extra_char();
 	cin >> noskipws >> wait;
+#endif // defined _WIN32 || _WIN64
+
 	return 0;
 
 	// Appendix: using std sorting algorithm (Quicksort)
