@@ -8,13 +8,14 @@
 
 namespace myHeap {
 // implementation of stl-like func: make_heap, push_heap, etc. 
+// note that it's simplified (no error handling)
 // see <https://en.cppreference.com/w/cpp/algorithm/push_heap>
 // see relative algorithms at CLRS-3e - Heapsort
 // see also <https://en.wikipedia.org/wiki/Heapsort>
 
 template <typename T>
-void swap(T& a, T& b) {
-	T tmp{ a };
+inline void swap(T& a, T& b) {
+	T tmp{ std::move(a) };
 	a = std::move(b);
 	b = std::move(tmp);
 }
@@ -32,7 +33,7 @@ void sift_down(size_t pos, RandIt A, size_t n, Compare comp) {
 		if (LS == pos)
 			return;
 		else {
-			swap(*(A + pos), *(A + LS));
+			myHeap::swap(*(A + pos), *(A + LS));
 			pos = LS;
 			left = 2 * pos + 1;
 		}
@@ -59,7 +60,7 @@ void make_heap(RandIt first, RandIt last, Compare comp = Compare{}) {
 	auto n{ last - first };	// number of nodes
 	auto i{ (n - 1) >> 1 }; // parent node of last leaf
 	while (i >= 0) {
-		sift_down(i--, first, n, comp);
+		myHeap::sift_down(i--, first, n, comp);
 	}
 }
 
@@ -69,7 +70,7 @@ void sift_up(size_t pos, RandIt A, size_t n, Compare comp) {
 	size_t parent = (pos - 1) >> 1;
 	while (pos > 0) {
 		if (comp(*(A + parent), *(A + pos))) {
-			swap(*(A + parent), *(A + pos));
+			myHeap::swap(*(A + parent), *(A + pos));
 			pos = parent;
 			parent= (pos - 1) >> 1;
 		}
@@ -81,16 +82,16 @@ void sift_up(size_t pos, RandIt A, size_t n, Compare comp) {
 // Insert the element at the position last-1 into the
 // heap defined by the range [first, last-1)
 template <typename RandIt, typename Compare = std::less<typename std::iterator_traits<RandIt>::value_type>>
-void push_heap(RandIt first, RandIt last, Compare comp = Compare{}) {
-	sift_up(last - first - 1, first, last - first, comp);
+inline void push_heap(RandIt first, RandIt last, Compare comp = Compare{}) {
+	myHeap::sift_up(last - first - 1, first, last - first, comp);
 }
 
 // Swap the value in the pos first and the value in the pos
 // last-1 and make the subrange [first, last-1) into a heap
 template <typename RandIt, typename Compare = std::less<typename std::iterator_traits<RandIt>::value_type>>
-void pop_heap(RandIt first, RandIt last, Compare comp = Compare{}) {
-	swap(*first, *(last - 1));
-	sift_down(0, first, last - first - 1, comp);
+inline void pop_heap(RandIt first, RandIt last, Compare comp = Compare{}) {
+	myHeap::swap(*first, *(last - 1));
+	myHeap::sift_down(0, first, last - first - 1, comp);
 }
 
 // Convert the heap [first, last) into a sorted range in ascending/descending order
@@ -98,18 +99,18 @@ template <typename RandIt, typename Compare = std::less<typename std::iterator_t
 void sort_heap(RandIt first, RandIt last, Compare comp = Compare{}) {
 	// move root node (the largest/smallest) to the end
 	while (last - first > 1) {
-		pop_heap(first, last--, comp);
+		myHeap::pop_heap(first, last--, comp);
 	}
 }
 
 template <typename RandIt, typename Compare = std::less<typename std::iterator_traits<RandIt>::value_type>>
 void heapsort(RandIt first, RandIt last, Compare comp = Compare{}) {
 	// build a heap
-	make_heap(first, last, comp);
+	myHeap::make_heap(first, last, comp);
 
 	// move root node (the largest/smallest) to the end
 	while (last - first > 1) {
-		pop_heap(first, last--, comp);
+		myHeap::pop_heap(first, last--, comp);
 	}
 }
 
@@ -129,7 +130,7 @@ public:
 	{
 		_arr = new T[_capacity]; // assert(_arr);
 		std::memcpy(_arr, data, _size * sizeof(T));
-		make_heap(_arr, _arr + _size, _comp);
+		myHeap::make_heap(_arr, _arr + _size, _comp);
 	}
 
 	Heap(const Heap& heap)
@@ -137,6 +138,13 @@ public:
 	{
 		_arr = new T[_capacity]; // assert(_arr);
 		std::memcpy(_arr, heap._arr, _size * sizeof(T));
+	}
+
+	Heap& operator=(const Heap& heap) {
+		if (&heap == this) return *this;
+		Heap tmp{ heap };
+		myHeap::swap(tmp, *this);
+		return *this;
 	}
 
 	~Heap() { clear_heap(); }
@@ -155,17 +163,18 @@ public:
 	void push(const T& value) {
 		if (_size == _capacity) expand_capacity();
 		_arr[_size++] = value;
-		push_heap(_arr, _arr + _size, _comp);
+		myHeap::push_heap(_arr, _arr + _size, _comp);
 	}
 
 	void push(T&& value) {
 		if (_size == _capacity) expand_capacity();
 		_arr[_size++] = std::move(value);
-		push_heap(_arr, _arr + _size, _comp);
+		myHeap::push_heap(_arr, _arr + _size, _comp);
 	}
 
 	void pop() {
-		pop_heap(_arr, _arr + _size, _comp);
+		assert(!empty());
+		myHeap::pop_heap(_arr, _arr + _size, _comp);
 		--_size;
 	}
 
@@ -186,7 +195,7 @@ protected:
 	}
 };
 
-}
+} // namespace myHeap
 
 #endif // !HEAP_H
 

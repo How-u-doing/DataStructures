@@ -224,13 +224,14 @@ void sortingMethods<RandomIt, Compare>::merge(RandomIt low, RandomIt mid, Random
 
 namespace myHeap {
 	// implementation of stl-like func: make_heap, push_heap, etc. 
+	// note that it's simplified (no error handling)
 	// see <https://en.cppreference.com/w/cpp/algorithm/push_heap>
 	// see relative algorithms at CLRS-3e - Heapsort
 	// see also <https://en.wikipedia.org/wiki/Heapsort>
 
 	template <typename T>
-	void swap(T& a, T& b) {
-		T tmp{ a };
+	inline void swap(T& a, T& b) {
+		T tmp{ std::move(a) };
 		a = std::move(b);
 		b = std::move(tmp);
 	}
@@ -248,7 +249,7 @@ namespace myHeap {
 			if (LS == pos)
 				return;
 			else {
-				swap(*(A + pos), *(A + LS));
+				myHeap::swap(*(A + pos), *(A + LS));
 				pos = LS;
 				left = 2 * pos + 1;
 			}
@@ -275,7 +276,7 @@ namespace myHeap {
 		auto n{ last - first };	// number of nodes
 		auto i{ (n - 1) >> 1 }; // parent node of last leaf
 		while (i >= 0) {
-			sift_down(i--, first, n, comp);
+			myHeap::sift_down(i--, first, n, comp);
 		}
 	}
 
@@ -285,7 +286,7 @@ namespace myHeap {
 		size_t parent = (pos - 1) >> 1;
 		while (pos > 0) {
 			if (comp(*(A + parent), *(A + pos))) {
-				swap(*(A + parent), *(A + pos));
+				myHeap::swap(*(A + parent), *(A + pos));
 				pos = parent;
 				parent = (pos - 1) >> 1;
 			}
@@ -297,16 +298,16 @@ namespace myHeap {
 	// Insert the element at the position last-1 into the
 	// heap defined by the range [first, last-1)
 	template <typename RandIt, typename Compare = std::less<typename std::iterator_traits<RandIt>::value_type>>
-	void push_heap(RandIt first, RandIt last, Compare comp = Compare{}) {
-		sift_up(last - first - 1, first, last - first, comp);
+	inline void push_heap(RandIt first, RandIt last, Compare comp = Compare{}) {
+		myHeap::sift_up(last - first - 1, first, last - first, comp);
 	}
 
 	// Swap the value in the pos first and the value in the pos
 	// last-1 and make the subrange [first, last-1) into a heap
 	template <typename RandIt, typename Compare = std::less<typename std::iterator_traits<RandIt>::value_type>>
-	void pop_heap(RandIt first, RandIt last, Compare comp = Compare{}) {
-		swap(*first, *(last - 1));
-		sift_down(0, first, last - first - 1, comp);
+	inline void pop_heap(RandIt first, RandIt last, Compare comp = Compare{}) {
+		myHeap::swap(*first, *(last - 1));
+		myHeap::sift_down(0, first, last - first - 1, comp);
 	}
 
 	// Convert the heap [first, last) into a sorted range in ascending/descending order
@@ -314,18 +315,18 @@ namespace myHeap {
 	void sort_heap(RandIt first, RandIt last, Compare comp = Compare{}) {
 		// move root node (the largest/smallest) to the end
 		while (last - first > 1) {
-			pop_heap(first, last--, comp);
+			myHeap::pop_heap(first, last--, comp);
 		}
 	}
 
 	template <typename RandIt, typename Compare = std::less<typename std::iterator_traits<RandIt>::value_type>>
 	void heapsort(RandIt first, RandIt last, Compare comp = Compare{}) {
 		// build a heap
-		make_heap(first, last, comp);
+		myHeap::make_heap(first, last, comp);
 
 		// move root node (the largest/smallest) to the end
 		while (last - first > 1) {
-			pop_heap(first, last--, comp);
+			myHeap::pop_heap(first, last--, comp);
 		}
 	}
 }// namespace myHeap
