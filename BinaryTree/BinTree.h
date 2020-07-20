@@ -11,7 +11,7 @@ template <typename T>
 struct BinNode {
 	T _data;
 	BinNode<T>* _lchild, * _rchild;
-	BinNode(const T& value = static_cast<T>(0), 
+	BinNode(const T& value = T{},
 		BinNode<T>* lchild = nullptr, BinNode<T>* rchild = nullptr)
 		:_data(value), _lchild(lchild), _rchild(rchild) {}
 };

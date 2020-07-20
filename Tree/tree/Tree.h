@@ -11,7 +11,7 @@ struct TreeNode {
 	using node_ptr = TreeNode<T>*;
 	T _data;
 	node_ptr _first_child,  _next_sibling;
-	TreeNode(const T& value = static_cast<T>(0), node_ptr fc = nullptr, node_ptr ns = nullptr)
+	TreeNode(const T& value = T{}, node_ptr fc = nullptr, node_ptr ns = nullptr)
 		: _data(value), _first_child(fc), _next_sibling(ns) {}
 	~TreeNode() { std::cout << "Destructing tree node with value " << _data << '\n'; }
 };
