@@ -171,29 +171,29 @@ SMatrix<T> SMatrix<T>::fast_transpose()const
 {
 	// The main idea is to record the initial indices of each
 	// cols (which have non-zero terms) in the storage array.
+	// kinda like count sort
 	SMatrix<T> B(_maxSize);
 	B._rows = _rows;
 	B._cols = _cols;
 	B._terms = _terms;
 
-	int* rowSize = new int[_cols] {};	// # of non-zero terms of each col of A, initialized with all zeros
-	for (size_t i = 0; i < _terms; ++i)
-		++rowSize[_arr[i]._col];
+	int* rowStart = new int[_cols + 1]{ 0 }; // # of non-zero terms of each col of A
 
-	int* rowStart = new int [_cols] {};	// initial indices of non-zero terms of each col of A
-	//rowStart[0] = 0;
-	for (size_t i = 1; i < _cols; ++i)
-		rowStart[i] = rowStart[i - 1] + rowSize[i - 1];
+	// count frequences
+	for (size_t i = 0; i < _terms; ++i)
+		++rowStart[_arr[i]._col + 1];
+
+	// transform counts into indices
+	for (size_t i = 0; i < _cols; ++i)
+		rowStart[i + 1] += rowStart[i];
 
 	int j;
 	for (size_t i = 0; i < _terms; ++i) {
-		j = rowStart[_arr[i]._col];	// i-th item of A transposed to the j-th position of B
+		j = rowStart[_arr[i]._col]++;	// i-th item of A transposed to the j-th position of B
 		B._arr[j]._row = _arr[i]._col;
 		B._arr[j]._col = _arr[i]._row;
 		B._arr[j]._val = _arr[i]._val;
-		++rowStart[_arr[i]._col];	// next index of same row in B
 	}
-	delete[] rowSize;
 	delete[] rowStart;
 
 	return B;
