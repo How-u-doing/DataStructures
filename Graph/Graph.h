@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <queue>
 #include <utility> // std::swap
+#include <string>
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
@@ -114,7 +115,7 @@ public:
 	iterator find_vertex(const T& v) { return _map.find(v); }
 	const_iterator find_vertex(const T& v) const { return _map.find(v); }
 
-	// since this is a undirected graph, from/to are equivalent
+	// since this is an undirected graph, from/to are equivalent
 	bool has_edge(const_iterator from, const_iterator to) const {
 		if (from == end() || to == end()) return false;
 		return has_edge_unchecked(from, to);
@@ -189,19 +190,21 @@ public:
 		_keys.pop_back();			
 	}
 
-	bool has_path(iterator from, iterator to) {
+	bool has_path(iterator from, iterator to, const std::string& mode = "DFS") {
 		std::vector<bool> marked(vertex_size(), false);
-		DFS_hp(from, marked);
+		if (mode == "DFS") DFS(from, marked);
+		else BFS(from, marked);
 		return marked[index(to)];
 	}
 
-	void path(iterator from, iterator to, std::vector<T>& path) {
+	void path(iterator from, iterator to, std::vector<T>& path, const std::string& mode = "DFS") {
 		if (from == end() || to == end())
 			throw GraphIterOutOfRange("DFS_path iterator out of range");
 		std::vector<bool> marked(vertex_size(), false);
 		std::vector<size_t> edge_to(vertex_size(), 0);
 		size_t s = from->second, v = to->second;
-		DFS_path(s, marked, edge_to);
+		if (mode == "DFS")	DFS_path(s, marked, edge_to);
+		else BFS_path(s, marked, edge_to);
 		if (!marked[index(to)]) return;	// no path
 		// add paths in reverse order
 		for (size_t x = v; x != s; x = edge_to[x])
@@ -218,7 +221,7 @@ public:
 		// where ipath is a vector<size_t> replaced path before
 	}
 
-	void connected_component() {
+	void connected_component(const std::string& mode = "DFS") {
 		// A good way to reduce the times of tell if visited is to get a vertex
 		// from each connected component of the graph, the overhead of which is,
 		// in general, regardless of time complexity or algorithm complexity, 
@@ -228,7 +231,8 @@ public:
 		std::unordered_map<T, size_t> ump;
 		for (auto it = _map.begin(); it != _map.end(); ++it) {
 			if (!marked[it->second]) {
-				DFS_cc(it, marked, count, ump);
+				if (mode == "DFS")	DFS_cc(it->second, marked, count, ump);
+				else BFS_cc(it->second, marked, count, ump);
 				++count;
 			}
 		}
@@ -245,18 +249,6 @@ public:
 		delete[] components;
 	}
 private:
-	void DFS_hp(iterator start, std::vector<bool>& marked) {
-		if (start == end()) throw GraphIterOutOfRange("DFS_hp starting iterator out of range");
-		DFS_hp(start->second, marked);
-	}
-
-	void DFS_hp(size_t s, std::vector<bool>& marked) {
-		marked[s] = true;
-		for (const auto& x : _adj[s])
-			if (!marked[x._dest])
-				DFS_hp(x._dest, marked);
-	}
-
 	void DFS_path(size_t s, std::vector<bool>& marked, std::vector<size_t>& edge_to) {
 		marked[s] = true;
 		for (const auto& x : _adj[s])
@@ -266,9 +258,19 @@ private:
 			}
 	}
 
-	void DFS_cc(iterator start, std::vector<bool>& marked, size_t count, std::unordered_map<T, size_t>& ump) {
-		if (start == end()) throw GraphIterOutOfRange("DFS_cc starting iterator out of range");
-		DFS_cc(start->second, marked, count, ump);
+	void BFS_path(size_t s, std::vector<bool>& marked, std::vector<size_t>& edge_to) {
+		std::queue<size_t> q{};
+		q.push(s);
+		marked[s] = true;
+		while (!q.empty()) {
+			s = q.front(); q.pop();
+			for (const auto& x : _adj[s])
+				if (!marked[x._dest]) {
+					edge_to[x._dest] = s; // mark source vertex to destination vertex
+					q.push(x._dest);
+					marked[x._dest] = true;
+				}
+		}
 	}
 
 	void DFS_cc(size_t s, std::vector<bool>& marked, size_t count, std::unordered_map<T, size_t>& ump) {
@@ -278,22 +280,59 @@ private:
 			if (!marked[x._dest])
 				DFS_cc(x._dest, marked, count, ump);
 	}
-public:
-	// traverse a connected component from a source vertex
-	void DFS(iterator start, void(*visit)(Graph<T>& G, iterator i), std::vector<bool>& marked) {
-		if (start == end()) throw GraphIterOutOfRange("DFS starting iterator out of range");
-		visit(*this, start);
-		// we can also set a counter for the number of vertices connected to start
-		// i.e. the size of this connected component |CC|
-		// ++count;
-		marked[start->second] = true;
-		for (const auto& x : _adj[start->second])
-			if (!marked[x._dest])
-				DFS(find_vertex(_keys[x._dest]), visit, marked);
+
+	void BFS_cc(size_t s, std::vector<bool>& marked, size_t count, std::unordered_map<T, size_t>& ump) {
+		std::queue<size_t> q{};
+		q.push(s);
+		marked[s] = true;
+		ump[_keys[s]] = count;
+		while (!q.empty()) {
+			s = q.front(); q.pop();
+			for (const auto& x : _adj[s])
+				if (!marked[x._dest]) {
+					ump[_keys[x._dest]] = count;
+					q.push(x._dest);
+					marked[x._dest] = true;
+				}
+		}
 	}
 
-	/*void BFS(const T& start, void(*visit)(Graph<T>& G, size_t i), std::vector<bool>& marked) {
-	}*/
+	void DFS(size_t s, std::vector<bool>& marked,
+		void(*visit)(Graph<T>& G, iterator i) = [](Graph<T>& G, iterator i) {/*dummy*/}) {
+		visit(*this, find_vertex(_keys[s]));
+		// we can also set a counter for the number of vertices connected to source s
+		// i.e. the size of this connected component |CC|
+		// ++count;
+		marked[s] = true;
+		for (const auto& x : _adj[s])
+			if (!marked[x._dest])
+				DFS(x._dest, marked, visit);
+	}
+public:
+	// traverse a connected component from a source vertex
+	void DFS(iterator start, std::vector<bool>& marked, 
+		void(*visit)(Graph<T>& G, iterator i) = [](Graph<T>& G, iterator i) {/*dummy*/}) {
+		if (start == end()) throw GraphIterOutOfRange("DFS starting iterator out of range");
+		DFS(start->second, marked, visit);
+	}
+
+	void BFS(iterator start, std::vector<bool>& marked,
+		void(*visit)(Graph<T>& G, iterator i) = [](Graph<T>& G, iterator i) {/*dummy*/}) {
+		if (start == end()) throw GraphIterOutOfRange("BFS starting iterator out of range");
+		std::queue<size_t> q{};
+		size_t s{ start->second };
+		q.push(s);
+		marked[s] = true;
+		while (!q.empty()) {
+			s = q.front(); q.pop();
+			visit(*this, find_vertex(_keys[s]));
+			for (const auto& x : _adj[s])
+				if (!marked[x._dest]) {
+					q.push(x._dest);
+					marked[x._dest] = true;
+				}
+		}
+	}
 
 private:
 	// data member default initialization
