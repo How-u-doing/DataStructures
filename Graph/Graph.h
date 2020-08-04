@@ -91,17 +91,23 @@ public:
 		}
 	}
 private:
-	size_t index(iterator i) {
+	size_t index(iterator i) const {
 		if (i == end()) throw GraphIterOutOfRange("Cannot get vertex to end()");
 		return i->second;
 	}
-	size_t index(const T& v) {
+	size_t index(const T& v) const {
 		return _map.at(v);
 	}
 public:
-	T vertex(iterator i) {
+	T vertex(iterator i) const {
 		if(i==end()) throw GraphIterOutOfRange("Cannot get vertex to end()");
 		return i->first;
+	}
+	T vertex(size_t i) const {
+		return _keys.at(i);
+	}
+	std::vector<Edge> adj(size_t i) const {
+		return _adj.at(i);
 	}
 	
 	size_t vertex_size() const noexcept { return _adj.size(); }
