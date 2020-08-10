@@ -1,4 +1,2 @@
-# Prim's algorithm for minimum spanning tree
-![](Prim.png)
-# Kruskal's algorithm for minimum spanning tree
-![](Kruskal.png)
+# Prim & Kruskal's algorithms for minimum spanning tree
+![](mst.png)
