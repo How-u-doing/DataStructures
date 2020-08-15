@@ -314,8 +314,7 @@ private:
 			if (!marked[x._dest])
 				DFS(x._dest, marked, visit);
 	}
-public:
-	// traverse a connected component from a source vertex
+
 	void DFS(iterator start, std::vector<bool>& marked, 
 		void(*visit)(Graph<T>& G, iterator i) = [](Graph<T>& G, iterator i) {/*dummy*/}) {
 		if (start == end()) throw GraphIterOutOfRange("DFS starting iterator out of range");
@@ -325,7 +324,7 @@ public:
 	void BFS(iterator start, std::vector<bool>& marked,
 		void(*visit)(Graph<T>& G, iterator i) = [](Graph<T>& G, iterator i) {/*dummy*/}) {
 		if (start == end()) throw GraphIterOutOfRange("BFS starting iterator out of range");
-		std::queue<size_t> q{};
+		std::queue<size_t> q{}; // use stack instead for iterative DFS
 		size_t s{ start->second };
 		q.push(s);
 		marked[s] = true;
@@ -338,6 +337,19 @@ public:
 					marked[x._dest] = true;
 				}
 		}
+	}
+public:
+	// traverse a connected component from a source vertex
+	void DFS(iterator start,
+		void(*visit)(Graph<T>& G, iterator i) = [](Graph<T>& G, iterator i) {/*dummy*/}) {
+		std::vector<bool> marked(vertex_size(), false);
+		DFS(start, marked, visit);
+	}
+	
+	void BFS(iterator start,
+		void(*visit)(Graph<T>& G, iterator i) = [](Graph<T>& G, iterator i) {/*dummy*/}) {
+		std::vector<bool> marked(vertex_size(), false);
+		BFS(start, marked, visit);
 	}
 
 private:
@@ -399,5 +411,4 @@ private:
 }// namespace myGraph
 
 #endif // !GRAPH_H
-
 

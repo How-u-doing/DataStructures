@@ -53,12 +53,10 @@ int main()
 		G.output_graph(cout, weighted);
 
 		cout << "\nDFS SymbolGraph_w.txt starting at \"LAS\":\n";
-		vector<bool>marked(G.vertex_size(), false);
-		G.DFS(G.find_vertex("LAS"), marked, print_vertex);
+		G.DFS(G.find_vertex("LAS"), print_vertex);
 
 		cout << "\nBFS SymbolGraph_w.txt starting at \"LAS\":\n";
-		vector<bool>marked_2(G.vertex_size(), false);
-		G.BFS(G.find_vertex("LAS"), marked_2, print_vertex);
+		G.BFS(G.find_vertex("LAS"), print_vertex);
 
 		cout << "\ntinyG.txt: \n";
 		G.read_file("tinyG.txt", !weighted);
