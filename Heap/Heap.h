@@ -22,21 +22,12 @@ inline void swap(T& a, T& b) {
 
 template <typename RandIt, typename Compare>
 void sift_down(size_t pos, RandIt A, size_t n, Compare comp) {
-	auto left = 2 * pos + 1;
-	size_t LS{ pos };	// largest or smallest among {parent, left, right}
-	while (left < n) {
-		if (comp(*(A + pos), *(A + left)))
-			LS = left;
-		if (left + 1 < n && comp(*(A + LS), *(A + left + 1))) // has right child
-			LS = left + 1;
-
-		if (LS == pos)
-			return;
-		else {
-			myHeap::swap(*(A + pos), *(A + LS));
-			pos = LS;
-			left = 2 * pos + 1;
-		}
+	size_t j{};	// largest or smallest between {left, right}
+	while ((j = (pos << 1) + 1) < n) {
+		if (j + 1 < n && comp(*(A + j), *(A + j + 1))) ++j;
+		if (comp(*(A + j), *(A + pos))) return;
+		myHeap::swap(*(A + pos), *(A + j));
+		pos = j;
 	}
 }
 
@@ -66,16 +57,10 @@ void make_heap(RandIt first, RandIt last, Compare comp = Compare{}) {
 
 template <typename RandIt, typename Compare>
 void sift_up(size_t pos, RandIt A, size_t n, Compare comp) {
-	if (pos == 0) return;
-	size_t parent = (pos - 1) >> 1;
-	while (pos > 0) {
-		if (comp(*(A + parent), *(A + pos))) {
-			myHeap::swap(*(A + parent), *(A + pos));
-			pos = parent;
-			parent= (pos - 1) >> 1;
-		}
-		else
-			return;
+	size_t parent{};
+	while (pos > 0 && comp(*(A + (parent = (pos - 1) >> 1)), *(A + pos))) {
+		myHeap::swap(*(A + parent), *(A + pos));
+		pos = parent;
 	}
 }
 
