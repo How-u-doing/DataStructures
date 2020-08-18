@@ -1,5 +1,5 @@
-#ifndef GRAPH_H
-#define GRAPH_H
+#ifndef DIGRAPH_H
+#define DIGRAPH_H
 #include <vector>
 #include <unordered_map>
 #include <queue>
@@ -10,26 +10,21 @@
 #include <stdexcept>
 
 // undirected graph
-namespace myGraph {
+namespace myDigraph {
 
-struct GraphReadException : std::runtime_error {
-	GraphReadException(const char* mesg) : std::runtime_error(mesg) {}
-	GraphReadException(const std::string& mesg) : std::runtime_error(mesg) {}
+struct DigraphReadException : std::runtime_error {
+	DigraphReadException(const char* mesg) : std::runtime_error(mesg) {}
+	DigraphReadException(const std::string& mesg) : std::runtime_error(mesg) {}
 };
 
-struct GraphEdgeException : std::runtime_error {
-	GraphEdgeException(const char* mesg) : std::runtime_error(mesg) {}
-	GraphEdgeException(const std::string& mesg) : std::runtime_error(mesg) {}
+struct DigraphEdgeException : std::runtime_error {
+	DigraphEdgeException(const char* mesg) : std::runtime_error(mesg) {}
+	DigraphEdgeException(const std::string& mesg) : std::runtime_error(mesg) {}
 };
 
-struct GraphInternalException : std::runtime_error {
-	GraphInternalException(const char* mesg) : std::runtime_error(mesg) {}
-	GraphInternalException(const std::string& mesg) : std::runtime_error(mesg) {}
-};
-
-struct GraphIterOutOfRange : std::out_of_range {
-	GraphIterOutOfRange(const char* mesg) : std::out_of_range(mesg) {}
-	GraphIterOutOfRange(const std::string& mesg) : std::out_of_range(mesg) {}
+struct DigraphIterOutOfRange : std::out_of_range {
+	DigraphIterOutOfRange(const char* mesg) : std::out_of_range(mesg) {}
+	DigraphIterOutOfRange(const std::string& mesg) : std::out_of_range(mesg) {}
 };
 
 struct Edge {
@@ -38,32 +33,33 @@ struct Edge {
 	double _cost;	// weight
 };
 
+// directed graph
 template<typename T = std::string>
-class Graph {
+class Digraph {
 public:
 	using iterator = typename std::unordered_map<T, size_t>::iterator;
 	using const_iterator = typename std::unordered_map<T, size_t>::const_iterator;
 
-	Graph() {}
+	Digraph() {}
 
-	Graph(const std::string& filename, bool weighted = true) {
+	Digraph(const std::string& filename, bool weighted = true) {
 		std::ifstream ifs(filename, std::ios_base::in);
 		if (!ifs.is_open())
 			throw std::runtime_error("Error opening file \"" + filename + "\"");
 
 		double cost{ 0.0 };
 		T v, w;
-		while(!ifs.eof()) {
-			if (!(ifs >> v >> w)) throw GraphReadException("Error reading vertex from \"" + filename + "\"");
+		while (!ifs.eof()) {
+			if (!(ifs >> v >> w)) throw DigraphReadException("Error reading vertex from \"" + filename + "\"");
 			if (weighted) {
-				if (!(ifs >> cost)) throw GraphReadException("Error reading edge weight from \"" + filename + "\"");
+				if (!(ifs >> cost)) throw DigraphReadException("Error reading edge weight from \"" + filename + "\"");
 			}
 			add_vertex(v);	add_vertex(w);	// do nothing if exist
 			auto p1{ find_vertex(v) }, p2{ find_vertex(w) };
 			if (!has_edge_unchecked(p1, p2))
 				add_edge_unchecked(p1->second, p2->second, cost);
 			else // or we may just need to overwrite it & print a message
-				throw GraphReadException("Found edge duplicated while reading \"" + filename + "\"");
+				throw DigraphReadException("Found edge duplicated while reading \"" + filename + "\"");
 		}
 		// file will be closed when leaving scope (regardless of exception),
 		// guaranteed by RAII (Resource Acquisition Is Initialization)
@@ -71,11 +67,11 @@ public:
 
 	void read_file(const std::string& filename, bool weighted = true) {
 		clear();
-		Graph G(filename, weighted);
+		Digraph G(filename, weighted);
 		std::swap(G, *this);
 	}
 
-	~Graph() {}
+	~Digraph() {}
 
 	void clear() { _adj.clear(); _map.clear(); _keys.clear();  _E = 0; }
 
@@ -92,7 +88,7 @@ public:
 	}
 private:
 	size_t index(iterator i) const {
-		if (i == end()) throw GraphIterOutOfRange("Cannot get vertex to end()");
+		if (i == end()) throw DigraphIterOutOfRange("Cannot get vertex to end()");
 		return i->second;
 	}
 	size_t index(const T& v) const {
@@ -100,7 +96,7 @@ private:
 	}
 public:
 	T vertex(iterator i) const {
-		if(i==end()) throw GraphIterOutOfRange("Cannot get vertex to end()");
+		if (i == end()) throw DigraphIterOutOfRange("Cannot get vertex to end()");
 		return i->first;
 	}
 	T vertex(size_t i) const {
@@ -109,7 +105,7 @@ public:
 	std::vector<Edge> adj(size_t i) const {
 		return _adj.at(i);
 	}
-	
+
 	size_t vertex_size() const noexcept { return _adj.size(); }
 	size_t edge_size() const noexcept { return _E; }
 
@@ -130,69 +126,63 @@ public:
 
 	void add_edge(iterator from, iterator to, double cost = 0.0) {
 		if (from == end() || to == end())
-			throw GraphIterOutOfRange("Cannot add edge from/to vertex to end()");
+			throw DigraphIterOutOfRange("Cannot add edge from/to vertex to end()");
 		if (has_edge_unchecked(from, to))
-			throw GraphEdgeException("Cannot add edge since it already existed");
+			throw DigraphEdgeException("Cannot add edge since it already existed");
 		else
 			add_edge_unchecked(from->second, to->second, cost);
 	}
 
-	void modify_weight(iterator v, iterator w, double cost) {
-		if (v == end() || w == end())
-			throw GraphIterOutOfRange("Cannot modify edge from/to vertex to end()");
-		auto p{ find_dest(v->second, w->second) }, q{ find_dest(w->second, v->second) };
-		if (p != _adj[w->second].end() && q != _adj[v->second].end()) {
-			p->_cost = cost; q->_cost = cost;
-		}
-		else if (p == _adj[w->second].end() && q == _adj[v->second].end())
-			throw GraphEdgeException("Cannot modify edge since it doesn't exist");
-		else // should never happen
-			throw GraphInternalException("Graph internal structure damaged");
+	void modify_weight(iterator from, iterator to, double cost) {
+		if (from == end() || to == end())
+			throw DigraphIterOutOfRange("Cannot modify edge from/to vertex to end()");
+		auto p{ find_dest(to->second, from->second) };
+		if (p != _adj[from->second].end()) p->_cost = cost;
+		else throw DigraphEdgeException("Cannot modify edge since it doesn't exist");
 	}
-	
-	void remove_edge(iterator v, iterator w) {
-		if (v == end() || w == end())
-			throw GraphIterOutOfRange("Cannot remove edge from/to vertex to end()");
-		auto p{ find_dest(v->second, w->second) }, q{ find_dest(w->second, v->second) };
-		if (p != _adj[w->second].end() && q != _adj[v->second].end()) {
-			_adj[w->second].erase(p); _adj[v->second].erase(q); --_E;
-		}
-		else if (p == _adj[w->second].end() && q == _adj[v->second].end())
-			throw GraphEdgeException("Cannot remove edge since it doesn't exist");
-		else // should never happen
-			throw GraphInternalException("Graph internal structure damaged");
+
+	void remove_edge(iterator from, iterator to) {
+		if (from == end() || to == end())
+			throw DigraphIterOutOfRange("Cannot remove edge from/to vertex to end()");
+		auto p{ find_dest(to->second, from->second) };
+		if (p != _adj[from->second].end()) { _adj[from->second].erase(p); --_E; }
+		else throw DigraphEdgeException("Cannot remove edge since it doesn't exist");
 	}
-	
+
 	// add vertex, if it dosen't exist
 	void add_vertex(const T& v) {
-		if (!has_vertex(v)) add_vertex_unchecked(v);
+		if (!has_vertex(v))	add_vertex_unchecked(v);
 	}
 
 	// remove vertex, if any
 	void remove_vertex(iterator v) {
-		if (v == end()) throw GraphIterOutOfRange("Cannot remove vertex to end()");
+		if (v == end()) throw DigraphIterOutOfRange("Cannot remove vertex to end()");
 		size_t vi{ v->second };	// index of v
 		// remove all edges point to v
-		for (const auto& e : _adj[vi]) 	remove_edge_unchecked(e._dest, vi);
-
+		for (auto i = 0; i < vertex_size(); ++i) {
+			if (i == vi) continue;
+			for (auto j = _adj[i].begin(); j != _adj[i].end(); ++j)
+				if (j->_dest == vi) { _adj[i].erase(j); --_E; break; }
+		}
 		size_t last{ vertex_size() - 1 };
 		// swap vertex from with last vertex & change relative edges
 		if (vi != last) {
 			_adj[vi].swap(_adj[last]);
 			// redirect all edges that pointed to last to vi
-			for (const auto& e : _adj[vi]) {
-				auto it = find_dest(last, e._dest);
-				if (it != _adj[e._dest].end())	it->_dest = vi;
-				else throw GraphInternalException("Graph internal structure damaged");
+			for (auto i = 0; i < vertex_size(); ++i) {
+				if (i == vi) continue;
+				for (auto j = _adj[i].begin(); j != _adj[i].end(); ++j)
+					if (j->_dest == last) j->_dest = vi;
 			}
 			// swap vertices in associated containers
 			std::swap(_map.find(_keys[last])->second, v->second);
 			std::swap(_keys[last], _keys[vi]);
 		}
+		_E -= _adj[last].size();
 		// remove vertex with index 'last'
 		_adj.pop_back();
 		_map.erase(v);
-		_keys.pop_back();			
+		_keys.pop_back();
 	}
 
 	bool has_path(iterator from, iterator to, const std::string& mode = "DFS") {
@@ -204,7 +194,7 @@ public:
 
 	void path(iterator from, iterator to, std::vector<T>& path, const std::string& mode = "DFS") {
 		if (from == end() || to == end())
-			throw GraphIterOutOfRange("DFS_path iterator out of range");
+			throw DigraphIterOutOfRange("DFS_path iterator out of range");
 		std::vector<bool> marked(vertex_size(), false);
 		std::vector<size_t> edge_to(vertex_size(), 0);
 		size_t s = from->second, v = to->second;
@@ -223,7 +213,7 @@ public:
 		// storing the vertex indices, then copy back in reverse order
 		/*for (auto p = ipath.rbegin(); p != ipath.rend(); ++p)
 			path.push_back(_keys[*p]);*/
-		// where ipath is a vector<size_t> replaced path before
+			// where ipath is a vector<size_t> replaced path before
 	}
 
 	void connected_component(const std::string& mode = "DFS") {
@@ -303,7 +293,7 @@ private:
 	}
 
 	void DFS(size_t s, std::vector<bool>& marked,
-		void(*visit)(Graph<T>& G, iterator i) = [](Graph<T>& G, iterator i) {/*dummy*/}) {
+		void(*visit)(Digraph<T>& G, iterator i) = [](Digraph<T>& G, iterator i) {/*dummy*/}) {
 		visit(*this, find_vertex(_keys[s]));
 		// we can also set a counter for the number of vertices connected to source s
 		// i.e. the size of this connected component |CC|
@@ -314,15 +304,15 @@ private:
 				DFS(e._dest, marked, visit);
 	}
 
-	void DFS(iterator start, std::vector<bool>& marked, 
-		void(*visit)(Graph<T>& G, iterator i) = [](Graph<T>& G, iterator i) {/*dummy*/}) {
-		if (start == end()) throw GraphIterOutOfRange("DFS starting iterator out of range");
+	void DFS(iterator start, std::vector<bool>& marked,
+		void(*visit)(Digraph<T>& G, iterator i) = [](Digraph<T>& G, iterator i) {/*dummy*/}) {
+		if (start == end()) throw DigraphIterOutOfRange("DFS starting iterator out of range");
 		DFS(start->second, marked, visit);
 	}
 
 	void BFS(iterator start, std::vector<bool>& marked,
-		void(*visit)(Graph<T>& G, iterator i) = [](Graph<T>& G, iterator i) {/*dummy*/}) {
-		if (start == end()) throw GraphIterOutOfRange("BFS starting iterator out of range");
+		void(*visit)(Digraph<T>& G, iterator i) = [](Digraph<T>& G, iterator i) {/*dummy*/}) {
+		if (start == end()) throw DigraphIterOutOfRange("BFS starting iterator out of range");
 		std::queue<size_t> q{}; // use stack instead for iterative DFS
 		size_t s{ start->second };
 		q.push(s);
@@ -340,13 +330,13 @@ private:
 public:
 	// traverse a connected component from a source vertex
 	void DFS(iterator start,
-		void(*visit)(Graph<T>& G, iterator i) = [](Graph<T>& G, iterator i) {/*dummy*/}) {
+		void(*visit)(Digraph<T>& G, iterator i) = [](Digraph<T>& G, iterator i) {/*dummy*/}) {
 		std::vector<bool> marked(vertex_size(), false);
 		DFS(start, marked, visit);
 	}
-	
+
 	void BFS(iterator start,
-		void(*visit)(Graph<T>& G, iterator i) = [](Graph<T>& G, iterator i) {/*dummy*/}) {
+		void(*visit)(Digraph<T>& G, iterator i) = [](Digraph<T>& G, iterator i) {/*dummy*/}) {
 		std::vector<bool> marked(vertex_size(), false);
 		BFS(start, marked, visit);
 	}
@@ -366,7 +356,6 @@ private:
 	// no check if the edge already exists
 	void add_edge_unchecked(size_t from, size_t to, double cost = 0.0) {
 		_adj[from].push_back(Edge(to, cost));
-		_adj[to].push_back(Edge(from, cost));
 		++_E;
 	}
 
@@ -398,11 +387,10 @@ private:
 
 	void modify_weight_unchecked(iterator from, iterator to, double cost) {
 		find_dest(to->second, from->second)->_cost = cost;
-		find_dest(from->second, to->second)->_cost = cost;
 	}
 };
 
-}// namespace myGraph
+}// namespace myDigraph
 
-#endif // !GRAPH_H
+#endif // !DIGRAPH_H
 
