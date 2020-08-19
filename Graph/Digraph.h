@@ -1,5 +1,7 @@
 #ifndef DIGRAPH_H
 #define DIGRAPH_H
+#include "IndexPQ.h"
+#include <cfloat> // DBL_MAX for Dijkstra's algo
 #include <vector>
 #include <unordered_map>
 #include <queue>
@@ -86,26 +88,6 @@ public:
 			}
 		}
 	}
-private:
-	size_t index(iterator i) const {
-		if (i == end()) throw DigraphIterOutOfRange("Cannot get vertex to end()");
-		return i->second;
-	}
-	size_t index(const T& v) const {
-		return _map.at(v);
-	}
-public:
-	T vertex(iterator i) const {
-		if (i == end()) throw DigraphIterOutOfRange("Cannot get vertex to end()");
-		return i->first;
-	}
-	T vertex(size_t i) const {
-		return _keys.at(i);
-	}
-	std::vector<Edge> adj(size_t i) const {
-		return _adj.at(i);
-	}
-
 	size_t vertex_size() const noexcept { return _adj.size(); }
 	size_t edge_size() const noexcept { return _E; }
 
@@ -118,32 +100,66 @@ public:
 	const_iterator find_vertex(const T& v) const { return _map.find(v); }
 	bool has_vertex(const T& v) const { return find_vertex(v) != end(); }
 
-	// since this is an undirected graph, from/to are equivalent
-	bool has_edge(const_iterator from, const_iterator to) const {
-		if (from == end() || to == end()) return false;
+	size_t index(iterator i) const {
+		verify_iterator(i, "@index iterator out of range");
+		return i->second;
+	}
+	size_t index(const T& v) const {
+		return _map.at(v);
+	}
+	T vertex(iterator i) const {
+		verify_iterator(i, "@vertex iterator out of range");
+		return i->first;
+	}
+	T vertex(size_t i) const {
+		return _keys.at(i);
+	}
+	std::vector<Edge> adj(size_t i) const {
+		return _adj.at(i);
+	}
+private:
+	void verify_iterator(iterator from, iterator to, const std::string& msg) const {
+		if (from == end() || to == end()) throw DigraphIterOutOfRange(msg);
+	}
+	void verify_iterator(iterator it, const std::string& msg) const {
+		if (it == end()) throw DigraphIterOutOfRange(msg);
+	}
+public:
+	bool has_edge(iterator from, iterator to) const {
+		verify_iterator(from, to, "@has_edge iterator out of range");
 		return has_edge_unchecked(from, to);
 	}
 
 	void add_edge(iterator from, iterator to, double cost = 0.0) {
-		if (from == end() || to == end())
-			throw DigraphIterOutOfRange("Cannot add edge from/to vertex to end()");
+		verify_iterator(from, to, "@add_edge iterator out of range");
 		if (has_edge_unchecked(from, to))
 			throw DigraphEdgeException("Cannot add edge since it already existed");
 		else
 			add_edge_unchecked(from->second, to->second, cost);
 	}
 
+	double weight(iterator from, iterator to) const {
+		verify_iterator(from, to, "@weight iterator out of range");
+		return weight_unchecked(from->second, to->second);
+	}
+	Edge edge(iterator from, iterator to) const {
+		verify_iterator(from, to, "@edge iterator out of range");
+		return edge_unchecked(from->second, to->second);
+	}
+private:
+	double weight_unchecked(size_t from, size_t to) const { return find_dest(to, from)->_cost; }
+	Edge edge_unchecked(size_t from, size_t to) const  { return *find_dest(to, from); }
+
+public:
 	void modify_weight(iterator from, iterator to, double cost) {
-		if (from == end() || to == end())
-			throw DigraphIterOutOfRange("Cannot modify edge from/to vertex to end()");
+		verify_iterator(from, to, "@modify_weight iterator out of range");
 		auto p{ find_dest(to->second, from->second) };
 		if (p != _adj[from->second].end()) p->_cost = cost;
 		else throw DigraphEdgeException("Cannot modify edge since it doesn't exist");
 	}
 
 	void remove_edge(iterator from, iterator to) {
-		if (from == end() || to == end())
-			throw DigraphIterOutOfRange("Cannot remove edge from/to vertex to end()");
+		verify_iterator(from, to, "@remove_edge iterator out of range");
 		auto p{ find_dest(to->second, from->second) };
 		if (p != _adj[from->second].end()) { _adj[from->second].erase(p); --_E; }
 		else throw DigraphEdgeException("Cannot remove edge since it doesn't exist");
@@ -151,15 +167,15 @@ public:
 
 	// add vertex, if it dosen't exist
 	void add_vertex(const T& v) {
-		if (!has_vertex(v))	add_vertex_unchecked(v);
+		if (!has_vertex(v)) add_vertex_unchecked(v);
 	}
 
 	// remove vertex, if any
 	void remove_vertex(iterator v) {
-		if (v == end()) throw DigraphIterOutOfRange("Cannot remove vertex to end()");
+		verify_iterator(v, "@remove_vertex iterator out of range");
 		size_t vi{ v->second };	// index of v
 		// remove all edges point to v
-		for (auto i = 0; i < vertex_size(); ++i) {
+		for (size_t i = 0; i < vertex_size(); ++i) {
 			if (i == vi) continue;
 			for (auto j = _adj[i].begin(); j != _adj[i].end(); ++j)
 				if (j->_dest == vi) { _adj[i].erase(j); --_E; break; }
@@ -169,7 +185,7 @@ public:
 		if (vi != last) {
 			_adj[vi].swap(_adj[last]);
 			// redirect all edges that pointed to last to vi
-			for (auto i = 0; i < vertex_size(); ++i) {
+			for (size_t i = 0; i < vertex_size(); ++i) {
 				if (i == vi) continue;
 				for (auto j = _adj[i].begin(); j != _adj[i].end(); ++j)
 					if (j->_dest == last) j->_dest = vi;
@@ -186,41 +202,66 @@ public:
 	}
 
 	bool has_path(iterator from, iterator to, const std::string& mode = "DFS") {
+		verify_iterator(from, to, "@has_path iterator out of range");
 		std::vector<bool> marked(vertex_size(), false);
-		if (mode == "DFS") DFS(from, marked);
-		else BFS(from, marked);
+		if (mode == "DFS") DFS(from->second, marked);
+		else			   BFS(from->second, marked);
 		return marked[index(to)];
 	}
 
-	void path(iterator from, iterator to, std::vector<T>& path, const std::string& mode = "DFS") {
-		if (from == end() || to == end())
-			throw DigraphIterOutOfRange("DFS_path iterator out of range");
+	void path(iterator from, iterator to, std::vector<Edge>& paths, const std::string& mode = "DFS") {
+		verify_iterator(from, to, "@path iterator out of range");
 		std::vector<bool> marked(vertex_size(), false);
 		std::vector<size_t> edge_to(vertex_size(), 0);
 		size_t s = from->second, v = to->second;
 		if (mode == "DFS")	DFS_path(s, marked, edge_to);
-		else BFS_path(s, marked, edge_to);
+		else				BFS_path(s, marked, edge_to);
 		if (!marked[index(to)]) return;	// no path
+		path(s, v, paths, edge_to);
+	}
+
+	void path(size_t from, size_t to, std::vector<Edge>& paths, std::vector<size_t>& prev) {
 		// add paths in reverse order
-		for (size_t x = v; x != s; x = edge_to[x])
-			path.push_back(_keys[x]);
-		path.push_back(_keys[s]); // add source to 'beginning' (after reverse)
+		for (size_t x = to; x != from; x = prev[x])
+			paths.push_back(edge_unchecked(prev[x], x));
+		paths.push_back(Edge(from, 0.0)); // add source to 'beginning' (after reverse)
 		// reverse back
-		for (auto p1 = path.begin(), p2 = path.end() - 1; p1 < p2;) {
+		for (auto p1 = paths.begin(), p2 = paths.end() - 1; p1 < p2;) {
 			std::swap(*p1++, *p2--);
 		}
 		// note that we can also use an auxiliary integer vector for
 		// storing the vertex indices, then copy back in reverse order
 		/*for (auto p = ipath.rbegin(); p != ipath.rend(); ++p)
 			path.push_back(_keys[*p]);*/
-			// where ipath is a vector<size_t> replaced path before
+		// where ipath is a vector<size_t> replaced path before
 	}
 
+	void Dijkstra(size_t s, std::vector<double>& dist, std::vector<size_t>& prev)
+	{
+		myIndexPQ::IndexPQ<double, std::greater<double>> pq(vertex_size()); // IndexMinPQ
+		for (size_t v = 0; v != vertex_size(); ++v)
+			dist[v] = DBL_MAX;
+		dist[s] = 0.0;
+
+		pq.insert(s, 0.0);
+		while (!pq.empty()) {
+			size_t u = pq.top_index(); pq.pop();
+			for (const auto& e : _adj[u]) {
+				size_t v = e._dest;
+				if (dist[v] > dist[u] + e._cost) {
+					dist[v] = dist[u] + e._cost;
+					prev[v] = u;
+					if (pq.contains(v)) pq.change(v, dist[v]);
+					else				pq.insert(v, dist[v]);
+				}
+			}
+		}
+	}
 	void connected_component(const std::string& mode = "DFS") {
 		// A good way to reduce the times of tell if visited is to get a vertex
 		// from each connected component of the graph, the overhead of which is,
 		// in general, regardless of time complexity or algorithm complexity, 
-		// greater than each vertex traversal. So let's just do it :)
+		// greater than each-vertex-traversal. So let's just do it :)
 		std::vector<bool> marked(vertex_size(), false);
 		size_t count{ 0 };
 		std::unordered_map<T, size_t> ump;
@@ -304,17 +345,9 @@ private:
 				DFS(e._dest, marked, visit);
 	}
 
-	void DFS(iterator start, std::vector<bool>& marked,
+	void BFS(size_t s, std::vector<bool>& marked,
 		void(*visit)(Digraph<T>& G, iterator i) = [](Digraph<T>& G, iterator i) {/*dummy*/}) {
-		if (start == end()) throw DigraphIterOutOfRange("DFS starting iterator out of range");
-		DFS(start->second, marked, visit);
-	}
-
-	void BFS(iterator start, std::vector<bool>& marked,
-		void(*visit)(Digraph<T>& G, iterator i) = [](Digraph<T>& G, iterator i) {/*dummy*/}) {
-		if (start == end()) throw DigraphIterOutOfRange("BFS starting iterator out of range");
 		std::queue<size_t> q{}; // use stack instead for iterative DFS
-		size_t s{ start->second };
 		q.push(s);
 		marked[s] = true;
 		while (!q.empty()) {
@@ -331,14 +364,16 @@ public:
 	// traverse a connected component from a source vertex
 	void DFS(iterator start,
 		void(*visit)(Digraph<T>& G, iterator i) = [](Digraph<T>& G, iterator i) {/*dummy*/}) {
+		verify_iterator(start, "@DFS iterator out of range");
 		std::vector<bool> marked(vertex_size(), false);
-		DFS(start, marked, visit);
+		DFS(start->second, marked, visit);
 	}
 
 	void BFS(iterator start,
 		void(*visit)(Digraph<T>& G, iterator i) = [](Digraph<T>& G, iterator i) {/*dummy*/}) {
+		verify_iterator(start, "@BFS iterator out of range");
 		std::vector<bool> marked(vertex_size(), false);
-		BFS(start, marked, visit);
+		BFS(start->second, marked, visit);
 	}
 
 private:
@@ -349,7 +384,7 @@ private:
 	size_t _E{ 0 };	// number of edges
 
 	// require that from and to must be prior to end() so that they are dereferenceable
-	bool has_edge_unchecked(const_iterator from, const_iterator to) const {
+	bool has_edge_unchecked(iterator from, iterator to) const {
 		return find_dest(to->second, from->second) != _adj[from->second].end();
 	}
 

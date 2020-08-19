@@ -24,26 +24,39 @@ int main()
 		cout << "Orginal: \n";
 		G.output_graph(cout, weighted);
 
-		cout << "\nG.has_path(G.find_vertex(\"JFK\"), G.find_vertex(\"LAX\"), \"DFS\")==" <<
-			G.has_path(G.find_vertex("JFK"), G.find_vertex("LAX"), "DFS");
+		auto from{ G.find_vertex("JFK") }, to{ G.find_vertex("LAX") };
 
-		vector<string> path_DFS{};
-		G.path(G.find_vertex("JFK"), G.find_vertex("LAX"), path_DFS);
+		cout << "\nG.has_path(G.find_vertex(\"JFK\"), G.find_vertex(\"LAX\"), \"DFS\")==" <<
+			G.has_path(from, to, "DFS");
+
+		vector<Edge> path_DFS{};
+		G.path(from, to, path_DFS);
 		cout << "\nPaths from JFK to LAX via DFS can be:\n";
-		for (const auto& x : path_DFS)
-			if (x == "JFK") cout << x;
-			else cout << "-->" << x;
+		for (const auto& e : path_DFS)
+			if (e._dest == G.index(from)) cout << G.vertex(e._dest);
+			else cout << " --" << e._cost << "--> " << G.vertex(e._dest);
 		cout << "\n";
 
 		cout << "\nG.has_path(G.find_vertex(\"JFK\"), G.find_vertex(\"LAX\"), \"BFS\")==" <<
-			G.has_path(G.find_vertex("JFK"), G.find_vertex("LAX"), "BFS");
+			G.has_path(from, to, "BFS");
 
-		vector<string> path_BFS{};
-		G.path(G.find_vertex("JFK"), G.find_vertex("LAX"), path_BFS, "BFS");
+		vector<Edge> path_BFS{};
+		G.path(from, to, path_BFS, "BFS");
 		cout << "\nPaths from JFK to LAX via BFS can be:\n";
-		for (const auto& x : path_BFS)
-			if (x == "JFK") cout << x;
-			else cout << "-->" << x;
+		for (const auto& e : path_BFS)
+			if (e._dest == G.index(from)) cout << G.vertex(e._dest);
+			else cout << " --" << e._cost << "--> " << G.vertex(e._dest);
+		cout << "\n";
+
+		vector<Edge> path_djs{};
+		vector<double> dist(G.vertex_size()); vector<size_t> prev(G.vertex_size());
+		G.Dijkstra(G.index(from), dist, prev);
+		G.path(G.index(from), G.index(to), path_djs, prev);
+		cout << "\nShortest paths from JFK to LAX via Dijkstra's algo can be:\n" 
+			<< dist[G.index(to)] << ": ";
+		for (const auto& e : path_djs)
+			if (e._dest == G.index(from)) cout << G.vertex(e._dest);
+			else cout << " --" << e._cost << "--> " << G.vertex(e._dest);
 		cout << "\n";
 
 		G.remove_edge(G.find_vertex("JFK"), G.find_vertex("MCO"));

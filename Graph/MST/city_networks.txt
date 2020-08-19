@@ -1,0 +1,19 @@
+San Francisco/Chicago/ 1200
+Chicago/New York/ 1000
+San Francisco/Denver/ 900
+Denver/Chicago/ 1350
+Denver/New York/ 1600
+Denver/Atlanta/ 1400
+Chicago/Atlanta/ 700
+Atlanta/New York/ 800
+San Francisco/Atlanta/ 2200
+San Francisco/New York/ 2000
+Seattle/Chicago/ 1450
+Seattle/Denver/ 1100
+Kansas City/Denver/ 550
+Kansas City/Chicago/ 500
+Kansas City/New York/ 1250
+San Francisco/Seattle/ 350
+Dallas/Denver/ 800
+Dallas/Atlanta/ 750
+Dallas/New York/ 1300

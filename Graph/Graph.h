@@ -89,27 +89,7 @@ public:
 				os << '\n';
 			}
 		}
-	}
-private:
-	size_t index(iterator i) const {
-		if (i == end()) throw GraphIterOutOfRange("Cannot get vertex to end()");
-		return i->second;
-	}
-	size_t index(const T& v) const {
-		return _map.at(v);
-	}
-public:
-	T vertex(iterator i) const {
-		if(i==end()) throw GraphIterOutOfRange("Cannot get vertex to end()");
-		return i->first;
-	}
-	T vertex(size_t i) const {
-		return _keys.at(i);
-	}
-	std::vector<Edge> adj(size_t i) const {
-		return _adj.at(i);
-	}
-	
+	}	
 	size_t vertex_size() const noexcept { return _adj.size(); }
 	size_t edge_size() const noexcept { return _E; }
 
@@ -121,25 +101,61 @@ public:
 	iterator find_vertex(const T& v) { return _map.find(v); }
 	const_iterator find_vertex(const T& v) const { return _map.find(v); }
 	bool has_vertex(const T& v) const { return find_vertex(v) != end(); }
-
+	
+	size_t index(iterator i) const {
+		verify_iterator(i, "@index iterator out of range");
+		return i->second;
+	}
+	size_t index(const T& v) const {
+		return _map.at(v);
+	}
+	T vertex(iterator i) const {
+		verify_iterator(i, "@vertex iterator out of range");
+		return i->first;
+	}
+	T vertex(size_t i) const {
+		return _keys.at(i);
+	}
+	std::vector<Edge> adj(size_t i) const {
+		return _adj.at(i);
+	}
+private:
+	void verify_iterator(iterator from, iterator to, const std::string& msg) const {
+		if (from == end() || to == end()) throw GraphIterOutOfRange(msg);
+	}
+	void verify_iterator(iterator it, const std::string& msg) const {
+		if (it == end()) throw GraphIterOutOfRange(msg);
+	}
+public:
 	// since this is an undirected graph, from/to are equivalent
-	bool has_edge(const_iterator from, const_iterator to) const {
-		if (from == end() || to == end()) return false;
+	bool has_edge(iterator from, iterator to) const {
+		verify_iterator(from, to, "@has_edge iterator out of range");
 		return has_edge_unchecked(from, to);
 	}
 
 	void add_edge(iterator from, iterator to, double cost = 0.0) {
-		if (from == end() || to == end())
-			throw GraphIterOutOfRange("Cannot add edge from/to vertex to end()");
+		verify_iterator(from, to, "@add_edge iterator out of range");
 		if (has_edge_unchecked(from, to))
 			throw GraphEdgeException("Cannot add edge since it already existed");
 		else
 			add_edge_unchecked(from->second, to->second, cost);
 	}
 
+	double weight(iterator from, iterator to) const {
+		verify_iterator(from, to, "@weight iterator out of range");
+		return weight_unchecked(from->second, to->second);
+	}
+	Edge edge(iterator from, iterator to) const {
+		verify_iterator(from, to, "@edge iterator out of range");
+		return edge_unchecked(from->second, to->second);
+	}
+private:
+	double weight_unchecked(size_t from, size_t to) const { return find_dest(to, from)->_cost; }
+	Edge edge_unchecked(size_t from, size_t to) const { return *find_dest(to, from); }
+
+public:
 	void modify_weight(iterator v, iterator w, double cost) {
-		if (v == end() || w == end())
-			throw GraphIterOutOfRange("Cannot modify edge from/to vertex to end()");
+		verify_iterator(v, w, "@modify_weight iterator out of range");
 		auto p{ find_dest(v->second, w->second) }, q{ find_dest(w->second, v->second) };
 		if (p != _adj[w->second].end() && q != _adj[v->second].end()) {
 			p->_cost = cost; q->_cost = cost;
@@ -151,8 +167,7 @@ public:
 	}
 	
 	void remove_edge(iterator v, iterator w) {
-		if (v == end() || w == end())
-			throw GraphIterOutOfRange("Cannot remove edge from/to vertex to end()");
+		verify_iterator(v, w, "@remove_edge iterator out of range");
 		auto p{ find_dest(v->second, w->second) }, q{ find_dest(w->second, v->second) };
 		if (p != _adj[w->second].end() && q != _adj[v->second].end()) {
 			_adj[w->second].erase(p); _adj[v->second].erase(q); --_E;
@@ -170,7 +185,7 @@ public:
 
 	// remove vertex, if any
 	void remove_vertex(iterator v) {
-		if (v == end()) throw GraphIterOutOfRange("Cannot remove vertex to end()");
+		verify_iterator(v, "@remove_vertex iterator out of range");
 		size_t vi{ v->second };	// index of v
 		// remove all edges point to v
 		for (const auto& e : _adj[vi]) 	remove_edge_unchecked(e._dest, vi);
@@ -196,27 +211,31 @@ public:
 	}
 
 	bool has_path(iterator from, iterator to, const std::string& mode = "DFS") {
+		verify_iterator(from, to, "@has_path iterator out of range");
 		std::vector<bool> marked(vertex_size(), false);
-		if (mode == "DFS") DFS(from, marked);
-		else BFS(from, marked);
+		if (mode == "DFS") DFS(from->second, marked);
+		else			   BFS(from->second, marked);
 		return marked[index(to)];
 	}
 
-	void path(iterator from, iterator to, std::vector<T>& path, const std::string& mode = "DFS") {
-		if (from == end() || to == end())
-			throw GraphIterOutOfRange("DFS_path iterator out of range");
+	void path(iterator from, iterator to, std::vector<Edge>& paths, const std::string& mode = "DFS") {
+		verify_iterator(from, to, "@path iterator out of range");
 		std::vector<bool> marked(vertex_size(), false);
 		std::vector<size_t> edge_to(vertex_size(), 0);
 		size_t s = from->second, v = to->second;
 		if (mode == "DFS")	DFS_path(s, marked, edge_to);
-		else BFS_path(s, marked, edge_to);
+		else				BFS_path(s, marked, edge_to);
 		if (!marked[index(to)]) return;	// no path
+		path(s, v, paths, edge_to);
+	}
+
+	void path(size_t from, size_t to, std::vector<Edge>& paths, std::vector<size_t>& prev) {
 		// add paths in reverse order
-		for (size_t x = v; x != s; x = edge_to[x])
-			path.push_back(_keys[x]);
-		path.push_back(_keys[s]); // add source to 'beginning' (after reverse)
+		for (size_t x = to; x != from; x = prev[x])
+			paths.push_back(edge_unchecked(prev[x], x));
+		paths.push_back(Edge(from, 0.0)); // add source to 'beginning' (after reverse)
 		// reverse back
-		for (auto p1 = path.begin(), p2 = path.end() - 1; p1 < p2;) {
+		for (auto p1 = paths.begin(), p2 = paths.end() - 1; p1 < p2;) {
 			std::swap(*p1++, *p2--);
 		}
 		// note that we can also use an auxiliary integer vector for
@@ -314,17 +333,9 @@ private:
 				DFS(e._dest, marked, visit);
 	}
 
-	void DFS(iterator start, std::vector<bool>& marked, 
+	void BFS(size_t s, std::vector<bool>& marked,
 		void(*visit)(Graph<T>& G, iterator i) = [](Graph<T>& G, iterator i) {/*dummy*/}) {
-		if (start == end()) throw GraphIterOutOfRange("DFS starting iterator out of range");
-		DFS(start->second, marked, visit);
-	}
-
-	void BFS(iterator start, std::vector<bool>& marked,
-		void(*visit)(Graph<T>& G, iterator i) = [](Graph<T>& G, iterator i) {/*dummy*/}) {
-		if (start == end()) throw GraphIterOutOfRange("BFS starting iterator out of range");
 		std::queue<size_t> q{}; // use stack instead for iterative DFS
-		size_t s{ start->second };
 		q.push(s);
 		marked[s] = true;
 		while (!q.empty()) {
@@ -341,14 +352,16 @@ public:
 	// traverse a connected component from a source vertex
 	void DFS(iterator start,
 		void(*visit)(Graph<T>& G, iterator i) = [](Graph<T>& G, iterator i) {/*dummy*/}) {
+		verify_iterator(start, "@DFS iterator out of range");
 		std::vector<bool> marked(vertex_size(), false);
-		DFS(start, marked, visit);
+		DFS(start->second, marked, visit);
 	}
 	
 	void BFS(iterator start,
 		void(*visit)(Graph<T>& G, iterator i) = [](Graph<T>& G, iterator i) {/*dummy*/}) {
+		verify_iterator(start, "@BFS iterator out of range");
 		std::vector<bool> marked(vertex_size(), false);
-		BFS(start, marked, visit);
+		BFS(start->second, marked, visit);
 	}
 
 private:
@@ -359,7 +372,7 @@ private:
 	size_t _E{ 0 };	// number of edges
 
 	// require that from and to must be prior to end() so that they are dereferenceable
-	bool has_edge_unchecked(const_iterator from, const_iterator to) const {
+	bool has_edge_unchecked(iterator from, iterator to) const {
 		return find_dest(to->second, from->second) != _adj[from->second].end();
 	}
 

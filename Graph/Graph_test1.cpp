@@ -27,23 +27,23 @@ int main()
 		cout << "\nG.has_path(G.find_vertex(\"LAS\"), G.find_vertex(\"MCO\"), \"DFS\")==" <<
 			G.has_path(G.find_vertex("LAS"), G.find_vertex("MCO"), "DFS");
 
-		vector<string> path_DFS{};
+		vector<Edge> path_DFS{};
 		G.path(G.find_vertex("LAS"), G.find_vertex("MCO"), path_DFS);
 		cout << "\nPaths from LAS to MCO via DFS can be:\n";
-		for (const auto& x : path_DFS)
-			if (x == "LAS") cout << x;
-			else cout << "-->" << x;
+		for(const auto & e : path_DFS)
+			if (e._dest == G.index("LAS")) cout << G.vertex(e._dest);
+			else cout << " --" << e._cost << "--> " << G.vertex(e._dest);
 		cout << "\n";
 
 		cout << "\nG.has_path(G.find_vertex(\"LAS\"), G.find_vertex(\"MCO\"), \"BFS\")==" <<
 			G.has_path(G.find_vertex("LAS"), G.find_vertex("MCO"), "BFS");
 
-		vector<string> path_BFS{};
+		vector<Edge> path_BFS{};
 		G.path(G.find_vertex("LAS"), G.find_vertex("MCO"), path_BFS, "BFS");
 		cout << "\nPaths from LAS to MCO via BFS can be:\n";
-		for (const auto& x : path_BFS)
-			if (x == "LAS") cout << x;
-			else cout << "-->" << x;
+		for (const auto& e : path_BFS)
+			if (e._dest == G.index("LAS")) cout << G.vertex(e._dest);
+			else cout << " --" << e._cost << "--> " << G.vertex(e._dest);
 		cout << "\n";
 
 		G.remove_edge(G.find_vertex("JFK"), G.find_vertex("MCO"));
