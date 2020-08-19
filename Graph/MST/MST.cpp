@@ -5,6 +5,7 @@
 #include <iostream>
 
 using namespace std;
+using namespace myGraph;
 
 char sp; // separator
 
@@ -36,11 +37,11 @@ ifstream& operator>>(ifstream& ifs, City& c) {
 }
 
 template<typename T>
-void print_MST(const T& mst) {
+void print_MST(Graph<T>& G, std::vector<MST_Edge>& mst) {
 	for (size_t i = 0; i < mst.size(); ++i) {
-		cout << std::get<0>(mst[i]) << " - "
-			<< std::get<1>(mst[i]) << '\t' <<
-			std::get<2>(mst[i]) << '\n';
+		cout << G.vertex(mst[i]._source) << " - "
+			<< G.vertex(mst[i]._dest) << '\t'
+			<< mst[i]._cost << '\n';
 	}
 }
 
@@ -56,20 +57,20 @@ namespace std {
 // Linux CLI example: ./mst "Kruskal" city_networks.txt "/"
 int main(int argc, const char* argv[])
 {
-	using namespace myGraph;
 	if (argc < 4) { cerr << "Too few arguments" << endl; return 1; }
-	string method{ argv[1] };
-	if (method != "Prim" && method != "Kruskal") {
-		cerr << "Unknown MST method" << endl; return 2;
-	}
+	string method{ argv[1] };	
 	string filename{ argv[2] };
 	sp = argv[3][0];
 	try {
 		Graph<City> G{ filename };
-		vector<std::tuple<City, City, double>> mst;
-		if (method == "Prim")	mst = PrimMST(G);
-		else mst = KruskalMST(G);
-		print_MST(mst);
+		vector<MST_Edge> mst;
+		double count{};
+		if (method == "LazyPrim")	count = LazyPrimMST(G, mst);
+		else if (method == "Prim")	count = PrimMST(G, mst);
+		else if (method == "Kruskal")  count = KruskalMST(G, mst);
+		else throw invalid_argument("unknown MST method");
+		cout << count << '\n';
+		print_MST(G, mst);
 	}
 	catch (const exception& e) {
 		cout << e.what() << endl;

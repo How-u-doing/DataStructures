@@ -46,6 +46,17 @@ int main()
 			else cout << " --" << e._cost << "--> " << G.vertex(e._dest);
 		cout << "\n";
 
+		vector<Edge> path_djs{};
+		vector<double> dist(G.vertex_size()); vector<size_t> prev(G.vertex_size());
+		G.Dijkstra(G.index("LAS"), dist, prev);
+		G.path(G.index("LAS"), G.index("MCO"), path_djs, prev);
+		cout << "\nShortest paths from LAS to MCO via Dijkstra's algo can be:\n"
+			<< dist[G.index("MCO")] << ": ";
+		for (const auto& e : path_djs)
+			if (e._dest == G.index("LAS")) cout << G.vertex(e._dest);
+			else cout << " --" << e._cost << "--> " << G.vertex(e._dest);
+		cout << "\n";
+
 		G.remove_edge(G.find_vertex("JFK"), G.find_vertex("MCO"));
 		G.remove_vertex(G.find_vertex("PHX"));
 		G.remove_vertex(G.find_vertex("HOU"));
@@ -82,7 +93,7 @@ int main()
 	catch (const GraphIterOutOfRange& e) {
 		cout << e.what() << endl;
 	}
-	catch (const runtime_error& e) {
+	catch (const exception& e) {
 		cout << e.what() << endl;
 	}
 	catch (...) {

@@ -24,6 +24,8 @@ public:
 	size_t size() const noexcept { return _N; }
 	bool contains(size_t k) const { return _qp.at(k) != UINT_MAX; }
 
+	T key(size_t k) { return _keys.at(k); }
+
 	const T& top() const { return _keys[_pq[0]]; }
 	size_t top_index() const { return _pq[0]; }
 

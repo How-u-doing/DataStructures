@@ -1,5 +1,7 @@
 #ifndef GRAPH_H
 #define GRAPH_H
+#include "IndexPQ.h"
+#include <cfloat> // DBL_MAX for Dijkstra's algo
 #include <vector>
 #include <unordered_map>
 #include <queue>
@@ -245,6 +247,27 @@ public:
 		// where ipath is a vector<size_t> replaced path before
 	}
 
+	void Dijkstra(size_t s, std::vector<double>& dist, std::vector<size_t>& prev)
+	{
+		myIndexPQ::IndexPQ<double, std::greater<double>> pq(vertex_size()); // IndexMinPQ
+		for (size_t v = 0; v != vertex_size(); ++v)
+			dist[v] = DBL_MAX;
+		dist[s] = 0.0;
+
+		pq.insert(s, 0.0);
+		while (!pq.empty()) {
+			size_t u = pq.top_index(); pq.pop();
+			for (const auto& e : _adj[u]) {
+				size_t v = e._dest;
+				if (dist[v] > dist[u] + e._cost) {
+					dist[v] = dist[u] + e._cost;
+					prev[v] = u;
+					if (pq.contains(v)) pq.change(v, dist[v]);
+					else				pq.insert(v, dist[v]);
+				}
+			}
+		}
+	}
 	void connected_component(const std::string& mode = "DFS") {
 		// A good way to reduce the times of tell if visited is to get a vertex
 		// from each connected component of the graph, the overhead of which is,
