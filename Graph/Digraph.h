@@ -226,18 +226,52 @@ public:
 			paths.push_back(edge_unchecked(prev[x], x));
 		paths.push_back(Edge(from, 0.0)); // add source to 'beginning' (after reverse)
 		// reverse back
-		for (auto p1 = paths.begin(), p2 = paths.end() - 1; p1 < p2;) {
-			std::swap(*p1++, *p2--);
-		}
-		// note that we can also use an auxiliary integer vector for
-		// storing the vertex indices, then copy back in reverse order
-		/*for (auto p = ipath.rbegin(); p != ipath.rend(); ++p)
-			path.push_back(_keys[*p]);*/
-		// where ipath is a vector<size_t> replaced path before
+		reverse(paths.begin(), paths.end());
 	}
 
-	void Dijkstra(size_t s, std::vector<double>& dist, std::vector<size_t>& prev)
+	void has_cycle(std::vector<size_t>& cycle) {
+		size_t N{ vertex_size() };
+		std::vector<bool> marked(N, false);
+		std::vector<bool> on_stack(N, false); // is a vertex on a call stack (by dfs)
+		std::vector<size_t> edge_to(N); // record the cycle(s)
+		for (size_t i = 0; i < N; ++i)
+			if (!marked[i])
+				DFS_hc(i, marked, on_stack, edge_to, cycle);
+	}
+private:
+	void DFS_hc(size_t s, std::vector<bool>& marked, std::vector<bool>& on_stack,
+		std::vector<size_t>& edge_to, std::vector<size_t>& cycle)
 	{
+		marked[s] = true;
+		on_stack[s] = true; // this vertex s is now on an active call stack
+		for (const auto& e : _adj[s]) {
+			size_t w = e._dest;
+			if (!marked[w]) {
+				edge_to[w] = s; DFS_hc(w, marked, on_stack, edge_to, cycle);
+			}
+			else if (on_stack[w]) {// found a cycle; each vertex will be only active once
+				auto offset{ cycle.size() }; // starting position of this cycle
+				for (size_t x = s; x != w; x = edge_to[x])
+					cycle.push_back(x);
+				cycle.push_back(w);
+				cycle.push_back(s); // s->w->...->s
+				reverse(cycle.begin() + offset, cycle.end());
+			}
+		}
+		on_stack[s] = false; // pop off call stack s (inactive now)
+	}
+
+	template<typename It>
+	void reverse(It first, It last) {
+		--last; // locates to last element
+		while (first != last && (last + 1) != first) // while (first < last)
+			std::swap(*first++, *last--);
+	}
+public:
+	void Dijkstra(iterator from, std::vector<double>& dist, std::vector<size_t>& prev)
+	{
+		verify_iterator(from, "@Dijkstra iterator out of range");
+		size_t s{ from->second };
 		myIndexPQ::IndexPQ<double, std::greater<double>> pq(vertex_size()); // IndexMinPQ
 		for (size_t v = 0; v != vertex_size(); ++v)
 			dist[v] = DBL_MAX;
@@ -248,9 +282,9 @@ public:
 			size_t u = pq.top_index(); pq.pop();
 			for (const auto& e : _adj[u]) {
 				size_t v = e._dest;
-				if (dist[v] > dist[u] + e._cost) {
-					dist[v] = dist[u] + e._cost;
-					prev[v] = u;
+				if (dist[v] > dist[u] + e._cost) {// Note that now dist[u] is the largest among the known sp nodes,
+					dist[v] = dist[u] + e._cost;  // hence, the if condition indicates v is not visited, otherwise
+					prev[v] = u;                  // we would have dist[v]<dist[u]. So, no need for a marked array.
 					if (pq.contains(v)) pq.change(v, dist[v]);
 					else				pq.insert(v, dist[v]);
 				}
@@ -258,10 +292,6 @@ public:
 		}
 	}
 	void connected_component(const std::string& mode = "DFS") {
-		// A good way to reduce the times of tell if visited is to get a vertex
-		// from each connected component of the graph, the overhead of which is,
-		// in general, regardless of time complexity or algorithm complexity, 
-		// greater than each-vertex-traversal. So let's just do it :)
 		std::vector<bool> marked(vertex_size(), false);
 		size_t count{ 0 };
 		std::unordered_map<T, size_t> ump;

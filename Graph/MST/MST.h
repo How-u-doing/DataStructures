@@ -13,7 +13,7 @@ struct MST_Edge : myGraph::Edge {
 	size_t _source;
 };
 
-// O(|E|log|E|) 
+// space: O(|E|), time: O(|E|log|E|) 
 template<typename T>
 double KruskalMST(const myGraph::Graph<T>& G, std::vector<MST_Edge>& mst) {
 	myHeap::Heap<MST_Edge, std::greater<MST_Edge>> pq{}; // MinHeap
@@ -36,7 +36,7 @@ double KruskalMST(const myGraph::Graph<T>& G, std::vector<MST_Edge>& mst) {
 	return count;
 }
 
-// O(|E|log|E|) 
+// space: O(|E|), time: O(|E|log|E|) 
 template<typename T>
 double LazyPrimMST(const myGraph::Graph<T>& G, std::vector<MST_Edge>& mst) {
 	myHeap::Heap<MST_Edge, std::greater<MST_Edge>> pq{}; // MinHeap
@@ -64,7 +64,7 @@ void add_edges_from(size_t source, const myGraph::Graph<T>& G,
 			pq.push(MST_Edge(source, e));
 }
 
-// O(|E|log|V|)
+// space: O(|V|), time: O(|E|log|V|) 
 template<typename T>
 double PrimMST(const myGraph::Graph<T>& G, std::vector<MST_Edge>& mst) {
 	myIndexPQ::IndexPQ<double, std::greater<double>> pq(G.vertex_size()); // IndexMinPQ

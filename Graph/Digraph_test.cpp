@@ -50,7 +50,7 @@ int main()
 
 		vector<Edge> path_djs{};
 		vector<double> dist(G.vertex_size()); vector<size_t> prev(G.vertex_size());
-		G.Dijkstra(G.index(from), dist, prev);
+		G.Dijkstra(from, dist, prev);
 		G.path(G.index(from), G.index(to), path_djs, prev);
 		cout << "\nShortest paths from JFK to LAX via Dijkstra's algo can be:\n" 
 			<< dist[G.index(to)] << ": ";

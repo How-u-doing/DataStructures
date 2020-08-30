@@ -48,7 +48,7 @@ int main()
 
 		vector<Edge> path_djs{};
 		vector<double> dist(G.vertex_size()); vector<size_t> prev(G.vertex_size());
-		G.Dijkstra(G.index("LAS"), dist, prev);
+		G.Dijkstra(G.find_vertex("LAS"), dist, prev);
 		G.path(G.index("LAS"), G.index("MCO"), path_djs, prev);
 		cout << "\nShortest paths from LAS to MCO via Dijkstra's algo can be:\n"
 			<< dist[G.index("MCO")] << ": ";

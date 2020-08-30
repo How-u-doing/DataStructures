@@ -53,8 +53,11 @@ namespace std {
 	};
 }
 
-// Linux CLI example: ./mst "Prim" city_networks.txt "/"
-// Linux CLI example: ./mst "Kruskal" city_networks.txt "/"
+/**
+ * CLI examples: ./mst "LazyPrim" city_networks.txt "/"
+ *               ./mst "Prim" city_networks.txt "/"
+ *               ./mst "Kruskal" city_networks.txt "/"
+ */
 int main(int argc, const char* argv[])
 {
 	if (argc < 4) { cerr << "Too few arguments" << endl; return 1; }
