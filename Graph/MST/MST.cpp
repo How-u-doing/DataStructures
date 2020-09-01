@@ -48,7 +48,7 @@ void print_MST(Graph<T>& G, std::vector<MST_Edge>& mst) {
 namespace std {
 	template<> struct hash<City> {
 		std::size_t operator()(const City& c) const {
-			return std::hash<size_t>{}(c.name().length());
+			return std::hash<std::string>{}(c.name());
 		}
 	};
 }
