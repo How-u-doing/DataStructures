@@ -48,8 +48,8 @@ void make_heap(RandIt first, RandIt last, Compare comp = Compare{}) {
 	//
 	//========================================================================================================
 
-	auto n{ last - first };	// number of nodes
-	auto i{ (n - 1) >> 1 }; // parent node of last leaf
+	auto n = last - first;	// number of nodes
+	int i = (n - 1) >> 1;	// parent node of last leaf
 	while (i >= 0) {
 		myHeap::sift_down(i--, first, n, comp);
 	}
