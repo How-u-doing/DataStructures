@@ -1,4 +1,7 @@
-#pragma once
+/**
+ *  see this file at following link for the latest version
+ *  https://github.com/How-u-doing/DataStructures/blob/master/Sorting/mySort.h
+ */
 #ifndef MYSORT_H
 #define MYSOER_H
 #include <functional> // std::less<T>
@@ -6,170 +9,74 @@
 
 namespace mySortingAlgo{
 
-	const int ISORT_MAX = 4;	// maximum size for insertion sort, 32 will be appropriate. For test, we set it 4 here
+const int ISORT_MAX = 4;	// maximum size for insertion sort, 32 might be appropriate. For test, we set it 4 here
 
-/* Some popular sorting algorithms */
-enum class Mode
+// swap content of two objects that are pointed to
+// by iterator (pointer) it_1 & it_2, respectively
+template<typename Iter>
+inline void iter_swap(Iter it_1, Iter it_2)
 {
-	// simple sorts
-	InsertionSort, SelectionSort,
-
-	// efficient sorts
-	MergeSort, Heapsort, Quicksort, Shellsort,
-
-	// bubble sort and variants
-	BubbleSort, CombSort,
-
-	// distribution sort
-	CountingSort, BucketSort, RadixSort
-
-};
-
-template<typename RandomIt, typename Compare>
-class sortingMethods {
-public:
-	static void InsertionSort(RandomIt first, RandomIt last, Compare comp);
-	// auxiliary function for insertion sort
-	static RandomIt binary_search(RandomIt first, RandomIt last, RandomIt target, Compare comp);
-
-	static void SelectionSort(RandomIt first, RandomIt last, Compare comp);
-	static void MergeSort(RandomIt first, RandomIt last, Compare comp);
-	// auxiliary function for merge sort. merge a[lo..mid] & a[mid+1..hi]
-	static void merge(RandomIt low, RandomIt mid, RandomIt high, Compare comp);
-
-	static void Heapsort(RandomIt first, RandomIt last, Compare comp);
-	static void Quicksort(RandomIt first, RandomIt last, Compare comp);
-	// auxiliary function for quicksort
-	static RandomIt partition(RandomIt low, RandomIt high, Compare comp);
-
-	static void Shellsort(RandomIt first, RandomIt last, Compare comp);
-	static void BubbleSort(RandomIt first, RandomIt last, Compare comp);
-	static void CombSort(RandomIt first, RandomIt last, Compare comp);
-	static void CountingSort(RandomIt first, RandomIt last, Compare comp);
-	static void BucketSort(RandomIt first, RandomIt last, Compare comp);
-	static void RadixSort(RandomIt first, RandomIt last, Compare comp);
-
-	static inline void swap(RandomIt it_1, RandomIt it_2);
-};
-
-/* Sort an array (or a list) ranging [first, last) */ 
-template<typename RandomIt, typename Compare>
-void sort(RandomIt first, RandomIt last, Compare comp, Mode mode = Mode::Quicksort)
-{
-	switch (mode)
-	{
-	case Mode::InsertionSort:
-		sortingMethods<RandomIt, Compare>::InsertionSort(first, last, comp);
-		break;
-	case Mode::SelectionSort:
-		sortingMethods<RandomIt, Compare>::SelectionSort(first, last, comp);
-		break;
-	case Mode::MergeSort:
-		sortingMethods<RandomIt, Compare>::MergeSort(first, last, comp);
-		break;
-	case Mode::Heapsort:
-		sortingMethods<RandomIt, Compare>::Heapsort(first, last, comp);
-		break;
-	case Mode::Quicksort:
-		sortingMethods<RandomIt, Compare>::Quicksort(first, last, comp);
-		break;
-	case Mode::Shellsort:
-		sortingMethods<RandomIt, Compare>::Shellsort(first, last, comp);
-		break;
-	case Mode::BubbleSort:
-		sortingMethods<RandomIt, Compare>::BubbleSort(first, last, comp);
-		break;
-	case Mode::CombSort:
-		sortingMethods<RandomIt, Compare>::CombSort(first, last, comp);
-		break;
-	case Mode::CountingSort:
-		sortingMethods<RandomIt, Compare>::CountingSort(first, last, comp);
-		break;
-	case Mode::BucketSort:
-		sortingMethods<RandomIt, Compare>::BucketSort(first, last, comp);
-		break;
-	case Mode::RadixSort:
-		sortingMethods<RandomIt, Compare>::RadixSort(first, last, comp);
-		break;
-	default:
-		break;
-	}
+	auto tmp = std::move(*it_1);
+	*it_1 = std::move(*it_2);
+	*it_2 = std::move(tmp);
 }
 
-//// This one has a drawback that cannot call lambda function
-//template<class RandomIt, class U>
-//void sort(RandomIt first, RandomIt last, bool (*comp)(const U& a, const U& b), Mode mode = Mode::Quicksort)
-//{
-//	// implementation...
-//}
-//// Or like this using only one template argument via decltype
-//template<class RandomIt>
-//void sort(RandomIt first, RandomIt last, bool (*comp)(const decltype(*first)& a, const decltype(*first)& b), Mode mode = Mode::Quicksort)
-//{
-//	// implementation...
-//}
-
 template<typename RandomIt, typename Compare>
-void sortingMethods<RandomIt, Compare>::InsertionSort(RandomIt first, RandomIt last, Compare comp)
+void insertion_sort(RandomIt first, RandomIt last, Compare comp)
 {
 	// see also <https://en.wikipedia.org/wiki/Insertion_sort>
-#if !defined BINARY_INSERTION_SORT	// DIRECT_INSERTION_SORT
-	// direct insertion sort
-	int len = last - first;
-	for (int i = 1; i < len; ++i) {
+	auto len = last - first;
+	for (auto i = 1; i < len; ++i) {
 		// insert a[i] into the sorted sequence a[0..i-1]
-		for (int j = i; j > 0 && comp(*(first + j), *(first + j - 1)); --j) {
-			swap(first + j, first + j - 1);
-		}
+		for (auto j = i; j > 0 && comp(*(first + j), *(first + j - 1)); --j)
+			iter_swap(first + j, first + j - 1);
 	}
-#else	// BINARY_INSERTION_SORT
-	// When we have massive data items, we can save some comparison time by using binary search.
-	for (auto it = first + 1; it != last; ++it) {
-		auto pos = binary_search(first, it, it, comp);
-		if (pos == it)
-			continue;
-
-		// insert *it before (at) position 'pos', move by block backwardly
-		auto tmp = *it;
-		for (auto iter = it; iter != pos; --iter)
-			*iter = *(iter - 1);
-		*pos = tmp;
-	}
-
-#endif // !defined BINARY_INSERTION_SORT
 }
 
-// return the position where target should INSERT_BEFORE in scope [first, last)
+// Helper function for binary insertion routine.
+// Return the position where target should INSERT_BEFORE in scope [first, last)
+// It's efficient when the distance of sorted area is long.
 template<typename RandomIt, typename Compare>
-RandomIt sortingMethods<RandomIt, Compare>::binary_search(RandomIt first, RandomIt last, RandomIt target, Compare comp)
+RandomIt binary_insertion_search(RandomIt first, RandomIt last, RandomIt target, Compare comp)
 {
 	// see also <https://en.wikipedia.org/wiki/Binary_search_algorithm>
-	RandomIt L{ first }, R{ last - 1 }, M{ }; 
+	RandomIt L{ first }, R{ last - 1 }, M{};
 	while (L <= R) {
-		M = L + ((R - L) >> 1);	// M=L+(R-L)/2;
+		M = L + ((R - L) >> 1);
 		if (comp(*target, *M)) {
-			if (M > first)
-				R = M - 1;	// Beautiful. Two cases - ascending or descending (operator< or operator>), but with uniform expression.
-			else
-				break;
+			if (M > first)	R = M - 1;
+			else break;
 		}
 		else if (comp(*M, *target))
 			L = M + 1;
 		else { // *M == *target, to keep this insertion sort stable, we should insert target after M.
 			   // Note that there may have more than 1 element that is equal to *M.
-			auto it{ M + 1 };
+			auto it = M + 1;
 			while (it != last && !comp(*M, *it) && !comp(*it, *M)) // *M == *it
 				++it;
-
-			return it;	// if it==last, insert target before last (after last-1)
+			return it;	// if it==last, insert target before last
 		}
 	}
-
 	return L;
 }
 
 template<typename RandomIt, typename Compare>
-void sortingMethods<RandomIt, Compare>::SelectionSort(RandomIt first, RandomIt last, Compare comp)
+void binary_insertion_sort(RandomIt first, RandomIt last, Compare comp)
+{
+	// When we have massive data items, we can save some comparison time by using binary search.
+	for (auto it = first + 1; it != last; ++it) {
+		auto pos = binary_insertion_search(first, it, it, comp);
+		if (pos == it)	continue;
+		// insert *it before (at) position 'pos'
+		auto tmp = *it;
+		for (auto iter = it; iter != pos; --iter)
+			*iter = *(iter - 1);
+		*pos = tmp;
+	}
+}
+
+template<typename RandomIt, typename Compare>
+void selection_sort(RandomIt first, RandomIt last, Compare comp)
 {
 	// see also <https://en.wikipedia.org/wiki/Selection_sort>
 	for (auto i = first; i != last - 1; ++i) {
@@ -179,37 +86,26 @@ void sortingMethods<RandomIt, Compare>::SelectionSort(RandomIt first, RandomIt l
 				jM = j;
 		}
 		if (jM != i)
-			swap(jM, i);
+			iter_swap(jM, i);
 	}
-}
-
-template<typename RandomIt, typename Compare>
-void sortingMethods<RandomIt, Compare>::MergeSort(RandomIt first, RandomIt last, Compare comp)
-{
-	// see also <https://en.wikipedia.org/wiki/Merge_sort>
-	if (last - first < 2) return;
-	auto mid = first + ((last - 1 - first) >> 1);
-	MergeSort(first, mid + 1, comp);	// sort a[lo..mid]
-	MergeSort(mid + 1, last, comp);		// sort a[mid+1..hi]
-	merge(first, mid, last - 1, comp);
 }
 
 // merge a[lo..mid] & a[mid+1..hi]
 template<typename RandomIt, typename Compare>
-void sortingMethods<RandomIt, Compare>::merge(RandomIt low, RandomIt mid, RandomIt high, Compare comp)
+void merge(RandomIt low, RandomIt mid, RandomIt high, Compare comp)
 {
-	int m = mid - low + 1;
-	//auto b = new decltype(*low)[m] {};	// error, *low is a reference, array of reference is not allowed
+	auto m = mid - low + 1;
+	//auto b = new decltype(*low)[m] {};  // error, *low is a reference, array of reference is not allowed
 	//auto obj = *low;	// an object for decltype
-	//auto b = new decltype(obj)[m] {};	// auxiliary array for temporary storage and comparison
+	//auto b = new decltype(obj)[m] {};	  // auxiliary array for temporary storage and comparison
 	auto b = new typename std::iterator_traits<RandomIt>::value_type[m]{};
 
 	auto it = low;
-	for (int i = 0; i < m; ++i) {// copy a[lo..mid] to b[0..m-1]
+	for (auto i = 0; i < m; ++i) {// copy a[lo..mid] to b[0..m-1]
 		b[i] = *it++;
 	}
 
-	int i = 0, k = 0, j = m, n = high - low + 1;
+	auto i = 0, k = 0, j = m, n = high - low + 1;
 	while (i < m && j < n) {
 		*(low + k++) = comp(*(low + j), b[i]) ? *(low + j++) : b[i++];
 	}
@@ -221,13 +117,23 @@ void sortingMethods<RandomIt, Compare>::merge(RandomIt low, RandomIt mid, Random
 	delete[] b;
 }
 
+template<typename RandomIt, typename Compare>
+void merge_sort(RandomIt first, RandomIt last, Compare comp)
+{
+	// see also <https://en.wikipedia.org/wiki/Merge_sort>
+	if (last - first < 2) return;
+	auto mid = first + ((last - first - 1) >> 1);
+	merge_sort(first, mid + 1, comp);	// sort a[lo..mid]
+	merge_sort(mid + 1, last, comp);	// sort a[mid+1..hi]
+	merge(first, mid, last - 1, comp);
+}
 
 namespace myHeap {
 	// implementation of stl-like func: make_heap, push_heap, etc. 
 	// note that it's simplified (no error handling)
 	// see <https://en.cppreference.com/w/cpp/algorithm/push_heap>
-	// see relative algorithms at CLRS-3e - Heapsort
-	// see also <https://en.wikipedia.org/wiki/Heapsort>
+	// see relative algorithms at CLRS-3e - heapsort
+	// see also <https://en.wikipedia.org/wiki/heapsort>
 
 	template <typename T>
 	inline void swap(T& a, T& b) {
@@ -264,8 +170,8 @@ namespace myHeap {
 		//
 		//========================================================================================================
 
-		auto n{ last - first };	// number of nodes
-		auto i{ (n - 1) >> 1 }; // parent node of last leaf
+		auto n = last - first;	// number of nodes
+		int i = (n - 1) >> 1;	// parent node of last leaf
 		while (i >= 0) {
 			myHeap::sift_down(i--, first, n, comp);
 		}
@@ -317,30 +223,69 @@ namespace myHeap {
 }// namespace myHeap
 
 template<typename RandomIt, typename Compare>
-void sortingMethods<RandomIt, Compare>::Heapsort(RandomIt first, RandomIt last, Compare comp)
+void heapsort(RandomIt first, RandomIt last, Compare comp)
 {
 	myHeap::heapsort(first, last, comp);
 }
 
-// quicksort elements in [first, last-1]
-template<typename RandomIt, typename Compare>
-void sortingMethods<RandomIt, Compare>::Quicksort(RandomIt first, RandomIt last, Compare comp)
-{
-	// see also <https://en.wikipedia.org/wiki/Quicksort>
-	// Define your partition scheme  before including this header,
-	// e.g. #define Median3_partition \NewLine #include "mySort.h".
 
+// make high = median of {low, mid, high}
+template<typename RandomIt, typename Compare>
+inline void mid3(RandomIt low, RandomIt high, Compare comp)
+{
+	auto mid = low + ((high - low) >> 1);
+	if (comp(*mid, *low))  iter_swap(low, mid);
+	if (comp(*high, *low)) iter_swap(low, high);
+	if (comp(*mid, *high)) iter_swap(mid, high);
+}
+
+template<typename RandomIt, typename Compare>
+RandomIt Lomuto_partition(RandomIt low, RandomIt high, Compare comp)
+{	
+	// See 'CLRS-3e' p171-172 (illustration, Fig7.1).
+	// See also <https://en.wikipedia.org/wiki/quicksort#Lomuto_partition_scheme>.
+	mid3(low, high, comp); // make high = median of {low, mid, high}
+	auto pivot = *high;	   // choose the rightmost element as pivot
+	auto i = low;
+	for (auto j = low; j != high; ++j) {
+		if (comp(*j, pivot))
+			iter_swap(i++, j);
+	}
+	iter_swap(i, high);
+	return i;
+	// Now a[lo..i-1] <= pivot, *i==pivot, a[i+1..hi] >= pivot. (operator<, ascending)
+	// Then quicksort a[lo..i-1] & a[i+1..hi].
+}
+
+template<typename RandomIt, typename Compare>
+RandomIt Hoare_partition(RandomIt low, RandomIt high, Compare comp)
+{
+	// see also <https://en.wikipedia.org/wiki/quicksort#Hoare_partition_scheme>
+	mid3(low, high, comp);
+	auto pivot = *(low + ((high - low) >> 1));
+	auto i = low, j = high;
+	while (true) {
+		while (comp(*i, pivot)) ++i;
+		while (comp(pivot, *j)) --j;
+		if (i >= j) return j;
+		iter_swap(i++, j--);
+	}
+	// Now a[lo..j] <= pivot, a[j+1..hi] >= pivot. (operator<, ascending)
+	// Then quicksort a[lo..j] & a[j+1..hi].
+}
+
+template<typename RandomIt, typename Compare>
+void quicksort(RandomIt first, RandomIt last, Compare comp)
+{
+	// see also <https://en.wikipedia.org/wiki/quicksort>
 	if (last - first < 2) return;
-//#define QUICK_INSERTION_SORT	// uncomment this to set it default for performance
-#if defined QUICK_INSERTION_SORT
-	if (last - first <= ISORT_MAX) { // hybrid with insertion sort
-		sortingMethods::InsertionSort(first, last, comp);
+	if (last - first <= ISORT_MAX) { // hybrid with insertion sort for speed
+		insertion_sort(first, last, comp);
 		return;
 	}
-#endif
-#if defined Quick3way_partition
-	// see also 'Algorithms-4e' p298-299. 3-way Quicksort is based on Dutch National Flag algorithm 
-	// (see also <https://www.geeksforgeeks.org/sort-an-array-of-0s-1s-and-2s/>).
+#if defined QUICK3WAY_PARTITION
+	// See also 'Algorithms-4e' p298-299. 3-way quicksort is based on Dutch National Flag algorithm 
+	// (see <https://www.geeksforgeeks.org/sort-an-array-of-0s-1s-and-2s/>).
 	// Dijkstra's solution is based on a single left-to-right pass through the array that maintains a 
 	// pointer lt such that a[lo..lt-1] is less than v, a pointer gt such that a[gt+1..hi] is greater 
 	// than v, and a pointer i such that a[lt..i-1] are equal to v, and a[i..gt] are not yet examined.
@@ -348,23 +293,19 @@ void sortingMethods<RandomIt, Compare>::Quicksort(RandomIt first, RandomIt last,
 	auto lt = first, i = first + 1, gt = last - 1;
 	auto pivot = *first;
 	while (i <= gt) {
-		if (comp(*i, pivot)) {
-			swap(lt++, i++);
-		}
-		else if (comp(pivot, *i)) {
-			swap(i, gt--);
-		}
-		else	++i;
+		if		(comp(*i, pivot)) iter_swap(lt++, i++);
+		else if (comp(pivot, *i)) iter_swap(i, gt--);
+		else					  ++i;
 	}	// Now a[lo..lt-1] < pivot = a[lt..gt] < a[gt+1..hi].
-	Quicksort(first, lt, comp);		// sort a[lo..lt-1]
-	Quicksort(gt + 1, last, comp);	// sort a[gt+1..hi]
+	quicksort(first, lt, comp);		// sort a[lo..lt-1]
+	quicksort(gt + 1, last, comp);	// sort a[gt+1..hi]
 
-#elif defined Fast3way_partition // by J. Bentley and D. McIlroy
-	// See also 'Algorithms-4e' p306 CREATIVE PROBLEMS 2.3.22
+#elif defined FAST3WAY_PARTITION // by J. Bentley and D. McIlroy
+	// See 'Algorithms-4e' p306 CREATIVE PROBLEMS 2.3.22
 	// Note that this partitioning scheme does extra swaps for keys equal to the partitioning item's key,
 	// while Quick3way does extra swaps for keys that are NOT equal to the partitioning item's key.
+	// See also <https://www.geeksforgeeks.org/3-way-quicksort-dutch-national-flag/>
 
-	// see also <https://www.geeksforgeeks.org/3-way-quicksort-dutch-national-flag/>
 	int p = -1;          // p points to left last one that is equal to pivot
 	auto q = last - 1;   // q points to right first one that is equal to pivot
 	int i = -1;          // a[p+1..i-1] < pivot, a[lo..p]==pivot
@@ -383,22 +324,22 @@ void sortingMethods<RandomIt, Compare>::Quicksort(RandomIt first, RandomIt last,
 		if (first + i >= j) break;
 
 		// swap, so that smaller goes on left and greater goes on right 
-		swap(first + i, j);
+		iter_swap(first + i, j);
 
 		// move all same left occurrence of pivot to beginning of array
 		if (!comp(*(first + i), pivot) && !comp(pivot, *(first + i))) {
-			swap(first + (++p), first + i);
+			iter_swap(first + (++p), first + i);
 		}
 
 		// move all same right occurrence of pivot to end of array
 		if (!comp(pivot, *j) && !comp(*j, pivot)) {
-			swap(j, --q);
+			iter_swap(j, --q);
 		}
 	}
 
 	// move pivot element to its correct index
 	if (comp(pivot, *(first + i)))	// *(first+i)>=pivot
-		swap(first + i, last - 1);
+		iter_swap(first + i, last - 1);
 
 	// move all left same occurrences from beginning to adjacent to a[i]
 	if (i >= 1)
@@ -407,7 +348,7 @@ void sortingMethods<RandomIt, Compare>::Quicksort(RandomIt first, RandomIt last,
 		j = first;
 
 	for (int k = 0; k <= p; ++k) {
-		swap(first + k, j);
+		iter_swap(first + k, j);
 		if (j > first)
 			--j;
 		else
@@ -417,94 +358,27 @@ void sortingMethods<RandomIt, Compare>::Quicksort(RandomIt first, RandomIt last,
 	// move all right same occurrences from end to adjacent to a[i]
 	i = i + 1;
 	for (auto k = last - 2; k >= q; --k, ++i)
-		swap(first + i, k);
+		iter_swap(first + i, k);
 
 	// sort the rest non-equal area on both sides
-	Quicksort(first, j + 1, comp);    // sort a[lo..j]
-	Quicksort(first + i, last, comp); // sort a[i..hi]
+	quicksort(first, j + 1, comp);    // sort a[lo..j]
+	quicksort(first + i, last, comp); // sort a[i..hi]
 
-#endif // defined QUICK_INSERTION_SORT
-
-// Lomuto_partition, Median3_partition, or Hoare_partition
-#if defined Lomuto_partition || defined Median3_partition
-	auto pivot = partition(first, last - 1, comp);
-	Quicksort(first, pivot, comp);		// sort a[first, pivot-1]
-	Quicksort(pivot + 1, last, comp);	// sort a[pivot+1, last-1]
-#elif defined Hoare_partition
-	auto pivot = partition(first, last - 1, comp);
-	Quicksort(first, pivot + 1, comp);	// sort a[frist, pivot]
-	Quicksort(pivot + 1, last, comp);	// sort a[pivot+1, last-1]
-#endif // defined Lomuto_partition || defined Median3_partition
-
-}
-
-// partition ranging [left, right]
-template<typename RandomIt, typename Compare>
-RandomIt sortingMethods<RandomIt, Compare>::partition(RandomIt low, RandomIt high, Compare comp)
-{
-#if defined Lomuto_partition || defined Median3_partition
-#if defined Median3_partition	// Median-of-3 partition
-	// Choose the median of the first, middle, and last element of the partition for the pivot.
-	// See also <https://en.wikipedia.org/wiki/Quicksort#Choice_of_pivot>.
-	auto mid = low + ((high - low) >> 1);
-	if (comp(*mid, *low)) { // after this, *low <= *mid (operator<) or *low >= *mid (operator>)
-		swap(low, mid);
-	}
-	if (comp(*high, *low)) { // after this, *low <= *high (operator<) or *low >= *high (operator>)
-		swap(low, high);
-	}
-	if (comp(*mid, *high)) { // insure the median is at the rightmost position
-		swap(mid, high);
-	}
-	// Now *high is the median of *low, *mid, and *high.
-
-#endif
-	// See 'CLRS-3e' p171-172 (illustration, Fig7.1).
-	// We can also choose a random iterator in [lo, hi] as pivot (i.e. k=RANDOM(lo,hi)), then swap(k, hi) if k!=hi.
-	// See also <https://en.wikipedia.org/wiki/Quicksort#Lomuto_partition_scheme>.
-	auto pivot = *high;	 // choose the rightmost element as pivot
-	auto i = low;
-	for (auto j = low; j != high; ++j) {
-		if (comp(*j, pivot)) {
-			if (i != j)
-				swap(i, j);
-			++i;
-		}
-	}
-	swap(i, high);
-	return i;
-	// Now [lo..i-1] <= pivot, *i==pivot, [i+1..hi] >= pivot. (operator<, ascending)
-	// Then quicksort [lo..i-1] & [i+1..hi] respectively.
-
-#elif defined Hoare_partition
-	// see also <https://en.wikipedia.org/wiki/Quicksort#Hoare_partition_scheme>
-	auto pivot = *(low + ((high - low) >> 1));	// pivot=*(low+(high-low)/2);
-	auto i = low, j = high;
-	while (true) {
-		while (comp(*i, pivot)) {
-			++i;
-		}
-		while (comp(pivot, *j)) {
-			--j;
-		}
-		if (i >= j) {	// possibly j=i-1
-			return j;
-		}
-		swap(i++, j--);
-	}
-
-	// After return, [lo..j] <= pivot, [j+1..hi] >= pivot. (operator<, ascending)
-	// You can imagine that &pivot < i = j-1, *i>pivot, *j<pivot. The follow-up is to 
-	// swap(i,j), ++i & --j such that j=i-1, [low..j] <= pivot, [j..high] >= pivot.
-	// Afterward, what we need to do is to quicksort [lo..j] & [j+1..hi] respectively.
-
-#endif // defined Lomuto_partition || defined Median3_partition	
+#elif defined LOMUTO_PARTITION
+	auto pivot = Lomuto_partition(first, last - 1, comp);
+	quicksort(first, pivot, comp);		// sort a[first..pivot-1]
+	quicksort(pivot + 1, last, comp);	// sort a[pivot+1..last-1]
+#else
+	auto pivot = Hoare_partition(first, last - 1, comp);
+	quicksort(first, pivot + 1, comp);	// sort a[frist..pivot]
+	quicksort(pivot + 1, last, comp);	// sort a[pivot+1..last-1]
+#endif // defined Quick3way_partition
 }
 
 template<typename RandomIt, typename Compare>
-void sortingMethods<RandomIt, Compare>::Shellsort(RandomIt first, RandomIt last, Compare comp)
+void shellsort(RandomIt first, RandomIt last, Compare comp)
 {
-	// see also <https://en.wikipedia.org/wiki/Shellsort>
+	// see also <https://en.wikipedia.org/wiki/shellsort>
 	int len = last - first;
 	int gap = len;
 	while (gap > 1) {
@@ -512,21 +386,40 @@ void sortingMethods<RandomIt, Compare>::Shellsort(RandomIt first, RandomIt last,
 		for (int i = gap; i < len; i += gap) {
 			// insert a[i] into the sorted sequence a[0..i-1] (every gap count 1)
 			for (int j = i; j > 0 && comp(*(first + j), *(first + j - gap)); j -= gap) {
-				swap(first + j, first + j - gap);
+				iter_swap(first + j, first + j - gap);
 			}
 		}	
 	}
 }
 
 template<typename RandomIt, typename Compare>
-void sortingMethods<RandomIt, Compare>::BubbleSort(RandomIt first, RandomIt last, Compare comp)
-{	
-#if defined Cocktail_shaker_sort
-	// see also <https://en.wikipedia.org/wiki/Cocktail_shaker_sort>
-	// Example: list (2,3,4,5,1), which would only need to go through one pass (indeed 1.5 pass, one
-	// more left-to-rigth comparison) of cocktail sort to become sorted, but if using an ascending 
-	// bubble sort would take four passes. However one cocktail sort pass should be counted as two 
-	// bubble sort passes. Typically cocktail sort is less than two times faster than bubble sort.
+void bubble_sort(RandomIt first, RandomIt last, Compare comp)
+{
+	// see also <https://en.wikipedia.org/wiki/Bubble_sort#Optimizing_bubble_sort>
+	int n = last - first;	// unsorted length
+	int lastSwappedIndex = 0;
+	while (n > 1) {
+		lastSwappedIndex = 0;
+		for (int i = 1; i < n; ++i) {
+			if (comp(*(first + i), *(first + i - 1))) {
+				iter_swap(first + i, first + i - 1);
+				lastSwappedIndex = i;
+			}
+		}
+		n = lastSwappedIndex;
+	}
+}
+
+/**
+ * See also <https://en.wikipedia.org/wiki/Cocktail_shaker_sort>
+ * Example: list{2,3,4,5,1}, which would only need to go through one pass (indeed 1.5 pass, one
+ * more left-to-rigth comparison) of cocktail sort to become sorted, but if using an ascending 
+ * bubble sort would take four passes. However one cocktail sort pass should be counted as two 
+ * bubble sort passes. Typically cocktail sort is less than two times faster than bubble sort.
+ */
+template<typename RandomIt, typename Compare>
+void cocktail_shaker_sort(RandomIt first, RandomIt last, Compare comp)
+{
 	int n = last - first;
 	int m = 1;
 	int lastLeftSwappedIndex;	// index of last left-side sorted
@@ -536,7 +429,7 @@ void sortingMethods<RandomIt, Compare>::BubbleSort(RandomIt first, RandomIt last
 		lastRightSwappedIndex = 0;
 		for (int i = m; i < n; ++i) {
 			if (comp(*(first + i), *(first + i - 1))) {
-				swap(first + i, first + i - 1);
+				iter_swap(first + i, first + i - 1);
 				lastRightSwappedIndex = i;
 			}
 		}
@@ -547,38 +440,23 @@ void sortingMethods<RandomIt, Compare>::BubbleSort(RandomIt first, RandomIt last
 
 		for (int j = n - 1; j >= m; --j) {
 			if (comp(*(first + j), *(first + j - 1))) {
-				swap(first + j, first + j - 1);
+				iter_swap(first + j, first + j - 1);
 				lastLeftSwappedIndex = j;
 			}
 		}
 		m = lastLeftSwappedIndex;
 	}
-
-#else	// just left-to-right bubble sort
-	// see also <https://en.wikipedia.org/wiki/Bubble_sort#Optimizing_bubble_sort>
-	int n = last - first;	// unsorted length
-	int lastSwappedIndex = 0;
-	while (n > 1) {
-		lastSwappedIndex = 0;
-		for (int i = 1; i < n; ++i) {
-			if (comp(*(first + i), *(first + i - 1))) {
-				swap(first + i, first + i - 1);
-				lastSwappedIndex = i;
-			}
-		}
-		n = lastSwappedIndex;
-	}
-#endif // defined Cocktail_shaker_sort
 }
 
+// The main idea is like shellsort, but based on
+// bubble sort (shellsort is based on insertion sort).
+// See also <https://en.wikipedia.org/wiki/Comb_sort>
 template<typename RandomIt, typename Compare>
-void sortingMethods<RandomIt, Compare>::CombSort(RandomIt first, RandomIt last, Compare comp)
+void comb_sort(RandomIt first, RandomIt last, Compare comp)
 {
-	// see also <https://en.wikipedia.org/wiki/Comb_sort>
-	// the main idea is like Shellsort, but based on bubble sort (Shellsort is based on insertion sort)
 	int n = last - first;	// unsorted length
 	int gap = n;
-	auto shrink = 1.3;	// gap shrink factor. 1.3 has been suggested
+	auto shrink = 1.3;	// gap shrink factor 1.3 has been suggested
 	bool sorted = false;
 	while (sorted == false) {
 		gap = int(gap / shrink);
@@ -588,7 +466,7 @@ void sortingMethods<RandomIt, Compare>::CombSort(RandomIt first, RandomIt last, 
 		}
 		for (int i = 0; i + gap < n; ++i) {
 			if (comp(*(first + i + gap), *(first + i))) {
-				swap(first + i + gap, first + i);
+				iter_swap(first + i + gap, first + i);
 				sorted = false;
 			}
 		}
@@ -596,30 +474,153 @@ void sortingMethods<RandomIt, Compare>::CombSort(RandomIt first, RandomIt last, 
 }
 
 template<typename RandomIt, typename Compare>
-void sortingMethods<RandomIt, Compare>::CountingSort(RandomIt first, RandomIt last, Compare comp)
+void counting_sort(RandomIt first, RandomIt last, Compare comp)
 {
 }
 
 template<typename RandomIt, typename Compare>
-void sortingMethods<RandomIt, Compare>::BucketSort(RandomIt first, RandomIt last, Compare comp)
+void bucket_sort(RandomIt first, RandomIt last, Compare comp)
 {
 }
 
 template<typename RandomIt, typename Compare>
-void sortingMethods<RandomIt, Compare>::RadixSort(RandomIt first, RandomIt last, Compare comp)
+void radix_sort(RandomIt first, RandomIt last, Compare comp)
 {
 }
 
-template<typename RandomIt, typename Compare>
-inline void sortingMethods<RandomIt, Compare>::swap(RandomIt it_1, RandomIt it_2)
+/* Some popular sorting algorithms */
+enum class Mode
 {
-	// swap content of two objects that are pointed by iterator (pointer) it_1 & it_2 respectively
-	auto tmp{ std::move(*it_1) };
-	*it_1 = std::move(*it_2);
-	*it_2 = std::move(tmp);
+	// simple sorts
+	insertion_sort, selection_sort,
 
-	// or we should change the two nodes' links when swapping data is expensive
-	// changing links operations...
+	// efficient sorts
+	merge_sort, heapsort, quicksort, shellsort,
+
+	// bubble sort and variants
+	bubble_sort, comb_sort,
+
+	// distribution sort
+	counting_sort, bucket_sort, radix_sort
+};
+
+/* Sort an array (random access) ranging [first, last) */
+template<typename RandomIt, typename Compare = std::less<typename std::iterator_traits<RandomIt>::value_type>>
+void sort(RandomIt first, RandomIt last, Compare comp = Compare{}, Mode mode = Mode::quicksort)
+{
+	switch (mode)
+	{
+	case Mode::insertion_sort:
+		insertion_sort(first, last, comp);
+		break;
+	case Mode::selection_sort:
+		selection_sort(first, last, comp);
+		break;
+	case Mode::merge_sort:
+		merge_sort(first, last, comp);
+		break;
+	case Mode::heapsort:
+		heapsort(first, last, comp);
+		break;
+	case Mode::quicksort:
+		quicksort(first, last, comp);
+		break;
+	case Mode::shellsort:
+		shellsort(first, last, comp);
+		break;
+	case Mode::bubble_sort:
+		bubble_sort(first, last, comp);
+		break;
+	case Mode::comb_sort:
+		comb_sort(first, last, comp);
+		break;
+	case Mode::counting_sort:
+		counting_sort(first, last, comp);
+		break;
+	case Mode::bucket_sort:
+		bucket_sort(first, last, comp);
+		break;
+	case Mode::radix_sort:
+		radix_sort(first, last, comp);
+		break;
+	default:
+		break;
+	}
+}
+/*
+// This one has a drawback that cannot use lambda functions
+template<class RandomIt, class U>
+void sort(RandomIt first, RandomIt last, bool (*comp)(const U& a, const U& b), Mode mode = Mode::quicksort)
+{
+	// implementation...
+}
+
+// Or like this using only one template argument via iterator_traits
+template<class RandomIt>
+void sort(RandomIt first, RandomIt last, bool (*comp)(
+	const typename std::iterator_traits<RandomIt>::value_type& a,
+	const typename std::iterator_traits<RandomIt>::value_type& b), Mode mode = Mode::quicksort)
+{
+	// implementation...
+}
+*/
+
+/**
+ * Time complexity: O(nlog(k)). It's fast when k isn't very large.
+ * See also https://en.wikipedia.org/wiki/Partial_sorting, and
+ * https://www.geeksforgeeks.org/sort-vs-partial_sort-vs-nth_element-sort-in-c-stl/
+ * Alternative implementations:
+ * 
+ * 1. Partial heapsort: Build a heap containing all n elements and then
+ *    perform pop_heap() k times, giving time complexity O(n+klog(n)).
+ * 
+ * 2. Use selection algorithms (say quickselect) to partition the array, 
+ *    and then sort these k smallest (largest) elements, at a total cost
+ *    of O(n+klog(k)) operations.
+ * 
+ * 3. Specialized partial sorting algorithms based on mergesort and quicksort,
+ *    with expected time O(n+klog(k)).
+ */ 
+template<typename RandomIt, typename Compare = std::less<typename std::iterator_traits<RandomIt>::value_type>>
+void partial_sort(RandomIt first, RandomIt middle, RandomIt last, Compare comp = Compare{})
+{
+	using namespace myHeap;
+	make_heap(first, middle, comp);
+	auto k = middle - first;
+	for (auto i = middle; i != last; ++i) {
+		if (comp(*i, *first)) {
+			iter_swap(i, first);
+			sift_down(0, first, k, comp);
+		}
+	}
+	sort_heap(first, middle, comp);
+}
+
+// same effect as stl nth_element
+// see also https://en.wikipedia.org/wiki/Quickselect and
+// https://en.cppreference.com/w/cpp/algorithm/nth_element
+template<typename RandomIt, typename Compare = std::less<typename std::iterator_traits<RandomIt>::value_type>>
+void quickselect(RandomIt first, RandomIt kth, RandomIt last, Compare comp = Compare{})
+{
+	while (true) {
+		if (last - first < 2) return;
+		auto pivot = Lomuto_partition(first, last - 1, comp);
+		if (pivot == kth) return;
+		else if (pivot < kth) first = pivot + 1;
+		else last = pivot;
+	}
+}
+
+template<typename RandomIt, typename Compare = std::less<typename std::iterator_traits<RandomIt>::value_type>>
+void partial_quicksort(RandomIt first, RandomIt kth, RandomIt last, Compare comp = Compare{})
+{
+	if (last - first < 2) return;
+	auto pivot = Hoare_partition(first, last - 1, comp);
+	partial_quicksort(first, kth, pivot + 1, comp);
+	/*auto pivot = Lomuto_partition(first, last - 1, comp);
+	partial_quicksort(first, kth, pivot, comp);*/
+	if (pivot < kth - 1)
+		partial_quicksort(pivot + 1, kth, last, comp);
 }
 
 }// namespace mySortingAlgo

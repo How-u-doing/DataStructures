@@ -4,18 +4,10 @@
 #include <string>
 #include <cassert>
 
-
-//#define BINARY_INSERTION_SORT	  // binary search for insertion sort
-
-// define quciksort partition scheme
-//#define QUICK_INSERTION_SORT
-//#define Quick3way_partition
-#define Fast3way_partition
-//#define Lomuto_partition
-//#define Median3_partition
-//#define Hoare_partition
-
-#define Cocktail_shaker_sort // define bubble sort method
+// define quciksort partition scheme: Hoare's partition by default
+//#define QUICK3WAY_PARTITION
+//#define FAST3WAY_PARTITION
+//#define LOMUTO_PARTITION
 
 #include "mySort.h"
 
