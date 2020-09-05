@@ -3,7 +3,7 @@
  *  https://github.com/How-u-doing/DataStructures/blob/master/Sorting/mySort.h
  */
 #ifndef MYSORT_H
-#define MYSOER_H
+#define MYSORT_H
 #include <functional> // std::less<T>
 #include <utility>	  // std::move
 
