@@ -1,9 +1,9 @@
-// tree header
+﻿// tree header
 #ifndef TREE_H
 #define TREE_H
 #include "SeqStack.h"
-#include <memory>
 #include <cassert>
+#include <string>
 #include <iostream>
 
 template<typename T>
@@ -21,7 +21,7 @@ class Tree {
 public:
 	using node_ptr = typename TreeNode<T>::node_ptr;
 
-	Tree() { _root = nullptr; }
+	Tree() : _root(nullptr) {}
 	~Tree() { destroy_tree(_root); };
 	void create_tree(std::istream& is, node_ptr& t);
 	void destroy_tree(node_ptr t);
@@ -42,12 +42,24 @@ public:
 
 	// print paths from root node to leaves
 	void print_path(node_ptr t)const;
-
 	void print_tree(node_ptr t)const;
+
+	void print(node_ptr dir)const {
+		if (dir == nullptr) return;
+		std::cout << dir->_data << '\n';
+		size_t dir_count = 0, file_count = 0;
+		dfs_print(dir, "", dir_count, file_count);
+		std::cout << '\n' << dir_count << " directories, " << file_count << " files\n";
+	}
 	
 private:
 	node_ptr _root;
 	static void visit(node_ptr t);
+	void dfs_print(node_ptr dir, const std::string& children_prefix, size_t& dir_count, size_t& file_count)const;
+
+	// precondition: t != nullptr
+	bool is_last_child(node_ptr t) const { return t->_next_sibling == nullptr; }
+	bool has_children(node_ptr t) const { return t->_first_child != nullptr; }
 };
 
 template<typename U>
@@ -202,6 +214,28 @@ void Tree<T>::print_tree(node_ptr t) const
 			}
 			std::cout << ')';
 		}
+	}
+}
+
+template<typename T>
+void Tree<T>::dfs_print(node_ptr t, const std::string& children_prefix, size_t& dir_count, size_t& file_count) const
+{
+	if (t == nullptr) return;
+	for (node_ptr i = t->_first_child; i != nullptr; i = i->_next_sibling) {
+		std::string addition{};
+		if (is_last_child(i)) {
+			std::cout << children_prefix << "└── " << i->_data << '\n';
+			addition = "    "; // 4 whitespace
+		}
+		else {
+			std::cout << children_prefix << "├── " << i->_data << '\n';
+			addition = "|   "; // 3 ws
+		}
+
+		if (has_children(i)) {// is_directory
+			dfs_print(i, children_prefix + addition, ++dir_count, file_count);
+		}
+		else ++file_count;
 	}
 }
 
