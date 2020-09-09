@@ -31,19 +31,20 @@ public:
 	node_ptr get_root()const { return _root; }
 	bool empty()const { return _root == nullptr; }
 	size_t depth(node_ptr t)const;
-	size_t count_node(node_ptr t)const;
+	size_t count_node(node_ptr t)const { return count_node(t, true); }		
 	size_t count_leaves(node_ptr t)const;
 
-	// We do NOT set traverses as const member functions
+	// We do NOT set traversals as const member functions
 	// given that we may need to modify those nodes.
 	// see also <https://isocpp.org/wiki/faq/pointers-to-members>
 	void preorder(node_ptr t, void (*visit)(node_ptr) = visit);
 	void postorder(node_ptr t, void (*visit)(node_ptr) = visit);
 
 	// print paths from root node to leaves
-	void print_path(node_ptr t)const;
-	void print_tree(node_ptr t)const;
+	void print_path(node_ptr t)const { SeqStack<T> s; print_path(t, s, true); }
+	void print_tree(node_ptr t)const; // print tree in generalized list form
 
+	// print tree by lines, like Linux tree command
 	void print(node_ptr dir)const {
 		if (dir == nullptr) return;
 		std::cout << dir->_data << '\n';
@@ -55,6 +56,8 @@ public:
 private:
 	node_ptr _root;
 	static void visit(node_ptr t);
+	size_t count_node(node_ptr t, bool is_same_level) const;
+	void print_path(node_ptr t, SeqStack<T>& s, bool is_same_level) const;
 	void dfs_print(node_ptr dir, const std::string& children_prefix, size_t& dir_count, size_t& file_count)const;
 
 	// precondition: t != nullptr
@@ -69,8 +72,8 @@ std::istream& operator>>(std::istream& is, Tree<U>& tree)
 	return is;
 }
 
-// create tree by generalized list
-// e.g. A(B(E), C, D(F,G))#
+// create tree by generalized list, e.g. A(B(E), C, D(F,G))#
+// precondition: t == nullptr
 template<>	// specialization for char type
 void Tree<char>::create_tree(std::istream& is, node_ptr& t)
 {
@@ -80,7 +83,6 @@ void Tree<char>::create_tree(std::istream& is, node_ptr& t)
 	SeqStack<node_ptr> pcs;	// pos of current sibling in each level
 	node_ptr curr{};		// pointer to new node
 	node_ptr parent{};		// pointer to previous built parent node
-	node_ptr sibling_pos{};
 	char ch;
 	is >> ch;
 	while (ch != end_tag) {
@@ -94,17 +96,10 @@ void Tree<char>::create_tree(std::istream& is, node_ptr& t)
 			if (t == nullptr)	// alright, actually we need t to be null under a typical input
 				t = curr;
 			else {// a stack underflow bug might occur if t
-				  // is non-null and input start with letter
+				  // is non-null and input start with a letter
 				parent = s.top();
-				if (CS == 1) {
-					pcs.push(parent->_first_child = curr);
-				}
-				else {
-					sibling_pos = pcs.top();
-					sibling_pos->_next_sibling = curr;
-					// update current sibling pos
-					pcs.top() = sibling_pos->_next_sibling;
-				}
+				if (CS == 1) pcs.push(parent->_first_child = curr);
+				else pcs.top() = pcs.top()->_next_sibling = curr;
 			}
 		}
 		is >> ch;
@@ -137,27 +132,32 @@ size_t Tree<T>::depth(node_ptr t) const
 }
 
 template<typename T>
-size_t Tree<T>::count_node(node_ptr t) const
+size_t Tree<T>::count_node(node_ptr t, bool is_same_level) const
 {
+	if (t == nullptr)	return 0;
+	if (is_same_level) 	return 1 + count_node(t->_first_child, false);
+	else				return 1 + count_node(t->_first_child, false)
+								 + count_node(t->_next_sibling, false);
+
+	// count_node(node_ptr t) alternative impl:
+	/*
 	if (t == nullptr) return 0;
 	size_t count = 1;
-	count += count_node(t->_first_child);
-	count += count_node(t->_next_sibling);
-
+	for (node_ptr i = t->_first_child; i != nullptr; i = i->_next_sibling) {
+		count += count_node(i);
+	}
 	return count;
+	*/
 }
 
 template<typename T>
 size_t Tree<T>::count_leaves(node_ptr t) const
 {
-	static size_t count = 0;
-	if (t != nullptr) {
-		if (t->_first_child == nullptr)
-			++count;
-		else
-			count_leaves(t->_first_child);
-
-		count_leaves(t->_next_sibling);
+	if (t == nullptr) return 0;
+	size_t count = 0;
+	for (node_ptr i = t->_first_child; i != nullptr; i = i->_next_sibling) {
+		if (!has_children(i))  count += 1;
+		else count += count_leaves(i);
 	}
 	return count;
 }
@@ -183,17 +183,16 @@ void Tree<T>::postorder(node_ptr t, void(*visit)(node_ptr))
 }
 
 template<typename T>
-void Tree<T>::print_path(node_ptr t) const
-{
-	static SeqStack<T> s;
+void Tree<T>::print_path(node_ptr t, SeqStack<T>& s, bool is_same_level) const
+{	
 	while (t != nullptr) {
 		s.push(t->_data);
-		if (t->_first_child == nullptr) {
+		if (!has_children(t)) {
 			s.bottom_up_traverse();
 			std::cout << '\n';
 		}
-		else
-			print_path(t->_first_child);
+		else print_path(t->_first_child, s, false);
+		if (is_same_level) return; //do Not print paths for siblings when first called
 		s.pop();
 		t = t->_next_sibling;
 	}
@@ -218,10 +217,10 @@ void Tree<T>::print_tree(node_ptr t) const
 }
 
 template<typename T>
-void Tree<T>::dfs_print(node_ptr t, const std::string& children_prefix, size_t& dir_count, size_t& file_count) const
+void Tree<T>::dfs_print(node_ptr dir, const std::string& children_prefix, size_t& dir_count, size_t& file_count) const
 {
-	if (t == nullptr) return;
-	for (node_ptr i = t->_first_child; i != nullptr; i = i->_next_sibling) {
+	if (dir == nullptr) return;
+	for (node_ptr i = dir->_first_child; i != nullptr; i = i->_next_sibling) {
 		std::string addition{};
 		if (is_last_child(i)) {
 			std::cout << children_prefix << "└── " << i->_data << '\n';
