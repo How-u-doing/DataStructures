@@ -45,20 +45,16 @@ public:
 	void print_tree(node_ptr t)const; // print tree in generalized list form
 
 	// print tree by lines, like Linux tree command
-	void print(node_ptr dir)const {
-		if (dir == nullptr) return;
-		std::cout << dir->_data << '\n';
-		size_t dir_count = 0, file_count = 0;
-		dfs_print(dir, "", dir_count, file_count);
-		std::cout << '\n' << dir_count << " directories, " << file_count << " files\n";
-	}
-	
+	void print(size_t level = 100) const { print(_root, level); }
+
 private:
 	node_ptr _root;
 	static void visit(node_ptr t);
 	size_t count_node(node_ptr t, bool is_same_level) const;
 	void print_path(node_ptr t, SeqStack<T>& s, bool is_same_level) const;
-	void dfs_print(node_ptr dir, const std::string& children_prefix, size_t& dir_count, size_t& file_count)const;
+	void print(node_ptr dir, size_t level) const;
+	void dfs_print(node_ptr dir, const std::string& children_prefix,
+		size_t& dir_count, size_t& file_count, size_t curr_level, size_t max_level) const;
 
 	// precondition: t != nullptr
 	bool is_last_child(node_ptr t) const { return t->_next_sibling == nullptr; }
@@ -217,24 +213,48 @@ void Tree<T>::print_tree(node_ptr t) const
 }
 
 template<typename T>
-void Tree<T>::dfs_print(node_ptr dir, const std::string& children_prefix, size_t& dir_count, size_t& file_count) const
+void Tree<T>::print(node_ptr dir, size_t max_level)const {
+	if (dir == nullptr) return;
+	if (max_level == 0) {
+		std::cout << "Invalid level, must be greater than 0.\n";
+		return;
+	}
+	std::cout << "\033[0;33m" << dir->_data << "\033[0m\n";
+	size_t dir_count = 0, file_count = 0, curr_level = 1;
+	dfs_print(dir, "", dir_count, file_count, curr_level, max_level);
+	std::cout << '\n' << dir_count << " directories, " << file_count << " files\n";
+}
+
+template<typename T>
+void Tree<T>::dfs_print(node_ptr dir, const std::string& children_prefix,
+	size_t& dir_count, size_t& file_count, size_t curr_level, size_t max_level) const
 {
 	if (dir == nullptr) return;
 	for (node_ptr i = dir->_first_child; i != nullptr; i = i->_next_sibling) {
-		std::string addition{};
-		if (is_last_child(i)) {
-			std::cout << children_prefix << "└── " << i->_data << '\n';
-			addition = "    "; // 4 whitespace
+		if (!is_last_child(i)) {
+			if (has_children(i)) {// is_directory
+				++dir_count;
+				std::cout << children_prefix << "├── " << "\033[0;33m" << i->_data << "\033[0m\n";
+				if (curr_level < max_level)// don't write as ++curr_level, since it will affect its (following) siblings
+					dfs_print(i, children_prefix + "|   ", dir_count, file_count, 1 + curr_level, max_level);
+			}
+			else {
+				++file_count;
+				std::cout << children_prefix << "├── " << "\033[1;34m" << i->_data << "\033[0m\n";
+			}
 		}
-		else {
-			std::cout << children_prefix << "├── " << i->_data << '\n';
-			addition = "|   "; // 3 ws
+		else {// last child
+			if (has_children(i)) {// is_directory
+				++dir_count;
+				std::cout << children_prefix << "└── " << "\033[0;33m" << i->_data << "\033[0m\n";
+				if (curr_level < max_level)
+					dfs_print(i, children_prefix + "    ", dir_count, file_count, ++curr_level, max_level);
+			}
+			else {
+				++file_count;
+				std::cout << children_prefix << "└── " << "\033[1;34m" << i->_data << "\033[0m\n";
+			}
 		}
-
-		if (has_children(i)) {// is_directory
-			dfs_print(i, children_prefix + addition, ++dir_count, file_count);
-		}
-		else ++file_count;
 	}
 }
 

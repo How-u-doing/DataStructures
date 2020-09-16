@@ -7,10 +7,10 @@
  */
 #ifndef _TREE_H
 #define _TREE_H
-//#include <utility>
-//#include <string>
-//#include <iterator>
-#include <iostream>
+#include <memory> // std::addressof
+#include <string>
+#include <iterator> // std::reverse_iterator
+#include <iostream> // std::cout
 
 #ifndef NDEBUG
 #   define _assert(condition, message) \
@@ -34,8 +34,8 @@ struct Tree_node {
 		node_ptr left = nullptr, node_ptr right = nullptr) :
 		_data(val), _N(N), _parent(parent), _left(left), _right(right) {}
 
-	T* val_ptr() {
-		return std::addressof(_data);
+	T* val_ptr() {// in case operator& is overloaded 
+		return std::addressof(_data); // return &_data;
 	}
 	const T* val_ptr() const {
 		return std::addressof(_data);
@@ -128,23 +128,6 @@ public:
 	bool contains(const T& key) const { return find(_root, key) != nullptr; }
 
 	node_ptr& root() noexcept { return _root; }
-
-	// element access for map
-	/*Val& at(const Key& key) {
-		node_ptr x = find(_root, key);
-		if (x == nullptr) throw std::out_of_range("at() called with invalid argument: key NOT found");
-		return x->_data;
-	}
-	Val& operator[](const Key& key) {
-		node_ptr x = find(_root, key);
-		if (x == nullptr) { insert(key, Val{}); return find(_root, key)->_data; }
-		return x->_data;
-	}
-	const Val& at(const Key& key) const {
-		node_ptr x = find(_root, key);
-		if (x == nullptr) throw std::out_of_range("at() called with invalid argument: key NOT found");
-		return x->_data;
-	}*/
 
 	// return end() if not found
 	iterator find(const T& key) {
@@ -369,40 +352,56 @@ protected:
 	// print with level
 	void print(node_ptr dir, size_t max_level) const noexcept {
 		if (dir == nullptr) return;
-		std::cout << dir->_data << '\n';
+		if (max_level == 0) {
+			std::cout << "Invalid level, must be greater than 0.\n";
+			return;
+		}
+		std::cout << "\033[0;33m" << dir->_data << "\033[0m\n";
 		size_t dir_count = 0, file_count = 0, curr_level = 1;
 		dfs_print(dir, "", dir_count, file_count, curr_level, max_level);
 		std::cout << '\n' << dir_count << " directories, " << file_count << " files\n";
 	}
 
 	void dfs_print(node_ptr dir, const std::string& children_prefix, size_t& dir_count,
-		size_t& file_count, size_t& curr_level, size_t max_level) const noexcept
+		size_t& file_count, size_t curr_level, size_t max_level) const noexcept
 	{
 		if (dir == nullptr) return;
 		node_ptr curr{};
 		if ((curr = dir->_left) != nullptr) {
-			std::cout << children_prefix << "├── " << curr->_data << '\n';
-			if (has_children(curr) && curr_level < max_level)
-				dfs_print(curr, children_prefix + "|   ", ++dir_count, file_count, ++curr_level, max_level);
-			else ++file_count;
+			if (has_children(curr)) {
+				++dir_count;                            // brown color for directories
+				std::cout << children_prefix << "├── " << "\033[0;33m" << curr->_data << "\033[0m\n";
+				if (curr_level < max_level)// don't write as ++curr_level, since it will affect its right sibling
+					dfs_print(curr, children_prefix + "|   ", dir_count, file_count, 1 + curr_level, max_level);
+			}
+			else {
+				++file_count;                 // default colors for files
+				std::cout << children_prefix << "├── " << curr->_data << "\n";
+			}
 		}
-		else if (dir->_right != nullptr) {// only have right child, print left child as null
-			std::cout << children_prefix << "├── " << "null\n";
+		else if (dir->_right != nullptr) {// only have right child, print left child as null (bold blue)
+			std::cout << children_prefix << "├── " << "\033[1;34m" << "null" << "\033[0m\n";
 		}
 
 		if ((curr = dir->_right) != nullptr) {
-			std::cout << children_prefix << "└── " << curr->_data << '\n';
-			if (has_children(curr) && curr_level < max_level)
-				dfs_print(curr, children_prefix + "    ", ++dir_count, file_count, ++curr_level, max_level);
-			else ++file_count;
+			if (has_children(curr)) {
+				++dir_count;
+				std::cout << children_prefix << "└── " << "\033[0;33m" << curr->_data << "\033[0m\n";
+				if (curr_level < max_level)
+					dfs_print(curr, children_prefix + "    ", dir_count, file_count, ++curr_level, max_level);
+			}
+			else {
+				++file_count;
+				std::cout << children_prefix << "└── " << curr->_data << "\n";
+			}
 		}
-		else if (dir->_left != nullptr) {// only have left child, print right child as null
-			std::cout << children_prefix << "└── " << "null\n";
+		else if (dir->_left != nullptr) {// only have left child, print right child as null (bold blue)
+			std::cout << children_prefix << "└── " << "\033[1;34m" << "null" << "\033[0m\n";
 		}
 	}
 
 	// precondition: dir != nullptr
-	bool has_children(node_ptr dir) const noexcept {
+	static bool has_children(node_ptr dir) noexcept {
 		return dir->_left != nullptr || dir->_right != nullptr;
 	}
 

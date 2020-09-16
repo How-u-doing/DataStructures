@@ -23,7 +23,8 @@ void tree_operations()
 
 	cout << "\nThe tree inputted is: "; tree.print_tree(root);
 	cout << "\nOr as follows:\n\n";
-	tree.print(root);
+	tree.print();
+	//tree.print(2); // print only 2 levels
 
 	cout << "\nAll paths from root to leaves are as follows:\n";
 	tree.print_path(root);
