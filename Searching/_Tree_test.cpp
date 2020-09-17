@@ -2,6 +2,7 @@
 #include <iostream>
 
 using namespace std;
+using namespace mySymbolTable;
 
 int main(int argc, char* argv[])
 {
@@ -39,9 +40,7 @@ int main(int argc, char* argv[])
 	for (auto it : st) {
 		cout << it << "  ";
 	}
-
 	cout << "\n\n";
 	st.print();
-
 	return 0;
 }
