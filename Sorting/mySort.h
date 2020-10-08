@@ -6,10 +6,15 @@
 #define MYSORT_H
 #include <functional> // std::less<T>
 #include <utility>	  // std::move
+#include <cstddef>	  // std::ptrdiff_t
 
 namespace mySortingAlgo{
 
-const int ISORT_MAX = 4;	// maximum size for insertion sort, 32 might be appropriate. For test, we set it 4 here
+#ifdef NDEBUG
+	const int ISORT_MAX = 32;	// maximum size for insertion sort
+#else 
+	const int ISORT_MAX = 4;	// for test
+#endif
 
 // swap content of two objects that are pointed to
 // by iterator (pointer) it_1 & it_2, respectively
@@ -105,7 +110,7 @@ void merge(RandomIt low, RandomIt mid, RandomIt high, Compare comp)
 		b[i] = *it++;
 	}
 
-	auto i = 0, k = 0, j = m, n = high - low + 1;
+	std::ptrdiff_t i = 0, k = 0, j = m, n = high - low + 1;
 	while (i < m && j < n) {
 		*(low + k++) = comp(*(low + j), b[i]) ? *(low + j++) : b[i++];
 	}
@@ -137,7 +142,7 @@ namespace myHeap {
 
 	template <typename T>
 	inline void swap(T& a, T& b) {
-		T tmp{ std::move(a) };
+		T tmp = std::move(a);
 		a = std::move(b);
 		b = std::move(tmp);
 	}
