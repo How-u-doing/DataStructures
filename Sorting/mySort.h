@@ -571,7 +571,7 @@ void sort(RandomIt first, RandomIt last, bool (*comp)(
 */
 
 /**
- * Time complexity: O(nlog(k)). It's fast when k isn't very large.
+ * Time complexity: O(k+(n-k)log(k)+klog(k)). It's fast when k isn't very large.
  * See also https://en.wikipedia.org/wiki/Partial_sorting, and
  * https://www.geeksforgeeks.org/sort-vs-partial_sort-vs-nth_element-sort-in-c-stl/
  * Alternative implementations:
