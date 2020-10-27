@@ -57,7 +57,7 @@ int main(int argc, char* argv[])
 
 		for (string word; ifs >> word;) {
 			if (word.length() < n) continue; // dump short word 
-			transform(word.begin(), word.end(), word.begin(), ::tolower); // note that tolower is global namespace
+			transform(word.begin(), word.end(), word.begin(), ::tolower); // note that tolower is of global namespace
 			++mp[word];
 		}
 		
