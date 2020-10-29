@@ -1,14 +1,14 @@
 ## \_Tree.h (also set) test
-![](_Tree_test.png)
+![](img/_Tree_test.png)
 
 ## TreeMap.h test
-![](TreeMap_test.png)
+![](img/TreeMap_test.png)
 
-## Count words using my symbol table
-![](TreeMap_count_words.png)
+## Count words on CoCalc
+![](img/count_words_CoCalc.png)
 
-## Python routine and C++ std::unordered\_map version for counting words
-![](python_and_cpp_count_words.png)
+## Count words on my local machine
+![](img/count_words_local_machine.png)
 
-Additionally, here is some tests under my *Kali* Linux virtual machine,
-see `virtual_machine_tests.png`.
+Additionally, here are some tests under my *Kali* Linux virtual machine,
+see [virtual_machine_tests.png](img/virtual_machine_tests.png).
