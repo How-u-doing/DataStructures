@@ -69,9 +69,20 @@ public class count_words {
             minHeap.poll();
         }
 
-        for(Map.Entry pair : arr) {
-            System.out.println(pair.getKey()
-                    + " :  " + pair.getValue());
+        if(arr.length > 10){ // print first 5 and last 5 items
+            for(i = 0; i < 5; ++i)
+                System.out.println(arr[i].getKey()
+                        + " :  " + arr[i].getValue());
+            System.out.println("...");
+            for(i = k-5; i < k; ++i)
+                System.out.println(arr[i].getKey()
+                        + " :  " + arr[i].getValue());
+        }
+        else { // print all if no more than 10 items
+            for(Map.Entry pair : arr) {
+                System.out.println(pair.getKey()
+                        + " :  " + pair.getValue());
+            }
         }
     }
 }

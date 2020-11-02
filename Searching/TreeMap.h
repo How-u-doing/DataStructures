@@ -56,6 +56,7 @@ public:
 	}
 
 	// element access
+	// or simply: return insert(value_type{ key, T() })->second;
 	T& operator[](const Key& key) {
 		iterator it = find(key);
 		if (it == end()) { return insert(value_type{ key, T() })->second; }
@@ -158,12 +159,10 @@ public:
 	// select the kth smallest (greatest) element
 	// return end() if out of range
 	iterator select(size_t k) {
-		if (k >= size()) return end();
 		return _tree.select(k);
 	}
 
 	const_iterator select(size_t k) const {
-		if (k >= size()) return end();
 		return _tree.select(k);
 	}
 
@@ -175,16 +174,16 @@ public:
 	// modifiers
 	void clear() { _tree.clear(); }
 
-	iterator insert(const value_type& val) {
-		return _tree.insert(val);
+	iterator insert(const value_type& kvpair) {
+		return _tree.insert(kvpair);
 	}
 	
 	iterator insert(const Key& key, const T& val) {
 		return _tree.insert(value_type{ key,val });
 	}
 
-	iterator insert_or_assign(const value_type& val) {
-		return _tree.insert_or_assign(val);
+	iterator insert_or_assign(const value_type& kvpair) {
+		return _tree.insert_or_assign(kvpair);
 	}
 
 	iterator insert_or_assign(const Key& key, const T& val) {
