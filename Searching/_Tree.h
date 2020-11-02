@@ -95,6 +95,8 @@ public:
 
 	Tree(const _self& rhs) : _root{ copy(rhs._root, nullptr) }, _comp{ rhs._comp } {}
 
+	~Tree() { clear(); }
+
 	_self& operator=(const _self& rhs) {
 		if (this == &rhs) return *this;
 		clear(); // destroy old resources
