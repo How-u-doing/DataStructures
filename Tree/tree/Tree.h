@@ -22,9 +22,9 @@ public:
 	using node_ptr = typename TreeNode<T>::node_ptr;
 
 	Tree() : _root(nullptr) {}
-	~Tree() { destroy_tree(_root); };
+	~Tree() { destroy_tree(); };
 	void create_tree(std::istream& is, node_ptr& t);
-	void destroy_tree(node_ptr t);
+	void destroy_tree() { destroy_tree(_root); _root = nullptr; }
 	template<typename U>
 	friend std::istream& operator>>(std::istream& is, Tree<U>& tree);
 
@@ -49,6 +49,7 @@ public:
 
 private:
 	node_ptr _root;
+	void destroy_tree(node_ptr t);
 	static void visit(node_ptr t);
 	size_t count_node(node_ptr t, bool is_same_level) const;
 	void print_path(node_ptr t, SeqStack<T>& s, bool is_same_level) const;

@@ -24,7 +24,7 @@ public:
 
 	BinTree() :	_root(nullptr) {}
 	BinTree(const BinTree<T>& tree);
-	~BinTree() { destroy_tree(_root); }
+	~BinTree() { destroy_tree(); }
 
 	void create_tree(std::istream& is) { create_tree(is, _root); }
 	void print_tree(std::ostream& os) const { print_tree(os, _root); }
@@ -34,7 +34,7 @@ public:
 	void print_tree(std::ostream& os, node_ptr subtree) const;
 	void print_path(std::ostream& os, node_ptr subtree) const;
 	node_ptr duplicate(node_ptr subtree);
-	void destroy_tree(node_ptr subtree);
+	void destroy_tree() { destroy_tree(_root); _root = nullptr; }
 	BinTree& operator=(const BinTree<T>& tree);
 	template<typename U>
 	friend std::istream& operator>>(std::istream& is, BinTree<U>& tree);
@@ -69,6 +69,8 @@ public:
 
 private:
 	node_ptr _root;
+
+	void destroy_tree(node_ptr subtree);
 };
 
 template<typename T>
