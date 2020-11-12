@@ -185,7 +185,7 @@ std::string parse_stem(const std::string& filename) {
 	for (; i >= 0; --i) {
 		if (filename[i] == '.') break;
 	}
-	if (i == 0) { // e.g. ".bashrc", filename stem is itself
+	if (i <= 0) { // e.g. ".bashrc", "Makefile", filename stems are themselves
 		return filename;
 	}
 	return filename.substr(0, i);
