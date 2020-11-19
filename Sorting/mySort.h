@@ -250,10 +250,10 @@ RandomIt Lomuto_partition(RandomIt low, RandomIt high, Compare comp)
 	// See 'CLRS-3e' p171-172 (illustration, Fig7.1).
 	// See also <https://en.wikipedia.org/wiki/quicksort#Lomuto_partition_scheme>.
 	mid3(low, high, comp); // make high = median of {low, mid, high}
-	auto pivot = high;	   // choose the rightmost element as pivot
+	auto pivot = *high;	   // choose the rightmost element as pivot
 	auto i = low;
 	for (auto j = low; j != high; ++j) {
-		if (comp(*j, *pivot))
+		if (comp(*j, pivot))
 			iter_swap(i++, j);
 	}
 	iter_swap(i, high);
@@ -267,11 +267,11 @@ RandomIt Hoare_partition(RandomIt low, RandomIt high, Compare comp)
 {
 	// see also <https://en.wikipedia.org/wiki/quicksort#Hoare_partition_scheme>
 	mid3(low, high, comp); // make high = median of {low, mid, high}
-	auto pivot = high;	   // choose the rightmost element as pivot
+	auto pivot = *high;	   // choose the rightmost element as pivot
 	auto i = low, j = high;
 	while (true) {
-		while (comp(*i, *pivot)) ++i;
-		while (comp(*pivot, *j)) --j;
+		while (comp(*i, pivot)) ++i;
+		while (comp(pivot, *j)) --j;
 		if (i >= j) return j;
 		iter_swap(i++, j--);
 	}
@@ -296,11 +296,11 @@ void quicksort(RandomIt first, RandomIt last, Compare comp)
 	// than v, and a pointer i such that a[lt..i-1] are equal to v, and a[i..gt] are not yet examined.
 		
 	auto lt = first, i = first + 1, gt = last - 1;
-	auto pivot = first;
+	auto pivot = *first;
 	while (i <= gt) {
-		if		(comp(*i, *pivot)) iter_swap(lt++, i++);
-		else if (comp(*pivot, *i)) iter_swap(i, gt--);
-		else					   ++i;
+		if		(comp(*i, pivot)) iter_swap(lt++, i++);
+		else if (comp(pivot, *i)) iter_swap(i, gt--);
+		else					  ++i;
 	}	// Now a[lo..lt-1] < pivot = a[lt..gt] < a[gt+1..hi].
 	quicksort(first, lt, comp);		// sort a[lo..lt-1]
 	quicksort(gt + 1, last, comp);	// sort a[gt+1..hi]
@@ -315,13 +315,13 @@ void quicksort(RandomIt first, RandomIt last, Compare comp)
 	auto q = last - 1;   // q points to right first one that is equal to pivot
 	int i = -1;          // a[p+1..i-1] < pivot, a[lo..p]==pivot
 	auto j = last - 1;   // a[j+1..q-1] > pivot, a[q..hi]==pivot
-	auto pivot = q; 	 // last - 1
+	auto pivot = *q; 	 // choose the rightmost element as pivot
 	while (true) {
 		// increment i until it encounters first one that is less than pivot
-		while (comp(*(first + (++i)), *pivot));
+		while (comp(*(first + (++i)), pivot));
 
 		// decrement j until it meets first one that is greater than pivot
-		while (comp(*pivot, *(--j)))
+		while (comp(pivot, *(--j)))
 			if (j == first)
 				break;
 
@@ -332,18 +332,18 @@ void quicksort(RandomIt first, RandomIt last, Compare comp)
 		iter_swap(first + i, j);
 
 		// move all same left occurrence of pivot to beginning of array
-		if (!comp(*(first + i), *pivot) && !comp(*pivot, *(first + i))) {
+		if (!comp(*(first + i), pivot) && !comp(pivot, *(first + i))) {
 			iter_swap(first + (++p), first + i);
 		}
 
 		// move all same right occurrence of pivot to end of array
-		if (!comp(*pivot, *j) && !comp(*j, *pivot)) {
+		if (!comp(pivot, *j) && !comp(*j, pivot)) {
 			iter_swap(j, --q);
 		}
 	}
 
 	// move pivot element to its correct index
-	if (comp(*pivot, *(first + i)))	// *(first+i)>=pivot
+	if (comp(pivot, *(first + i)))	// *(first+i)>=pivot
 		iter_swap(first + i, last - 1);
 
 	// move all left same occurrences from beginning to adjacent to a[i]
