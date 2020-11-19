@@ -266,8 +266,8 @@ template<typename RandomIt, typename Compare>
 RandomIt Hoare_partition(RandomIt low, RandomIt high, Compare comp)
 {
 	// see also <https://en.wikipedia.org/wiki/quicksort#Hoare_partition_scheme>
-	mid3(low, high, comp);
-	auto pivot = low + ((high - low) >> 1);
+	mid3(low, high, comp); // make high = median of {low, mid, high}
+	auto pivot = high;	   // choose the rightmost element as pivot
 	auto i = low, j = high;
 	while (true) {
 		while (comp(*i, *pivot)) ++i;
