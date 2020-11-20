@@ -12,9 +12,11 @@ object). For test, we'll just try them out respectively, and see how the time va
 
 Here are the results on VS2019 (x86), Ubuntu (g++ 5.4.0), Kali (g++ 10.2.0):
 
-![](results/VS2019/VS2019_bar_chart.png =500x400) | ![](results/VS2019/VS2019_line_chart.png =500x400)
-![](results/Ubuntu/ubuntu_bar_chart.png =500x400) | ![](results/Ubuntu/ubuntu_line_chart.png =500x400)	
-![](results/Kali/kali_bar_chart.png =500x400) | ![](results/Kali/kali_line_chart.png =500x400)
+![](results/VS2019/VS2019_bar_chart.png){:height="500px" width="360px"} | ![](results/VS2019/VS2019_line_chart.png){:height="500px" width="360px"}
+
+![](results/Ubuntu/ubuntu_bar_chart.png){:height="500px" width="360px"} | ![](results/Ubuntu/ubuntu_line_chart.png){:height="500px" width="360px"}
+
+![](results/Kali/kali_bar_chart.png){:height="500px" width="360px"} | ![](results/Kali/kali_line_chart.png){:height="500px" width="360px"}
 
 As we can see from above charts, Ubuntu and Kali have very similar results (they all Linux, and use g++), 
 and object size 512 bytes seems to be a threshold, that is `std::sort` wins when <= 512B, `qsort` wins when > 512B.
