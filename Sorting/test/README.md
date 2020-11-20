@@ -11,11 +11,10 @@ makes little use of each cpu cache line (only 4 bytes of information are used wh
 object). For test, we'll just try them out respectively, and see how the time varies as the object size grows.
 
 Here are the results on VS2019 (x86), Ubuntu (g++ 5.4.0), Kali (g++ 10.2.0):
-<img src="results/VS2019/VS2019_bar_chart.png" width="425"/>  <img src="results/VS2019/VS2019_line_chart.png" width="425"/>
 
-<img src="results/Ubuntu/ubuntu_bar_chart.png" width="425"/>  <img src="results/Ubuntu/ubuntu_line_chart.png" width="425"/>
-
-<img src="results/Kali/kali_bar_chart.png" width="425"/>  <img src="results/Kali/kali_line_chart.png" width="425"/>
+![](results/VS2019/VS2019_bar_chart.png =500x400) | ![](results/VS2019/VS2019_line_chart.png =500x400)
+![](results/Ubuntu/ubuntu_bar_chart.png =500x400) | ![](results/Ubuntu/ubuntu_line_chart.png =500x400)	
+![](results/Kali/kali_bar_chart.png =500x400) | ![](results/Kali/kali_line_chart.png =500x400)
 
 As we can see from above charts, Ubuntu and Kali have very similar results (they all Linux, and use g++), 
 and object size 512 bytes seems to be a threshold, that is `std::sort` wins when <= 512B, `qsort` wins when > 512B.
