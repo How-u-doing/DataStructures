@@ -1,4 +1,25 @@
 # C qsort() vs C++ sort() on large objects
+
+---
+
+Updated on Nov 21, 2020
+These tests are inaccurate and buggy, see [here](https://github.com/How-u-doing/DataStructures/tree/master/Sorting/test) instead.
+
+There is an awful bug (typo) on qsort, that is `qsort(arr1, N, sizeof(int), compare)`.
+I mistakenly wrote `sizeof(int)` applying on `qsort` for sorting an array of objects
+ which in this case are of `Employee` type. They're NOT of size `int` type!! What a 
+horrible typo! And the compilers all remained silient on this!! We were [q]sorting an
+array starting at address `arr1`, which is of address type `Employee*` and will be
+casted to `void*` for generic sorting using the comparator which uses `void*` as its
+two parameters' type. Think about this! Sorting the array every 4 bytes (`sizeof(int)`)
+by using the comparator to dereference and access the structure's data member
+ (filed `id`). For most of times, it's not accessing them from the begining of those
+objects, but rather in some inner parts of them. Awfull!! No warnning, no error messages
+at all!!! So we would have results like this (astouding):
+![](Sorting/test/results/VS2019/VS2019_qsort_on_sizeof(int)_always.png)
+
+---
+
 Say let's try to sort 10M objects:
 ```c++
 enum Gender : char  {M, W};
@@ -48,7 +69,8 @@ sort() when sorting large objects?
 
 ---
 
-Using `gdb` debugging I found qsort() enters a file called `msort.c`, whose source code can be found 
+## Preliminary Conjecture
+Using `gdb` for debugging I found qsort() enters a file called `msort.c`, whose source code can be found 
 [here](https://github.com/lattera/glibc/blob/master/stdlib/msort.c). It seems qsort() can utilize 
 memory paging for optimization on large objects, and qsort() is smart enough to choose proper methods
 depending on the object size, array size, pagesize.  
