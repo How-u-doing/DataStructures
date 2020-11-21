@@ -16,7 +16,7 @@ by using the comparator to dereference and access the structure's data member
  (filed `id`). For most of times, it's not accessing them from the begining of those
 objects, but rather in some inner parts of them. Awfull!! No warnning, no error messages
 at all!!! So we would have results like this (astouding):
-![](Sorting/test/results/VS2019/VS2019_qsort_on_sizeof(int)_always.png)
+![](https://github.com/How-u-doing/DataStructures/raw/master/Sorting/test/results/VS2019/VS2019_qsort_on_sizeof(int)_always.png)
 
 ---
 
