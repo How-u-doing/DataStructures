@@ -6,16 +6,38 @@ struct Employee {
 	char others[28]; // try { 0, 4, 8, 16, 28, 124, 252, 396, 508, 1020 }
 };
 ```
+
+---
+
 Of course, when the size of each object becomes large, say 1024 bytes, the structrue itself is poorly designed and 
 makes little use of each cpu cache line (only 4 bytes of information are used while needing to cache the whole 
-object). In fact, if we really want to sort an array of large objects (say 1KB), we can actually use vector holding
+object). In fact, if we really want to sort an array of large objects (say 1KB), we can actually use a vector holding
 an array of pointers (`vector<Employee*>`) to those objects, and then sort those pointers. That would be much faster
 (after all we have cheapter swappings for pointer type):
- 
-![](results/Ubuntu/ubuntu_sort_pointers.png)
 
-From above screenshot we can see that sorting an array of pointers to large objects of 1KB size was almost as fast
-as `qsort` on 4 bytes `int` type objects.
+<img src="results/Ubuntu/ubuntu_gallery.png" width="500"/> <img src="results/Kali/kali_gallery.png" width="500"/>
+
+From above screenshots we can see that sorting an array of pointers (`sort_pointers()`) to large objects of 1KB size
+was almost as fast as `qsort` on 4 bytes `int` type objects. Besides, it's interesting to notice that `indirection_sort()`
+which `sort pointers -> allocate memory & copy values -> copyback -> free memory`, i.e.
+```c++
+sort(&ve[0], &ve[0] + N, comp);
+Employee* sorted_arr = (Employee*)malloc(sizeof(arr));
+for (int i = 0; i < N; ++i) {
+	sorted_arr[i] = *ve[i];
+}
+memcpy(arr, sorted_arr, sizeof(arr));
+free(sorted_arr);
+```
+has similiar effects on both Kali and Ubuntu: First time executing it will have much longer time (about `2s`) than 
+subsequent executions (about `0.75s`). One possible reason could be system warmups of `malloc` (1GB data) on heap. 
+Once the system finish the warmup exercises (loading all essential components for dynamic memory allocation), 
+subsequent calls to `malloc` could run more smoothly.
+
+So we can actually be more faster than `qsort` via `indirection_sort` on large objects, but at the cost of
+ doubling its memory usage ;)
+
+---
 
 For tests, however, we'll just try them out respectively, and see how the time varies as the object size grows.
 

@@ -21,9 +21,15 @@ namespace mySortingAlgo{
 template<typename Iter>
 inline void iter_swap(Iter it_1, Iter it_2)
 {
+#ifdef COPY_SWAP
+	auto tmp = *it_1;
+	*it_1 = *it_2;
+	*it_2 = tmp;
+#else // move swap
 	auto tmp = std::move(*it_1);
 	*it_1 = std::move(*it_2);
 	*it_2 = std::move(tmp);
+#endif // !COPY_SWAP
 }
 
 template<typename RandomIt, typename Compare>

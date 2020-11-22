@@ -1,4 +1,5 @@
-#include <algorithm>
+#define COPY_SWAP 1
+#include "mySort.h"
 #include <fstream>
 #include <iostream>
 #include <chrono>
@@ -12,10 +13,11 @@ struct Employee {
 
 const int N = (int)1e6;
 
-inline int compare(const void* a, const void* b)
-{
-	return (((Employee*)a)->id - ((Employee*)b)->id);
-}
+struct Comp {
+	bool operator()(const Employee& lhs, const Employee& rhs) {
+		return lhs.id < rhs.id;
+	}
+} comp;
 
 int main(int argc, const char* argv[])
 {
@@ -36,13 +38,13 @@ int main(int argc, const char* argv[])
 	}
 
 	auto begin = chrono::high_resolution_clock::now();
-	qsort(arr, N, sizeof(Employee), compare);
+	mySortingAlgo::sort(arr, arr + N, comp);
 	auto stop = chrono::high_resolution_clock::now();
 
 	auto time_spent = chrono::duration_cast<chrono::microseconds>(stop - begin).count();
 
 	cout << sizeof(Employee) << "\t" << sizeof(arr) << '\n';
-	cout << "Time taken by C qsort(): " << time_spent / 1e6 << "s\n";
+	cout << "Time taken by C++ mysort_copyswap(): " << time_spent / 1e6 << "s\n";
 
 	return 0;
 }

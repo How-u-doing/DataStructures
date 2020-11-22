@@ -8,7 +8,7 @@ using namespace std;
 
 struct Employee {
 	int id;
-	char others[396];
+	char others[1020];
 };
 
 const int N = (int)1e6;
