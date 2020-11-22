@@ -10,8 +10,12 @@ Of course, when the size of each object becomes large, say 1024 bytes, the struc
 makes little use of each cpu cache line (only 4 bytes of information are used while needing to cache the whole 
 object). In fact, if we really want to sort an array of large objects (say 1KB), we can actually use vector holding
 an array of pointers (`vector<Employee*>`) to those objects, and then sort those pointers. That would be much faster
-(after all we have cheapter swappings for pointer type): 
+(after all we have cheapter swappings for pointer type):
+ 
 ![](results/Ubuntu/ubuntu_sort_pointers.png)
+
+From above screenshot we can see that sorting an array of pointers to large objects of 1KB size was almost as fast
+as `qsort` on 4 bytes `int` type objects.
 
 For tests, however, we'll just try them out respectively, and see how the time varies as the object size grows.
 
