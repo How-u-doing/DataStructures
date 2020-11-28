@@ -22,7 +22,7 @@ private:
 		Node* next[R] = {};
 
 		Node() {}
-		Node(T val) : pval(new T(val)) {}
+		Node(const T& val) : pval(new T(val)) {}
 		~Node() { delete pval; }
 	};
 	using node_ptr = Node*;
@@ -124,7 +124,7 @@ protected:
 		return find(root, key, 0);
 	}
 
-	// return null if not found
+	// return pointer to key node, null if not found
 	node_ptr find(node_ptr x, const std::string& key, size_t d) const {
 		if (x == nullptr) return nullptr;
 		if (d == key.length()) return x;
@@ -186,7 +186,7 @@ protected:
 			if (x->pval == nullptr) {
 				++n;
 				x->pval = new T(val);
-			} // else do thing
+			} // else do nothing
 			return x;
 		}
 		return insert(x->next[key[d]], key, val, d + 1);
