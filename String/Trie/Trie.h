@@ -9,11 +9,11 @@
 #include <vector>
 #include <stdexcept>
 
-namespace myTrie {
+namespace mySymbolTable {
 
 // Trie Symbol Table: key=string -> value
 template<typename T>
-class TrieST {
+class Trie {
 private:
 	static const size_t R = 256; // extented ASCII
 	struct Node {
@@ -30,9 +30,9 @@ private:
 	node_ptr root;	// pointer to root node
 	size_t n;		// no. of keys in trie
 public:
-	TrieST() : root(nullptr), n(0) {}
+	Trie() : root(nullptr), n(0) {}
 
-	~TrieST() { clear(); }
+	~Trie() { clear(); }
 
 	void clear() { clear(root); root = nullptr; }
 	
@@ -84,7 +84,7 @@ public:
 		return vs; // it'll be totally fine to return large object due to RVO
 	}
 
-	// using wildcard ? to represent exactly any single character
+	// using wildcard ? to represent any single character
 	// e.g. file?.h matches first two in {file1.h, file2.h, file3.cc}
 	std::vector<std::string> keys_that_match(const std::string& pattern) const {
 		std::vector<std::string> vs;
@@ -226,6 +226,6 @@ protected:
 	}
 };
 
-} // myTrie
+} // mySymbolTable
 
 #endif // !TRIE_H

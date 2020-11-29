@@ -5,7 +5,7 @@
 int main(int argc, char* argv[])
 {
 	using namespace std;
-	using namespace myTrie;
+	using namespace mySymbolTable;
 	std::ios_base::sync_with_stdio(false);
 
 	if (argc < 2) { cerr << "lack of filename" << endl; return 1; }
@@ -13,7 +13,7 @@ int main(int argc, char* argv[])
 	ifstream ifs{ filename };
 	if (!ifs.is_open()) { cerr << "Error opening file " << filename << endl; return 2; }
 	try {
-		TrieST<int> trie;
+		Trie<int> trie;
 		int i = 0;
 		for (string word; ifs >> word; ) {
 			trie[word] = i++; // trie.insert_or_assign(word, i++);
