@@ -87,12 +87,14 @@ public:
 	// using wildcard ? to represent any single character
 	// e.g. file?.h matches first two in {file1.h, file2.h, file3.cc}
 	std::vector<std::string> keys_that_match(const std::string& pattern) const {
+		if (pattern == "") throw std::invalid_argument("pattern to keys_that_match() cannot be null");
 		std::vector<std::string> vs;
 		collect(root, "", pattern, vs);
 		return vs;
 	}
 
 	std::string longest_prefix_of(const std::string& query) {
+		if (query == "") throw std::invalid_argument("query to longest_prefix_of() cannot be null");
 		size_t len = max_len(root, query, 0, 0); // 0 if no substring of query
 		return query.substr(0, len);
 	}
