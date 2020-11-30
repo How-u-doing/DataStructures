@@ -186,8 +186,7 @@ protected:
 		if (x == nullptr) x = new Node();
 		if (d == key.length()) {
 			if (x->pval == nullptr) {
-				++n;
-				x->pval = new T(val);
+				x->pval = new T(val); ++n;
 			} // else do nothing
 			return x;
 		}
@@ -201,8 +200,7 @@ protected:
 		if (x == nullptr) x = new Node();
 		if (d == key.length()) {
 			if (x->pval == nullptr) {
-				++n;
-				x->pval = new T(val);
+				x->pval = new T(val); ++n;
 			}
 			else *(x->pval) = val; // overwrite
 			return x;
