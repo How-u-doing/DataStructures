@@ -15,6 +15,7 @@ namespace mySymbolTable {
 template<typename T>
 class Trie {
 private:
+	typedef unsigned char uchar;
 	static const size_t R = 256; // extented ASCII
 	struct Node {
 		T* pval = nullptr;  // here we use a pointer instead of an object entity given that internal
@@ -130,12 +131,12 @@ protected:
 	node_ptr find(node_ptr x, const std::string& key, size_t d) const {
 		if (x == nullptr) return nullptr;
 		if (d == key.length()) return x;
-		return find(x->next[key[d]], key, d + 1);
+		return find(x->next[(uchar)key[d]], key, d + 1);
 	}
 
 	// non-recursive version
 	/*node_ptr find(node_ptr x, const std::string& key, size_t d) const {
-		for (; x != nullptr; x = x->next[key[d++]])	
+		for (; x != nullptr; x = x->next[(uchar)key[d++]])
 			if (d == key.length())	return x;
 		return nullptr;
 	}*/
@@ -145,7 +146,7 @@ protected:
 		if (x == nullptr) return len;
 		if (x->pval != nullptr) len = d;
 		if (d == query.length()) return len;
-		return max_len(x->next[query[d]], query, d + 1, len);
+		return max_len(x->next[(uchar)query[d]], query, d + 1, len);
 	}
 
 	void clear(node_ptr x) {
@@ -159,8 +160,8 @@ protected:
 		// e.g. collect "shell" and "shore" starting at "sh"
 		if (x == nullptr) return;
 		if (x->pval != nullptr) vs.push_back(prefix);
-		for (char c = 0; c < R; ++c)
-			collect(x->next[c], prefix + c, vs);
+		for (size_t c = 0; c < R; ++c)
+			collect(x->next[c], prefix + (char)c, vs);
 	}
 
 	void collect(node_ptr x, const std::string& prefix, const std::string& pattern,
@@ -171,12 +172,12 @@ protected:
 		if (d == pattern.length() && x->pval != nullptr) vs.push_back(prefix);
 		if (d == pattern.length()) return;
 
-		char ch = pattern[d];
+		uchar ch = pattern[d];
 		if (ch == '?') { // wildcard that matches any single character
-			for (char c = 0; c < R; ++c)
-				collect(x->next[c], prefix + c, pattern, vs);
+			for (size_t c = 0; c < R; ++c)
+				collect(x->next[c],  prefix + (char)c,  pattern, vs);
 		}
-		else	collect(x->next[ch], prefix + ch, pattern, vs);		
+		else	collect(x->next[ch], prefix + (char)ch, pattern, vs);
 	}
 
 	// no overwriting if key already exists
@@ -190,7 +191,7 @@ protected:
 			} // else do nothing
 			return x;
 		}
-		return insert(x->next[key[d]], key, val, d + 1);
+		return insert(x->next[(uchar)key[d]], key, val, d + 1);
 	}
 
 	// overwrite if key already exists
@@ -205,7 +206,7 @@ protected:
 			else *(x->pval) = val; // overwrite
 			return x;
 		}
-		return insert_or_assign(x->next[key[d]], key, val, d + 1);
+		return insert_or_assign(x->next[(uchar)key[d]], key, val, d + 1);
 	}
 
 	// remove key and its associated value from trie, if any
@@ -218,7 +219,7 @@ protected:
 				x->pval = nullptr;
 			}
 		}
-		else erase(x->next[key[d]], key, d + 1);
+		else erase(x->next[(uchar)key[d]], key, d + 1);
 
 		if (is_leaf(x) && x->pval == nullptr) {
 			delete x; x = nullptr;
