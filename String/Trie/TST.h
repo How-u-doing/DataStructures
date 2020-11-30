@@ -124,7 +124,7 @@ protected:
 		return find(root, key, 0);
 	}
 
-#ifdef RECURSIVE_TST
+#if defined(RECURSIVE_TST)
 	// return pointer to key node, null if not found
 	node_ptr find(node_ptr x, const std::string& key, size_t d) const {
 		if (x == nullptr) return nullptr;
@@ -244,7 +244,7 @@ protected:
 			}
 		}
 	}
-#endif // !RECURSIVE_TST
+#endif // defined(RECURSIVE_TST)
 
 	// remove key and its associated value in TST, if any
 	void erase(node_ptr& x, const std::string& key, size_t d) {
