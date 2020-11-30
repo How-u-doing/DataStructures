@@ -1,7 +1,7 @@
 CXX := g++
 CXXFLAGS := -std=c++17 -Wall -g
 
-tests := Trie_test
+tests := Trie_test TST_test
 
 .PHONY: all clean
 
