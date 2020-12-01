@@ -250,22 +250,20 @@ protected:
 	void erase(node_ptr& x, const std::string& key, size_t d) {
 		// e.g. remove "shells" or "she" in  {"shells", "she"}
 		if (x == nullptr) return;
-		if (d == key.length() - 1) {
+		if		(key[d] < x->ch) erase(x->left,  key, d);
+		else if (key[d] > x->ch) erase(x->right, key, d);
+		else if (d < key.length() - 1) erase(x->mid, key, d + 1);
+		else {
 			if (x->pval != nullptr) { // found
 				delete x->pval;	--n;
 				x->pval = nullptr;
 			}
 		}
-		else { // d < key.length() - 1
-			if (key[d] < x->ch) erase(x->left, key, d);
-			else if (key[d] == x->ch) erase(x->mid, key, d + 1);
-			else erase(x->right, key, d);
-		}		
 
 		if (is_leaf(x) && x->pval == nullptr) {
 			delete x; x = nullptr;
 		}
-	}	
+	}
 
 	void clear(node_ptr x) {
 		if (x == nullptr) return;
