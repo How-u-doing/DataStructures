@@ -3,7 +3,7 @@
  *  ordered symbol tables:
  *  BST/AVL_tree/RB_tree(map)/set
  *  see following link for the latest version
- *  https://github.com/How-u-doing/DataStructures/tree/master/Searching/_Tree.h
+ *  https://github.com/How-u-doing/DataStructures/tree/master/Searching/TreeMap/_Tree.h
  */
 #ifndef _TREE_H
 #define _TREE_H

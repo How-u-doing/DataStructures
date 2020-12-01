@@ -1,7 +1,7 @@
 /**
  * ordered symbol table: TreeMap
  * see following link for the latest version
- * https://github.com/How-u-doing/DataStructures/tree/master/Searching/TreeMap.h
+ * https://github.com/How-u-doing/DataStructures/tree/master/Searching/TreeMap/TreeMap.h
  */
 #ifndef TREEMAP_H
 #define TREEMAP_H
