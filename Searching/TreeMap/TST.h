@@ -577,11 +577,6 @@ private:
 			return get_key(_ptr);
 		}
 
-		T& val() {
-			_assert(_ptr != nullptr, "cannot get/set the value of end() iterator");
-			return *(_ptr->pval);
-		}
-
 		const T& val() const {
 			_assert(_ptr != nullptr, "cannot get the value of end() iterator");
 			return *(_ptr->pval);
@@ -630,10 +625,6 @@ private:
 
 		std::string key() const {
 			return (--_base::base()).key();
-		}
-
-		T& val() {
-			return (--_base::base()).val();
 		}
 
 		const T& val() const {
