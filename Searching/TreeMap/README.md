@@ -1,3 +1,6 @@
+## TST.h (ternary search tree, with iterators) test
+![](img/TST_test.png)
+
 ## \_Tree.h (also set) test
 ![](img/_Tree_test.png)
 

@@ -1,20 +1,17 @@
 CXX := g++
-CFLAGS := -std=c++17 -Wall -g
+CXXFLAGS := -std=c++17 -Wall -g
 
-TESTS := _Tree_test TreeMap_test
+TESTS := _Tree_test TreeMap_test TST_test
+
+.PHONY: all clean
 
 all: $(TESTS) count_words
 
-_Tree_test: _Tree_test.cpp _Tree.h
-	$(CXX) $(CFLAGS) -o $@ $<
-
-TreeMap_test: TreeMap_test.cpp TreeMap.h _Tree.h
-	$(CXX) $(CFLAGS) -o $@ $<
+$(TESTS): %_test : %_test.cpp %.h
+	$(CXX) $(CXXFLAGS) -o $@ $<
 
 count_words: count_words.cpp TreeMap.h _Tree.h
-	$(CXX) -std=c++17 -Wall -Ofast -o $@ $<
+	$(CXX) -std=c++17 -Wall -O3 -o $@ $<
 
 clean:
 	rm -f $(TESTS) count_words
-
-.PHONY: all clean
