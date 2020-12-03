@@ -1,9 +1,17 @@
-#define MYTREEMAP // uncomment to use std::map/std::unordered_map
-#ifdef MYTREEMAP
-#include "TreeMap.h"
+/*
+ * 
+ * Base file to be included.
+ * You can also use #define MYTREEMAP or MYTST or not defining 
+ * any macros to compile and execute this translation unit.
+ * 
+ */
+#if defined(MYTREEMAP)
+	#include "TreeMap.h"
+#elif defined(MYTST)
+	#include "TST.h"
 #else
-#include <unordered_map>
-#endif // MYTREEMAP
+	#include <unordered_map>
+#endif // defined(MYTREEMAP)
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -22,6 +30,28 @@ void show_most_common_words(MapIt begin, MapIt end, size_t n)
 		wordIters.push_back(i);
 
 	auto sortedRangeEnd = wordIters.begin() + n;
+
+#if defined(MYTST)
+	std::partial_sort(wordIters.begin(), sortedRangeEnd, wordIters.end(),
+		[](MapIt it1, MapIt it2) { return it1.val() > it2.val(); });
+
+	if (n <= 10) { // print all if no more then 10 items
+		for (auto it = wordIters.cbegin(); it != sortedRangeEnd; ++it)
+		{
+			std::cout << (*it).key() << " :  " << (*it).val() << '\n';
+			//std::printf("  %-10s%10zu\n", (*it).key().c_str(), (*it).val());
+		}
+	}
+	else { // print first 5 and last 5 items
+		auto it = wordIters.cbegin();
+		for (int i = 0; i < 5; ++i, ++it)
+			std::cout << (*it).key() << " :  " << (*it).val() << '\n';
+		std::cout << "...\n";
+		it = sortedRangeEnd - 5;
+		for (int i = 0; i < 5; ++i, ++it)
+			std::cout << (*it).key() << " :  " << (*it).val() << '\n';
+	}
+#else
 	std::partial_sort(wordIters.begin(), sortedRangeEnd, wordIters.end(),
 		[](MapIt it1, MapIt it2) { return it1->second > it2->second; });
 
@@ -40,7 +70,8 @@ void show_most_common_words(MapIt begin, MapIt end, size_t n)
 		it = sortedRangeEnd - 5;
 		for (int i = 0; i < 5; ++i, ++it)
 			std::cout << (*it)->first << " :  " << (*it)->second << '\n';
-	}	
+	}
+#endif // defined(MYTST)
 }
 
 // CLI: ./count_words leipzig1M.txt 8 10000
@@ -64,11 +95,13 @@ int main(int argc, char* argv[])
 		ifstream ifs{ filename };
 		if (!ifs.is_open()) { cerr << "Error opening file " << filename << endl; return 2; }
 
-#ifdef MYTREEMAP
+#if defined(MYTREEMAP)
 		mySymbolTable::TreeMap<string, size_t> mp{};
+#elif defined(MYTST)
+		mySymbolTable::TST<size_t> mp{};
 #else
 		unordered_map<string, size_t> mp{};
-#endif // MYTREEMAP
+#endif // defined(MYTREEMAP)
 
 		for (string word; ifs >> word;) {
 			if (word.length() < n) continue; // dump short word 
