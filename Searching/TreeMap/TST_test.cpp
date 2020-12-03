@@ -58,9 +58,15 @@ int main(int argc, char* argv[])
 			<< "        backward print:\n"
 			<< "********************************\n";
 		for (auto it = tst.crbegin(); it != tst.crend(); ++it) {
-			const auto& [key, val] = *it;
-			cout << key << " : " << val << '\n';
-		}		
+			/*const auto& [key, val] = *it;
+			cout << key << " : " << val << '\n';*/
+			cout << it.key() << " : " << it.val() << '\n';
+		}
+
+		cout << "\nReset last value to 100\n";
+		auto iter = tst.rbegin();
+		iter.val() = 100; // reset
+		cout << iter.key() << " : " << iter.val() << '\n';
 		/*TST<int>::const_iterator p = tst.find("she");
 		cout << "get key: " << tst.key(p) << '\n';
 		cout << "next key: " << tst.key(++p) << '\n';

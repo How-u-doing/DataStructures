@@ -34,6 +34,8 @@ template<typename T>
 class TST {
 	class Tst_iter;
 	class Tst_const_iter;
+	class Tst_reverse_iter;
+	class Tst_const_reverse_iter;
 
 	enum class Link : char { LEFT, MID, RIGHT };
 
@@ -57,8 +59,8 @@ class TST {
 public:
 	using iterator = Tst_iter;
 	using const_iterator = Tst_const_iter;
-	using reverse_iterator = std::reverse_iterator<iterator>;
-	using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+	using reverse_iterator = Tst_reverse_iter;
+	using const_reverse_iterator = Tst_const_reverse_iter;
 
 	TST() : root(nullptr), n(0) {}
 
@@ -485,6 +487,21 @@ private:
 		// auxiliary functions
 		node_ptr ptr() const noexcept { return _ptr; }
 		const TST* cont() const noexcept { return _ptree; }	// get container
+
+		std::string key() const {
+			_assert(_ptr != nullptr, "cannot get the key of end() iterator");
+			return get_key(_ptr);
+		}
+
+		T& val() {
+			_assert(_ptr != nullptr, "cannot get/set the value of end() iterator");
+			return *(_ptr->pval);
+		}
+
+		const T& val() const {
+			_assert(_ptr != nullptr, "cannot get the value of end() iterator");
+			return *(_ptr->pval);
+		}
 	private:
 		node_ptr _ptr;
 		const TST* _ptree;		
@@ -554,9 +571,74 @@ private:
 		// auxiliary functions
 		node_ptr ptr() const noexcept { return _ptr; }
 		const TST* cont() const noexcept { return _ptree; }	// get container
+
+		std::string key() const {
+			_assert(_ptr != nullptr, "cannot get the key of end() iterator");
+			return get_key(_ptr);
+		}
+
+		T& val() {
+			_assert(_ptr != nullptr, "cannot get/set the value of end() iterator");
+			return *(_ptr->pval);
+		}
+
+		const T& val() const {
+			_assert(_ptr != nullptr, "cannot get the value of end() iterator");
+			return *(_ptr->pval);
+		}
 	private:
 		node_ptr _ptr;
 		const TST* _ptree;
+	};
+
+	class Tst_reverse_iter : public std::reverse_iterator<iterator> {
+		using _base = std::reverse_iterator<iterator>;
+	public:
+		Tst_reverse_iter() : _base() {}
+		Tst_reverse_iter(node_ptr ptr, const TST* ptree) : _base(ptr, ptree) {}
+		Tst_reverse_iter(const iterator& it) : _base(it) {}
+
+		// auxiliary functions
+		node_ptr ptr() const noexcept { return _base::base().ptr(); }
+		const TST* cont() const noexcept { return _base::base().cont(); }	// get container
+
+		std::string key() const {
+			return (--_base::base()).key();
+		}
+
+		T& val() {
+			return (--_base::base()).val();
+		}
+
+		const T& val() const {
+			return (--_base::base()).val();
+		}
+	};
+
+	class Tst_const_reverse_iter : public std::reverse_iterator<const_iterator> {
+		using _base = std::reverse_iterator<const_iterator>;
+	public:
+		Tst_const_reverse_iter() : _base() {}
+		Tst_const_reverse_iter(node_ptr ptr, const TST* ptree) : _base(ptr, ptree) {}
+		//Tst_const_reverse_iter(const iterator& it) : _base(it) {} // implicit
+		Tst_const_reverse_iter(const const_iterator& it) : _base(it) {} // crucial
+		Tst_const_reverse_iter(const reverse_iterator& it) : _base(it) {}
+
+		// auxiliary functions
+		node_ptr ptr() const noexcept { return _base::base().ptr(); }
+		const TST* cont() const noexcept { return _base::base().cont(); }	// get container
+
+		std::string key() const {
+			return (--_base::base()).key();
+		}
+
+		T& val() {
+			return (--_base::base()).val();
+		}
+
+		const T& val() const {
+			return (--_base::base()).val();
+		}
 	};
 };
 
