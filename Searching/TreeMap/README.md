@@ -1,4 +1,8 @@
-## Count words on ubuntu
+## Count Words
+| std::unordered\_map | std::map | BST | TST |
+| --- | --- | --- | --- | 
+| 5.115s | 7.058s | 7.261s | 5.708s |
+
 ![](img/count_words.png)
 
 ## TST.h (ternary search tree, with iterators) test
