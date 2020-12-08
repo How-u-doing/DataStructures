@@ -1,5 +1,5 @@
 ## Count words on ubuntu
-![](img/count_words_ubuntu.png)
+![](img/count_words.png)
 
 ## TST.h (ternary search tree, with iterators) test
 ![](img/TST_test.png)

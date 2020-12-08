@@ -9,6 +9,8 @@
 	#include "TreeMap.h"
 #elif defined(MYTST)
 	#include "TST.h"
+#elif defined(STDMAP)
+	#include <map>
 #else
 	#include <unordered_map>
 #endif // defined(MYTREEMAP)
@@ -99,6 +101,8 @@ int main(int argc, char* argv[])
 		mySymbolTable::TreeMap<string, size_t> mp{};
 #elif defined(MYTST)
 		mySymbolTable::TST<size_t> mp{};
+#elif defined(STDMAP)
+		map<string, size_t> mp{};
 #else
 		unordered_map<string, size_t> mp{};
 #endif // defined(MYTREEMAP)

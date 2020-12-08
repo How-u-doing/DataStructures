@@ -2,7 +2,7 @@ CXX := g++
 CXXFLAGS := -std=c++17 -Wall -g
 
 TESTS := _Tree_test TreeMap_test TST_test
-COUNTWORDS  :=  count_words count_words_BST count_words_TST
+COUNTWORDS  :=  count_words count_words_map count_words_BST count_words_TST
 
 .PHONY: all clean
 
@@ -11,7 +11,7 @@ all: $(TESTS) $(COUNTWORDS)
 $(TESTS): %_test : %_test.cpp %.h
 	$(CXX) $(CXXFLAGS) -o $@ $<
 
-$(COUNTWORDS): % : %.cpp
+$(COUNTWORDS): % : %.cpp count_words.cpp
 	$(CXX) -std=c++17 -Wall -O3 -o $@ $<
 
 clean:
