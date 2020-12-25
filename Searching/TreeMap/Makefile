@@ -1,5 +1,5 @@
 CXX := g++
-CXXFLAGS := -std=c++17 -Wall -g
+CXXFLAGS := -std=c++17 -Wall
 
 TESTS := _Tree_test TreeMap_test TST_test
 COUNTWORDS  :=  count_words count_words_map count_words_BST count_words_TST
@@ -9,10 +9,19 @@ COUNTWORDS  :=  count_words count_words_map count_words_BST count_words_TST
 all: $(TESTS) $(COUNTWORDS)
 
 $(TESTS): %_test : %_test.cpp %.h
-	$(CXX) $(CXXFLAGS) -o $@ $<
+	$(CXX) $(CXXFLAGS) -g -o $@ $<
 
-$(COUNTWORDS): % : %.cpp count_words.cpp
-	$(CXX) -std=c++17 -Wall -O3 -o $@ $<
+count_words: count_words.cpp
+	$(CXX) $(CXXFLAGS) -O3 -o $@ $<
+
+count_words_map: count_words_map.cpp count_words.cpp
+	$(CXX) $(CXXFLAGS) -O3 -o $@ $<
+
+count_words_BST: count_words_BST.cpp count_words.cpp TreeMap.h _Tree.h
+	$(CXX) $(CXXFLAGS) -O3 -o $@ $<
+
+count_words_TST: count_words_TST.cpp count_words.cpp TST.h
+	$(CXX) $(CXXFLAGS) -O3 -o $@ $<
 
 clean:
 	rm -f $(TESTS) $(COUNTWORDS)

@@ -113,10 +113,11 @@ int main(int argc, char* argv[])
 			++mp[word];
 		}
 		
+		if (k > mp.size()) k = mp.size();
 		show_most_common_words(mp.begin(), mp.end(), k);
-
-		cout << "\nUsed " << (clock() - start) / (double)CLOCKS_PER_SEC <<
-			"s to find the top " << k << " most common words" << endl;
+		
+		auto duration = (clock() - start) / (double)CLOCKS_PER_SEC;
+		cout << "\nUsed " << duration << "s to find the top " << k << " most common words" << endl;
 	}
 	catch (const exception& e) {
 		cout << e.what() << endl;
