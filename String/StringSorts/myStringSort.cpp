@@ -5,7 +5,7 @@ void myStringSort::LSD(std::string a[], int n, int w)
 	auto aux = new std::string[n];
 	// sort d-th digit by counting sort
 	for (int d = w - 1; d >= 0; --d) {
-		auto count = new int[Radix + 1]{ 0 };
+		int count[Radix + 1]{ 0 };
 
 		// count frequencies
 		for (int i = 0; i < n; ++i)
@@ -22,8 +22,6 @@ void myStringSort::LSD(std::string a[], int n, int w)
 		// copy back
 		for (int i = 0; i < n; ++i)
 			a[i] = aux[i];
-
-		delete[] count;
 	}
 	delete[] aux;
 }
