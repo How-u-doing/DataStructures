@@ -17,11 +17,11 @@ void myStringSort::LSD(std::string a[], int n, int w)
 
 		// distribute
 		for (int i = 0; i < n; ++i)
-			aux[count[a[i][d]]++] = a[i];
+			aux[count[a[i][d]]++] = std::move(a[i]);
 
 		// copy back
 		for (int i = 0; i < n; ++i)
-			a[i] = aux[i];
+			a[i] = std::move(aux[i]);
 	}
 	delete[] aux;
 }
