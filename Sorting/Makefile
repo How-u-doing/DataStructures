@@ -1,14 +1,14 @@
-CC := g++
-CFLAGS := -std=c++17 -Wall -g
-
-TESTS := Sort_test Sort_test2
-
-all: $(TESTS) 
-
-$(TESTS): %: %.cpp mySort.h
-	$(CC) $(CFLAGS) -o $@ $<
-
-clean:
-	rm -f $(TESTS) 
+CXX := g++
+CXXFLAGS := -std=c++17 -Wall -g
 
 .PHONY: all clean
+
+TESTS := $(patsubst %.cpp, %, $(wildcard *.cpp))
+
+all: $(TESTS)
+
+$(TESTS): %: %.cpp mySort.h
+	$(CXX) $(CXXFLAGS) -o $@ $<
+
+clean:
+	rm -f $(TESTS)

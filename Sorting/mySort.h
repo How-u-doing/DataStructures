@@ -4,9 +4,14 @@
  */
 #ifndef MYSORT_H
 #define MYSORT_H
+#include <vector>
+#include <algorithm>  // std::max/min_element
 #include <functional> // std::less<T>
 #include <utility>	  // std::move
+#include <limits>	  // std::numeric_limits<T>::max()
 #include <cstddef>	  // std::ptrdiff_t
+#include <cmath>	  // std::floor
+#include <cassert>
 
 namespace mySortingAlgo{
 
@@ -478,19 +483,209 @@ void comb_sort(RandomIt first, RandomIt last, Compare comp)
 	}
 }
 
-template<typename RandomIt, typename Compare>
-void counting_sort(RandomIt first, RandomIt last, Compare comp)
+// An unstable sort with O(n + r) time complexity and O(r) space
+// complexity, where r is the range of the non-negative key values.
+// Works for string, vector<unsigned char/short>, etc.
+template<typename RandomIt>
+void counting_sort_unstable(RandomIt first, RandomIt last)
 {
+	typedef typename std::iterator_traits<RandomIt>::value_type Key;
+	constexpr int r = std::numeric_limits<Key>::max() + 1; // radix
+	static_assert(r > 0); // to avoid int or size_t type
+	int freq[r]{ 0 };
+	RandomIt it;
+	int c;
+
+	for (it = first; it != last; ++it) {
+		assert(*it >= 0 && "pointed value must be non-negative"); // especially string
+		++freq[*it];
+	}
+
+	for (it = first, c = 0; c < r; ++c) {
+		while (freq[c]-- > 0)
+			*it++ = c;
+	}
 }
 
-template<typename RandomIt, typename Compare>
-void bucket_sort(RandomIt first, RandomIt last, Compare comp)
+// A stable sort with O(n + r) time & space complexity,
+// where r is the range of the non-negative key values.
+template<typename RandomIt>
+void counting_sort(RandomIt first, RandomIt last)
 {
+	typedef typename std::iterator_traits<RandomIt>::value_type Key;
+	constexpr int r = std::numeric_limits<Key>::max() + 1; // radix
+	static_assert(r > 0); // to avoid int or size_t type
+	const int n = last - first;
+	int count[r + 1]{ 0 };
+	Key* aux = new Key[n]; // vector or std::unique_ptr<Key[]> aux{ new Key[n] };
+
+	for (RandomIt it = first; it != last; ++it) {
+		assert(*it >= 0 && "pointed value must be non-negative");
+		++count[*it + 1];
+	}
+
+	// transform counts to indices
+	for (int i = 0; i < r; ++i)
+		count[i + 1] += count[i];
+
+	// distribute a[i] to aux[j] (the right position)
+	for (RandomIt i = first; i != last; ++i)
+		aux[count[*i]++] = *i;
+
+	// copy back
+	for (int i = 0; i < n; ++i)
+		*(first + i) = aux[i];
+
+	delete[] aux;
 }
 
-template<typename RandomIt, typename Compare>
-void radix_sort(RandomIt first, RandomIt last, Compare comp)
+// Extended counting sort that can take negative values.
+// Works for string, vector<char>, vector<int>, etc.
+template<typename RandomIt>
+void counting_sort_ext(RandomIt first, RandomIt last)
 {
+	typedef typename std::iterator_traits<RandomIt>::value_type Key;
+	const int max = *std::max_element(first, last);
+	const int min = *std::min_element(first, last);
+	const int r = max - min + 1; assert(r > 0);
+	const int n = last - first;
+	int* count = new int[r + 1]{ 0 };
+	Key* aux = new Key[n];
+
+	for (RandomIt it = first; it != last; ++it) {
+		++count[*it - min + 1];
+	}
+
+	// transform counts to indices
+	for (int i = 0; i < r; ++i)
+		count[i + 1] += count[i];
+
+	// distribute a[i] to aux[j] (the right position)
+	for (RandomIt i = first; i != last; ++i)
+		aux[count[*i - min]++] = *i;
+
+	// copy back
+	for (int i = 0; i < n; ++i)
+		*(first + i) = aux[i];
+
+	delete[] aux;
+	delete[] count;
+}
+
+template<typename RandomIt>
+void counting_sort_ext_unstable(RandomIt first, RandomIt last)
+{
+	const int max = *std::max_element(first, last);
+	const int min = *std::min_element(first, last);
+	const int r = max - min + 1; assert(r > 0);
+	int* freq = new int[r]{ 0 };
+	RandomIt it;
+	int c;
+
+	for (it = first; it != last; ++it) {
+		++freq[*it - min];
+	}
+
+	for (it = first, c = 0; c < r; ++c) {
+		while (freq[c]-- > 0)
+			*it++ = c + min;
+	}
+	delete[] freq;
+}
+
+// Works for an array of numerics, e.g. vector<char/int/float/double>, etc.
+template<typename RandomIt>
+void bucket_sort(RandomIt first, RandomIt last, size_t bucket_size)
+{
+	typedef typename std::iterator_traits<RandomIt>::value_type Key;
+	const Key max = *std::max_element(first, last);
+	const Key min = *std::min_element(first, last);
+	const Key M = max - min; assert(M > 0);
+	const size_t bucket_count = std::floor(M / bucket_size) + 1;
+	std::vector<std::vector<Key>> bucket_list(bucket_count);
+
+	// distribute values into their corresponding buckets
+	for (RandomIt it = first; it != last; ++it) {
+		bucket_list[std::floor((*it - min) / bucket_size)].push_back(*it);
+	}
+
+	// sort & concatenate each bucket
+	int sortedIdx = 0;
+	for (size_t i = 0; i < bucket_count; ++i) {
+		if (bucket_list[i].size() > 1)
+			insertion_sort(bucket_list[i].begin(), bucket_list[i].end(), std::less<Key>());
+		// concatenate
+		for (auto x : bucket_list[i])
+			*(first + sortedIdx++) = x;
+	}
+}
+
+// for std::string, etc.
+template<typename StringT>
+struct string_traits
+{
+	typedef typename StringT::value_type value_type;
+};
+
+// for const char*, etc
+template<typename charT>
+struct string_traits<charT*>
+{
+	typedef std::remove_cv_t<charT> value_type;
+};
+
+/*
+ * Radix sort an array of fixed-size strings with D digits.
+ * Works for: vector<string>, string[] ;
+ *            vector<[const] char*>, [const] char* [], etc.
+ * Note that  char(*) [D + 1]  may look better than char* [] since it
+ * points to an array of fixed-size (that is D + 1) C strings. But it
+ * also means it's an array of const pointers which cannot be changed.
+ * i.e. const char a[][5] = { "1234", "5678" };
+ *      a[1] = "ABCD"; // Oops, no, a[1] is NOT a modifiable lvalue
+ * But: const char* b[] = { "1234", "5678" };
+ *      b[1] = "ABCD"; // Okay, b[1] is a modifiable lvalue
+ * So, we DON'T support char(*)[D+1] as it would incur lots of copies.
+ */
+template<typename RandomIt>
+void radix_sort(RandomIt first, RandomIt last, size_t D)
+{
+	typedef typename std::iterator_traits<RandomIt>::value_type String;
+	typedef typename string_traits<String>::value_type charT;
+	constexpr int min = std::numeric_limits<charT>::min();
+	/*
+	 * On Linux, sizeof( wchar_t ) is 4, while 2 on Windows. So, here
+	 * wstring on Linux might incur integer overflow, thus Radix == 0.
+	 * Best practice is to almost never use wstring on Linux and almost
+	 * alway use it on Windows. See more detail at
+	 * https://stackoverflow.com/questions/402283/stdwstring-vs-stdstring/402918#402918
+	 */
+	constexpr int Radix = std::numeric_limits<charT>::max() - min + 1;
+	static_assert(Radix > 0);
+	const int n = last - first;
+	auto a = & *first; // raw data of the arr, of type String*
+	std::vector<String> aux(n);
+
+	// sort d-th digit by counting sort
+	for (int d = D - 1; d >= 0; --d) {
+		std::vector<int> count(Radix + 1, 0);
+
+		// count frequencies
+		for (int i = 0; i < n; ++i)
+			++count[a[i][d] - min + 1];
+
+		// transform counts to indices
+		for (int r = 0; r < Radix; ++r)
+			count[r + 1] += count[r];
+
+		// distribute
+		for (int i = 0; i < n; ++i)
+			aux[count[a[i][d] - min]++] = std::move(a[i]);
+
+		// copy back
+		for (int i = 0; i < n; ++i)
+			a[i] = std::move(aux[i]);
+	}
 }
 
 /* Some popular sorting algorithms */
@@ -534,19 +729,18 @@ void sort(RandomIt first, RandomIt last, Compare comp = Compare{}, Mode mode = M
 		shellsort(first, last, comp);
 		break;
 	case Mode::bubble_sort:
-		bubble_sort(first, last, comp);
+		//bubble_sort(first, last, comp);
+		cocktail_shaker_sort(first, last, comp);
 		break;
 	case Mode::comb_sort:
 		comb_sort(first, last, comp);
 		break;
+
+	// distribution sorts apply only to some particular types
+	// call them separately according to the given data type
 	case Mode::counting_sort:
-		counting_sort(first, last, comp);
-		break;
 	case Mode::bucket_sort:
-		bucket_sort(first, last, comp);
-		break;
 	case Mode::radix_sort:
-		radix_sort(first, last, comp);
 		break;
 	default:
 		break;

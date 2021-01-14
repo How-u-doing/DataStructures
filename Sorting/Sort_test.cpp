@@ -111,15 +111,15 @@ int main()
 {
 	vector<stu> vs;
 
-	vs.push_back(stu(10170401,82,79,91));
-	vs.push_back(stu(10170402, 61, 70, 61));
-	vs.push_back(stu(10170403, 92, 89, 98));
-	vs.push_back(stu(10170404, 70, 94.5, 90));
-	vs.push_back(stu(10170405, 83, 76, 93));
-	vs.push_back(stu(10170406, 78, 79, 81.5));
-	vs.push_back(stu(10170407, 92, 97, 100));
-	vs.push_back(stu(10170408, 82, 91, 79));
-	vs.push_back(stu(10170409, 90, 69, 71));
+	vs.emplace_back(10170401, 82, 79, 91);
+	vs.emplace_back(10170402, 61, 70, 61);
+	vs.emplace_back(10170403, 92, 89, 98);
+	vs.emplace_back(10170404, 70, 94.5, 90);
+	vs.emplace_back(10170405, 83, 76, 93);
+	vs.emplace_back(10170406, 78, 79, 81.5);
+	vs.emplace_back(10170407, 92, 97, 100);
+	vs.emplace_back(10170408, 82, 91, 79);
+	vs.emplace_back(10170409, 90, 69, 71);
 
 	cout << "Original list\n";
 	stu::printHeader();
@@ -139,7 +139,7 @@ int main()
 	printArr(a, b, c, d, n);
 
 
-	cout << "\nPlease choose sorting algorithm\n";
+	cout << "\nPlease choose a sorting algorithm\n";
 	cout << "** Insertion Sort------------------------- 0 \n";
 	cout << "** Selection Sort ------------------------ 1 \n";
 	cout << "** Merge Sort ---------------------------- 2 \n";
