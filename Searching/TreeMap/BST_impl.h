@@ -305,8 +305,10 @@ public:
     // Returns iterator following the last removed element.
     iterator erase(const_iterator first, const_iterator last) {
         // quick erasing
-        if (first == begin() && first == end())
+        if (first == begin() && first == end()) {
             clear();
+            return end();
+        }
         while (first != last) {
             first = erase(first);
         }
