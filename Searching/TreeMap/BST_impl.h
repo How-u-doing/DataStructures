@@ -273,6 +273,7 @@ protected:
         }
     }
 
+    // only for map
     std::pair<iterator, bool> insert_or_assign(const T& val) {
         const auto& [p, inserted] = insert_or_assign(&ROOT, val);
         return { iterator(p), inserted };
@@ -360,6 +361,8 @@ private:
     static node_ptr tree_next(node_ptr x) noexcept {
         if (x->_right != nullptr)
             return tree_min(x->_right);
+        // ROOT being rightmost, go to _header
+        if (x == x->_parent->_parent) return x->_parent;
         node_ptr parent = x->_parent;// root->_parent == _header
         while (x == parent->_right) {// root == _header->_parent
             x = parent;
@@ -372,6 +375,8 @@ private:
     static node_ptr tree_prev(node_ptr x) noexcept {
         if (x->_left != nullptr)
             return tree_max(x->_left);
+        // ROOT being leftmost, go to _header
+        if (x == x->_parent->_parent) return x->_parent;
         node_ptr parent = x->_parent;// root->_parent == _header
         while (x == parent->_left) { // root == _header->_parent
             x = parent;
@@ -494,6 +499,7 @@ private:
         }
     }
     
+    // only for map
     std::pair<node_ptr, bool> insert_or_assign(node** x, const T& val) {
         node_ptr parent = (*x)->_parent;
         if (_count > 0) {
@@ -540,7 +546,7 @@ private:
         }
         else { // *x points to first node that compares equally to `val`
             // duplicates are maintained in this way: a->b->c->d->e->...
-			/* 
+            /* 
                      20
                    /     \
                   10     (20)a
@@ -550,7 +556,7 @@ private:
                         (20)d  (20)e
                                  \
                                   30
-			*/
+            */
             bool equal = true;
             while (equal) {
                 parent = *x;
@@ -645,10 +651,49 @@ private:
             std::cout << "Invalid level, must be greater than 0.\n";
             return;
         }
-        std::cout << "\033[0;33m" << dir->_val << "\033[0m\n";
+        print_val_is_dir(dir, true);
         size_t dir_count = 0, file_count = 0, curr_level = 1;
         dfs_print(dir, "", dir_count, file_count, curr_level, max_level);
         std::cout << '\n' << dir_count << " directories, " << file_count << " files\n";
+    }
+
+    // map
+    static void print_val_via_ptr(node_ptr x, bool is_dir, std::true_type) {
+        if (is_dir) { // brown color for directories
+            std::cout << "\033[0;33m{" << (x->_val).first << ", " << (x->_val).second << "}\033[0m\n";
+        }             // default color for files
+        else std::cout << "{" << (x->_val).first << ", " << (x->_val).second << "}\n";
+    }
+
+    // set
+    static void print_val_via_ptr(node_ptr x, bool is_dir, std::false_type) {
+        if (is_dir) {
+            std::cout << "\033[0;33m" << x->_val << "\033[0m\n";
+        }
+        else std::cout << x->_val << "\n";
+    }
+
+    static void print_val_is_dir(node_ptr x, bool is_dir) {
+        print_val_via_ptr(x, is_dir, std::bool_constant<IsMap>{});
+    }
+
+    static void dfs_print_aux(node_ptr curr, bool is_last_child, const std::string& children_prefix,
+        size_t& dir_count, size_t& file_count, size_t curr_level, size_t max_level)
+    {
+        std::string link_shape = !is_last_child ? "├── " : "└── ";
+        std::string prefix_shape = !is_last_child ? "|   " : "    ";
+
+        std::cout << children_prefix << link_shape;
+        if (has_children(curr)) {
+            ++dir_count;
+            print_val_is_dir(curr, true);
+            if (curr_level < max_level)
+                dfs_print(curr, children_prefix + prefix_shape, dir_count, file_count, curr_level + 1, max_level);
+        }
+        else {
+            ++file_count;
+            print_val_is_dir(curr, false);
+        }
     }
 
     // precondition: dir = ROOT != _header or size() > 0
@@ -656,34 +701,22 @@ private:
         size_t& file_count, size_t curr_level, size_t max_level)
     {
         if (dir == nullptr) return;
+        // pseudocode
+        /*for (node_ptr curr = first_child(dir); curr != end_child(dir); curr = next_child(dir, curr)) {
+            bool is_last_child = curr == last_child(dir);
+            dfs_print_aux(curr, is_last_child, children_prefix, dir_count, file_count, curr_level, max_level);
+        }*/
+
         node_ptr curr{};
         if ((curr = dir->_left) != nullptr) {
-            if (has_children(curr)) {
-                ++dir_count;                            // brown color for directories
-                std::cout << children_prefix << "├── " << "\033[0;33m" << curr->_val << "\033[0m\n";
-                if (curr_level < max_level)// don't write as ++curr_level, since it will affect its right sibling
-                    dfs_print(curr, children_prefix + "|   ", dir_count, file_count, 1 + curr_level, max_level);
-            }
-            else {
-                ++file_count;                 // default colors for files
-                std::cout << children_prefix << "├── " << curr->_val << "\n";
-            }
+            dfs_print_aux(curr, false, children_prefix, dir_count, file_count, curr_level, max_level);
         }
         else if (dir->_right != nullptr) {// only have right child, print left child as null (bold blue)
             std::cout << children_prefix << "├── " << "\033[1;34m" << "null" << "\033[0m\n";
         }
 
         if ((curr = dir->_right) != nullptr) {
-            if (has_children(curr)) {
-                ++dir_count;
-                std::cout << children_prefix << "└── " << "\033[0;33m" << curr->_val << "\033[0m\n";
-                if (curr_level < max_level)
-                    dfs_print(curr, children_prefix + "    ", dir_count, file_count, ++curr_level, max_level);
-            }
-            else {
-                ++file_count;
-                std::cout << children_prefix << "└── " << curr->_val << "\n";
-            }
+            dfs_print_aux(curr, true, children_prefix, dir_count, file_count, curr_level, max_level);
         }
         else if (dir->_left != nullptr) {// only have left child, print right child as null (bold blue)
             std::cout << children_prefix << "└── " << "\033[1;34m" << "null" << "\033[0m\n";
@@ -710,6 +743,11 @@ private:
             return std::addressof(_val);
         }
     };
+
+    static bool is_header(node_ptr x) {
+        if (x->_left == nullptr || x->_right == nullptr) return false;
+        return x->_left->_parent != x;
+    }
 
     class Tree_iter
     {
@@ -747,8 +785,8 @@ private:
         }
 
         _self& operator--() {
-            if (_ptr->_parent->_parent == _ptr) _ptr = _ptr->_right;
-            else                                _ptr = tree_prev(_ptr);
+            if (is_header(_ptr)) _ptr = _ptr->_right;
+            else                 _ptr = tree_prev(_ptr);
             return *this;
         }
 
@@ -804,8 +842,8 @@ private:
         }
 
         _self& operator--() {
-            if (_ptr->_parent->_parent == _ptr) _ptr = _ptr->_right;
-            else                                _ptr = tree_prev(_ptr);
+            if (is_header(_ptr)) _ptr = _ptr->_right;
+            else                 _ptr = tree_prev(_ptr);
             return *this;
         }
 

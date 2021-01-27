@@ -5,6 +5,15 @@
 using namespace std;
 using namespace mySymbolTable;
 
+template<typename Map>
+void print_map(std::string_view comment, const Map& m)
+{
+	std::cout << comment;
+	for (const auto& [key, value] : m) {
+		std::cout << '{' << key << ", " << value << "} ";
+	}
+}
+
 int main()
 {
 	//using BST = BstMap<int, string, less<int>>;
@@ -32,17 +41,14 @@ int main()
 		//st.insert_or_assign(60, "six * six");
 		//st[60] = "six * six";
 
-		cout << "st:\n"; 
-		for (auto it : st) {
-			cout << it << "  ";
-		}
+		print_map("st:\n", st);		
 		cout << "\n\nst printed by lines: \n";
 		st.print();
 
 		BST st2 = st;
 		cout << "\n\nst2=st, in reverse order:\n";
 		for (auto i = st2.rbegin(); i != st2.crend(); ++i) {
-			cout << *i << "  ";
+			cout << '{' << i->first << ", " << i->second << "} ";
 		}
 
 		size_t count1 = st.erase(50);
@@ -50,26 +56,18 @@ int main()
 		cout << "\n\nst, after removing 50 and 60: \n" << "there are \" "
 			<< count1 << "\" 50 and \"" << count2 << "\" 60 being removed\n";
 
-		for (auto it : st) {
-			cout << it << "  ";
-		}
+		print_map("", st);
 		cout << "\n\n";
 		st.print();
 
 		swap(st, st2);
-		cout << "\n\nst, after swapping with st2: \n";
-		for (auto it : st) {
-			cout << it << "  ";
-		}
+		print_map("\n\nst, after swapping with st2: \n", st);
 		cout << "\n\n";
 		st.print();
 
-		/*cout << "\n\nst2, after swapping with st: \n";
-		for (auto it : st2) {
-			cout << it << "  ";
-		}
+		print_map("\n\nst2, after swapping with st: \n", st2);
 		cout << "\n\n";
-		st2.print();*/
+		st2.print();
 	}
 	catch (const exception& e) {
 		cout << e.what() << endl;

@@ -71,7 +71,7 @@ public:
     }
 
     // (3) b
-    BstSet(std::initializer_list<value_type> init, const Alloc& alloc = Alloc())
+    BstSet(std::initializer_list<value_type> init, const Alloc& alloc)
         : BstSet(init, Compare(), alloc) {}
 
     /* IV */
@@ -182,7 +182,7 @@ public:
     }
 
     // (3) b
-    BstMultiset(std::initializer_list<value_type> init, const Alloc& alloc = Alloc())
+    BstMultiset(std::initializer_list<value_type> init, const Alloc& alloc)
         : BstMultiset(init, Compare(), alloc) {}
 
     /* IV */

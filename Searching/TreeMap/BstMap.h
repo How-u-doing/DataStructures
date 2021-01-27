@@ -16,25 +16,13 @@
 
 namespace mySymbolTable {
 
-template<typename Key, typename T>
-struct MyPair {
-    using first_type = Key;
-    using second_type = T;
-    Key first;
-    T second;
-    friend std::ostream& operator<<(std::ostream& os, const MyPair& mypair) {
-        os << '{' << mypair.first << ", " << mypair.second << '}';
-        return os;
-    }
-};
-
-template<typename Key, typename T, typename Compare = std::less<Key>, typename Alloc = std::allocator<MyPair<const Key, T>>>
-class BstMap : public Tree<MyPair<Key, T>, Compare, Alloc, true> {
-    using _base = Tree<MyPair<Key, T>, Compare, Alloc, true>;
+template<typename Key, typename T, typename Compare = std::less<Key>, typename Alloc = std::allocator<std::pair<const Key, T>>>
+class BstMap : public Tree<std::pair<const Key, T>, Compare, Alloc, true> {
+    using _base = Tree<std::pair<const Key, T>, Compare, Alloc, true>;
 public:
     using key_type = Key;
     using mapped_type = T;
-    using value_type = MyPair<const Key, T>;
+    using value_type = std::pair<const Key, T>;
     using key_compare = Compare;
     using allocator_type = Alloc;
     using reference = value_type&;
@@ -95,7 +83,7 @@ public:
     }
 
     // (3) b
-    BstMap(std::initializer_list<value_type> init, const Alloc& alloc = Alloc())
+    BstMap(std::initializer_list<value_type> init, const Alloc& alloc)
         : BstMap(init, Compare(), alloc) {}
 
     /* IV */
@@ -173,20 +161,20 @@ public:
 }; // class BstMap
 
 template <typename Key, typename T ,typename Compare, typename Alloc>
-void swap( BstMap<MyPair<Key, T>, Compare, Alloc>& lhs,
-           BstMap<MyPair<Key, T>, Compare, Alloc>& rhs) noexcept(noexcept(lhs.swap(rhs)))
+void swap( BstMap<std::pair<const Key, T>, Compare, Alloc>& lhs,
+           BstMap<std::pair<const Key, T>, Compare, Alloc>& rhs) noexcept(noexcept(lhs.swap(rhs)))
 {
     lhs.swap(rhs);
 }
 
 
-template<typename Key, typename T, typename Compare = std::less<Key>, typename Alloc = std::allocator<MyPair<const Key, T>>>
-class BstMultimap : public Tree<MyPair<Key, T>, Compare, Alloc, true> {
-    using _base = Tree<MyPair<Key, T>, Compare, Alloc, true>;
+template<typename Key, typename T, typename Compare = std::less<Key>, typename Alloc = std::allocator<std::pair<const Key, T>>>
+class BstMultimap : public Tree<std::pair<const Key, T>, Compare, Alloc, true> {
+    using _base = Tree<std::pair<const Key, T>, Compare, Alloc, true>;
 public:
     using key_type = Key;
     using mapped_type = T;
-    using value_type = MyPair<const Key, T>;
+    using value_type = std::pair<const Key, T>;
     using key_compare = Compare;
     using allocator_type = Alloc;
     using reference = value_type&;
@@ -247,7 +235,7 @@ public:
     }
 
     // (3) b
-    BstMultimap(std::initializer_list<value_type> init, const Alloc& alloc = Alloc())
+    BstMultimap(std::initializer_list<value_type> init, const Alloc& alloc)
         : BstMultimap(init, Compare(), alloc) {}
 
     /* IV */
@@ -299,8 +287,8 @@ public:
 }; // class BstMultimap
 
 template <typename Key, typename T, typename Compare, typename Alloc>
-void swap(BstMultimap<MyPair<Key, T>, Compare, Alloc>& lhs,
-          BstMultimap<MyPair<Key, T>, Compare, Alloc>& rhs) noexcept(noexcept(lhs.swap(rhs)))
+void swap(BstMultimap<std::pair<const Key, T>, Compare, Alloc>& lhs,
+          BstMultimap<std::pair<const Key, T>, Compare, Alloc>& rhs) noexcept(noexcept(lhs.swap(rhs)))
 {
     lhs.swap(rhs);
 }
