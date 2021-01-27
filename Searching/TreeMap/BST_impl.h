@@ -9,7 +9,7 @@
 #ifndef BST_IMPL_H
 #define BST_IMPL_H 1
 
-#include <memory>	// std::addressof, std::allocator_tarits
+#include <memory>   // std::addressof, std::allocator_tarits
 #include <utility>  // std::swap, std::pair
 #include <string>
 #include <iterator> // std::reverse_iterator, std::distance
@@ -343,21 +343,21 @@ public:
 private:
     // When using greater<T> (operator>) for comp, the
     // leftmost node is on the contrary the largest.
-    // precondition: x != nullptr
+    // precondition: x != nullptr && x != _header
     static node_ptr tree_min(node_ptr x) noexcept {
         while (x->_left != nullptr)
             x = x->_left;
         return x;
     }
 
-    // precondition: x != nullptr
+    // precondition: x != nullptr && x != _header
     static node_ptr tree_max(node_ptr x) noexcept {
         while (x->_right != nullptr)
             x = x->_right;
         return x;
     }
 
-    // precondition: x != nullptr
+    // precondition: x != nullptr && x != _header
     static node_ptr tree_next(node_ptr x) noexcept {
         if (x->_right != nullptr)
             return tree_min(x->_right);
@@ -371,7 +371,7 @@ private:
         return parent; // _header if x points to the rightmost node
     }
 
-    // precondition: x != nullptr
+    // precondition: x != nullptr && x != _header
     static node_ptr tree_prev(node_ptr x) noexcept {
         if (x->_left != nullptr)
             return tree_max(x->_left);
@@ -455,7 +455,7 @@ private:
     // precondition: ROOT is dereferencable, i.e. size() > 0
     node_ptr find(node_ptr x, const key_type& val) const {
         while (x != nullptr) {
-            if		(_comp(val, get_key(x))) x = x->_left;
+            if      (_comp(val, get_key(x))) x = x->_left;
             else if (_comp(get_key(x), val)) x = x->_right;
             else return x;
         }
@@ -505,7 +505,7 @@ private:
         if (_count > 0) {
             while (*x != nullptr) {
                 parent = *x;
-                if		(_comp(get_key(val), get_key(*x))) x = &(*x)->_left;
+                if      (_comp(get_key(val), get_key(*x))) x = &(*x)->_left;
                 else if (_comp(get_key(*x), get_key(val))) x = &(*x)->_right;
                 else {
                     ((*x)->_val).second = val.second;
@@ -745,6 +745,7 @@ private:
     };
 
     static bool is_header(node_ptr x) {
+        if (x->_left == x) return true; // container's empty
         if (x->_left == nullptr || x->_right == nullptr) return false;
         return x->_left->_parent != x;
     }
@@ -784,6 +785,8 @@ private:
             return tmp;
         }
 
+        // if container's empty, _ptr->_right still gets itself (_header)
+        // maybe we should assert(_ptr != _ptr->_left), i.e. !empty()
         _self& operator--() {
             if (is_header(_ptr)) _ptr = _ptr->_right;
             else                 _ptr = tree_prev(_ptr);
