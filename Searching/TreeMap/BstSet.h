@@ -16,8 +16,8 @@
 namespace mySymbolTable {
 
 template<typename Key, typename Compare = std::less<Key>, typename Alloc = std::allocator<Key>>
-class BstSet : public Tree<Key, Compare, Alloc, false> {
-    using _base = Tree<Key, Compare, Alloc, false>;
+class BstSet : public Tree<Key, Compare, Alloc, /*IsMap=*/false> {
+    using _base = Tree<Key, Compare, Alloc, /*IsMap=*/false>;
 public:
     using key_type = Key;
     using value_type = Key;
@@ -127,8 +127,8 @@ void swap( BstSet<Key, Compare, Alloc>& lhs,
 
 
 template<typename Key, typename Compare = std::less<Key>, typename Alloc = std::allocator<Key>>
-class BstMultiset : public Tree<Key, Compare, Alloc, false> {
-    using _base = Tree<Key, Compare, Alloc, false>;
+class BstMultiset : public Tree<Key, Compare, Alloc, /*IsMap=*/false> {
+    using _base = Tree<Key, Compare, Alloc, /*IsMap=*/false>;
 public:
     using key_type = Key;
     using value_type = Key;
@@ -164,7 +164,7 @@ public:
     BstMultiset(InputIt first, InputIt last, const Compare& comp = Compare(),
         const Alloc& alloc = Alloc()) : _base(comp, alloc)
     {
-        _base::insert_equal(first, last);
+        _base::insert_multi(first, last);
     }
 
     // (2) b
@@ -178,7 +178,7 @@ public:
     BstMultiset(std::initializer_list<value_type> init, const Compare& comp = Compare(),
         const Alloc& alloc = Alloc()) : _base(comp, alloc)
     {
-        _base::insert_equal(init.begin(), init.end());
+        _base::insert_multi(init.begin(), init.end());
     }
 
     // (3) b
@@ -203,16 +203,16 @@ public:
     /* duplicable insertion for multiset */
 
     iterator insert(const value_type& val) {
-        return _base::insert_equal(val);
+        return _base::insert_multi(val);
     }
 
     template <typename InputIt>
     void insert(InputIt first, InputIt last) {
-        return _base::insert_equal(first, last);
+        return _base::insert_multi(first, last);
     }
 
     void insert(std::initializer_list<value_type> ilist) {
-        return _base::insert_equal(ilist.begin(), ilist.end());
+        return _base::insert_multi(ilist.begin(), ilist.end());
     }
 
     void swap(BstMultiset& rhs) {

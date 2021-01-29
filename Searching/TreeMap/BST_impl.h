@@ -280,14 +280,14 @@ protected:
     }
 
     // for multi map (set)
-    iterator insert_equal(const T& val) {
-        return iterator(insert_equal(&ROOT, val));
+    iterator insert_multi(const T& val) {
+        return iterator(insert_multi(&ROOT, val));
     }
 
     template< typename InputIt >
-    void insert_equal(InputIt first, InputIt last) {
+    void insert_multi(InputIt first, InputIt last) {
         while (first != last) {
-            insert_equal(*first++);
+            insert_multi(*first++);
         }
     }
 
@@ -531,7 +531,7 @@ private:
         return { *x, true };
     }
 
-    node_ptr insert_equal(node** x, const T& val) {
+    node_ptr insert_multi(node** x, const T& val) {
         node_ptr parent = (*x)->_parent;
         if (_count > 0) {
             while (*x != nullptr) {

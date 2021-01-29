@@ -17,8 +17,8 @@
 namespace mySymbolTable {
 
 template<typename Key, typename T, typename Compare = std::less<Key>, typename Alloc = std::allocator<std::pair<const Key, T>>>
-class BstMap : public Tree<std::pair<const Key, T>, Compare, Alloc, true> {
-    using _base = Tree<std::pair<const Key, T>, Compare, Alloc, true>;
+class BstMap : public Tree<std::pair<const Key, T>, Compare, Alloc, /*IsMap=*/true> {
+    using _base = Tree<std::pair<const Key, T>, Compare, Alloc, /*IsMap=*/true>;
 public:
     using key_type = Key;
     using mapped_type = T;
@@ -169,8 +169,8 @@ void swap( BstMap<std::pair<const Key, T>, Compare, Alloc>& lhs,
 
 
 template<typename Key, typename T, typename Compare = std::less<Key>, typename Alloc = std::allocator<std::pair<const Key, T>>>
-class BstMultimap : public Tree<std::pair<const Key, T>, Compare, Alloc, true> {
-    using _base = Tree<std::pair<const Key, T>, Compare, Alloc, true>;
+class BstMultimap : public Tree<std::pair<const Key, T>, Compare, Alloc, /*IsMap=*/true> {
+    using _base = Tree<std::pair<const Key, T>, Compare, Alloc, /*IsMap=*/true>;
 public:
     using key_type = Key;
     using mapped_type = T;
@@ -217,7 +217,7 @@ public:
     BstMultimap(InputIt first, InputIt last, const Compare& comp = Compare(),
         const Alloc& alloc = Alloc()) : _base(comp, alloc)
     {
-        _base::insert_equal(first, last);
+        _base::insert_multi(first, last);
     }
 
     // (2) b
@@ -231,7 +231,7 @@ public:
     BstMultimap(std::initializer_list<value_type> init, const Compare& comp = Compare(),
         const Alloc& alloc = Alloc()) : _base(comp, alloc)
     {
-        _base::insert_equal(init.begin(), init.end());
+        _base::insert_multi(init.begin(), init.end());
     }
 
     // (3) b
@@ -256,20 +256,20 @@ public:
     /* duplicable insertion for multimap */
 
     iterator insert(const value_type& val) {
-        return _base::insert_equal(val);
+        return _base::insert_multi(val);
     }
 
     iterator insert(const Key& key, const T& val) {
-        return _base::insert_equal({ key, val });
+        return _base::insert_multi({ key, val });
     }
 
     template <typename InputIt>
     void insert(InputIt first, InputIt last) {
-        return _base::insert_equal(first, last);
+        return _base::insert_multi(first, last);
     }
 
     void insert(std::initializer_list<value_type> ilist) {
-        return _base::insert_equal(ilist.begin(), ilist.end());
+        return _base::insert_multi(ilist.begin(), ilist.end());
     }
 
     void swap(BstMultimap& rhs) {
