@@ -56,6 +56,9 @@ private:
 	void print(node_ptr dir, size_t level) const;
 	void dfs_print(node_ptr dir, const std::string& children_prefix,
 		size_t& dir_count, size_t& file_count, size_t curr_level, size_t max_level) const;
+	void print_val_is_dir(node_ptr x, bool is_dir) const;
+	void dfs_print_aux(node_ptr curr, bool is_last_child, const std::string& children_prefix,
+		size_t& dir_count, size_t& file_count, size_t curr_level, size_t max_level) const;
 
 	// precondition: t != nullptr
 	bool is_last_child(node_ptr t) const { return t->_next_sibling == nullptr; }
@@ -227,35 +230,42 @@ void Tree<T>::print(node_ptr dir, size_t max_level)const {
 }
 
 template<typename T>
+void Tree<T>::print_val_is_dir(node_ptr x, bool is_dir) const
+{
+	if (is_dir) { // brown color for directories
+		std::cout << "\033[0;33m" << x->_data << "\033[0m\n";
+	}             // bold blue for files
+	else std::cout << "\033[1;34m" << x->_data << "\033[0m\n";
+}
+
+template<typename T>
+void Tree<T>::dfs_print_aux(node_ptr curr, bool is_last_child, const std::string& children_prefix,
+	size_t& dir_count, size_t& file_count, size_t curr_level, size_t max_level) const
+{
+	std::string link_shape = !is_last_child ? "├── " : "└── ";
+	std::string prefix_shape = !is_last_child ? "|   " : "    ";
+
+	std::cout << children_prefix << link_shape;
+	if (has_children(curr)) {
+		++dir_count;
+		print_val_is_dir(curr, true);
+		if (curr_level < max_level)
+			dfs_print(curr, children_prefix + prefix_shape, dir_count, file_count, curr_level + 1, max_level);
+	}
+	else {
+		++file_count;
+		print_val_is_dir(curr, false);
+	}
+}
+
+template<typename T>
 void Tree<T>::dfs_print(node_ptr dir, const std::string& children_prefix,
 	size_t& dir_count, size_t& file_count, size_t curr_level, size_t max_level) const
 {
 	if (dir == nullptr) return;
 	for (node_ptr i = dir->_first_child; i != nullptr; i = i->_next_sibling) {
-		if (!is_last_child(i)) {
-			if (has_children(i)) {// is_directory
-				++dir_count;
-				std::cout << children_prefix << "├── " << "\033[0;33m" << i->_data << "\033[0m\n";
-				if (curr_level < max_level)// don't write as ++curr_level, since it will affect its (following) siblings
-					dfs_print(i, children_prefix + "|   ", dir_count, file_count, 1 + curr_level, max_level);
-			}
-			else {
-				++file_count;
-				std::cout << children_prefix << "├── " << "\033[1;34m" << i->_data << "\033[0m\n";
-			}
-		}
-		else {// last child
-			if (has_children(i)) {// is_directory
-				++dir_count;
-				std::cout << children_prefix << "└── " << "\033[0;33m" << i->_data << "\033[0m\n";
-				if (curr_level < max_level)
-					dfs_print(i, children_prefix + "    ", dir_count, file_count, ++curr_level, max_level);
-			}
-			else {
-				++file_count;
-				std::cout << children_prefix << "└── " << "\033[1;34m" << i->_data << "\033[0m\n";
-			}
-		}
+		bool last_child = is_last_child(i);
+		dfs_print_aux(i, last_child, children_prefix, dir_count, file_count, curr_level, max_level);
 	}
 }
 

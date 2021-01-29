@@ -1,14 +1,15 @@
-CC := g++
-CFLAGS := -std=c++17 -Wall -g
+CXX := g++
+CXXFLAGS := -std=c++17 -Wall -g
 
-TEST := Tree_test
-
-all: $(TEST) 
-
-$(TEST): %: %.cpp Tree.h Stack.h SeqStack.h
-	$(CC) $(CFLAGS) -o $@ $<
-
-clean:
-	rm -f $(TEST) 
+TREETEST := Tree_test
+TREEDEPS := Stack.h SeqStack.h
 
 .PHONY: all clean
+
+all: $(TREETEST) 
+
+$(TREETEST): %_test: %_test.cpp %.h $(TREEDEPS) 
+	$(CXX) $(CXXFLAGS) -o $@ $<
+
+clean:
+	rm -f $(TREETEST)
