@@ -324,7 +324,9 @@ public:
         return n;
     }
 
-    void swap(Tree& rhs) noexcept {
+    void swap(Tree& rhs) noexcept(std::allocator_traits<Alloc>::is_always_equal::value
+                           &&     std::is_nothrow_swappable<Compare>::value)
+    {
         _assert(_alloc == rhs._alloc, "allocator must be the same");
         if (std::allocator_traits<allocator_type>::propagate_on_container_swap::value) {
             std::swap(_alloc, rhs._alloc);
