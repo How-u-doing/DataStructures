@@ -1,2 +1,2 @@
-#define BSTMAP 1
+#define HASHMAP 1
 #include "count_words.cpp"

@@ -1,2 +1,2 @@
-#define MYTST 1
+#define TSTMAP 1
 #include "count_words.cpp"

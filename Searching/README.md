@@ -1,24 +1,12 @@
-## Count Words
-| std::unordered\_map | std::map | BST | TST |
-| --- | --- | --- | --- | 
-| 5.115s | 7.058s | 7.261s | 5.708s |
+# Count Words
+|   | std::unordered\_map | myst::[HashMap](https://github.com/How-u-doing/DataStructures/blob/master/Searching/HashMap/HashMap.h) | std::map | myst::[BstMap](https://github.com/How-u-doing/DataStructures/blob/master/Searching/TreeMap/BstMap.h) | myst::[TST](https://github.com/How-u-doing/DataStructures/blob/master/Searching/TreeMap/TST.h) |
+|---| --- | --- | --- | --- | --- |
+| build time | 5.021s | 5.096s | 6.847s | 6.882s | 5.594s |
+| sort time  | 0.041s | 0.070s | 0.076s | 0.078s | 0.105s |
+| total time | 5.062s | 5.166s | 6.923s | 6.961s | 5.699s |
 
-![](img/count_words.png)
+# Unordered
+![](img/count_words_unordered.png)
 
-## TST.h (ternary search tree, with iterators) test
-![](img/TST_test.png)
-
-## \_Tree.h (also set) test
-![](img/_Tree_test.png)
-
-## TreeMap.h test
-![](img/TreeMap_test.png)
-
-## Count words on CoCalc
-![](img/count_words_CoCalc.png)
-
-## Count words on my local machine
-![](img/count_words_local_machine.png)
-
-Additionally, here are some tests under my *Kali* Linux virtual machine,
-see [virtual_machine_tests.png](img/virtual_machine_tests.png).
+# Ordered
+![](img/count_words_ordered.png)
