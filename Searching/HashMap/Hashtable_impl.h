@@ -461,9 +461,9 @@ private:
 
     // before calling it, you MUST set policies (members) first
     void copy_nodes(const _self& rhs) {
-        _count = 0; // insert_head() will increment it automatically
+        _count = 0; // insert_tail() will increment it automatically
         for (node_ptr pos = rhs.begin().ptr(); pos; pos = pos->_next) {
-            // insert at tail to remain relative orders in the same bucket
+            // insert at tail to retain relative orders in the same bucket
             insert_tail(bucket(get_key(pos)), pos->_val);
         }
     }
