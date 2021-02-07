@@ -1,4 +1,4 @@
-# TST.h 
+# TST
 ![](img/TST_test.png)
 
 # BstSet

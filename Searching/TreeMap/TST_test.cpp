@@ -22,6 +22,17 @@ int main(int argc, char* argv[])
 		for (const auto& word : tst.keys()) {
 			cout << word << " : " << tst.at(word) << '\n';
 		}
+		cout << "********************************\n"
+			<< "        backward print:\n"
+			<< "********************************\n";
+		for (auto it = tst.crbegin(); it != tst.crend(); ++it) {
+			/*const auto& [key, val] = *it;
+			cout << key << " : " << val << '\n';*/
+			cout << it.key() << " : " << it.val() << '\n';
+		}
+
+		cout << "\ntst print by lines (hide_null_links=false):\n";
+		tst.print();
 
 		cout << "\nlongest prefix of \"shellsort\": ";
 		cout << tst.longest_prefix_of("shellsort") << '\n';
@@ -42,35 +53,17 @@ int main(int argc, char* argv[])
 		for (const auto& word : tst.keys_that_match("s??")) {
 			cout << word << "  ";
 		}
-		cout << '\n';
 
-		cout << "\nAfter removing \"shells\": ";
-		tst.erase("shells");
 		cout << '\n';
-		for (const auto& pair : tst) {
-			cout << pair.first << " : " << pair.second << '\n';
-		}
-		// using structured bindings, c++17 or later
-		/*for (const auto& [key, val] : tst) {
-			cout << key << " : " << val << '\n';
-		}*/
-		cout << "********************************\n"
-			<< "        backward print:\n"
-			<< "********************************\n";
-		for (auto it = tst.crbegin(); it != tst.crend(); ++it) {
-			/*const auto& [key, val] = *it;
-			cout << key << " : " << val << '\n';*/
-			cout << it.key() << " : " << it.val() << '\n';
-		}
-
 		cout << "\nReset last value to 100\n";
 		auto iter = tst.rbegin();
 		iter.val() = 100; // reset
 		cout << iter.key() << " : " << iter.val() << '\n';
-		/*TST<int>::const_iterator p = tst.find("she");
-		cout << "get key: " << tst.key(p) << '\n';
-		cout << "next key: " << tst.key(++p) << '\n';
-		cout << "prev key: " << tst.key(----p) << '\n';*/
+
+		tst.erase("shells");
+		cout << "\nAfter removing \"shells\" (hide_null_links=true):\n\n";
+
+		tst.print(/*hide_null_links=*/true);
 	}
 	catch (const exception& e) {
 		cout << e.what() << endl;
