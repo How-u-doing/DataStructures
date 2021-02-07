@@ -659,20 +659,24 @@ private:
         std::cout << '\n' << dir_count << " directories, " << file_count << " files\n";
     }
 
+#define BLUE    "\033[1;34m"
+#define BROWN   "\033[0;33m"
+#define END     "\033[0m"
+
     // map
     static void print_val_via_ptr(node_ptr x, bool is_dir, std::true_type) {
         if (is_dir) { // brown color for directories
-            std::cout << "\033[0;33m{" << (x->_val).first << ", " << (x->_val).second << "}\033[0m\n";
+            std::cout << BROWN << '{' << (x->_val).first << ", " << (x->_val).second << '}' << END << '\n';
         }             // default color for files
-        else std::cout << "{" << (x->_val).first << ", " << (x->_val).second << "}\n";
+        else std::cout << '{' << (x->_val).first << ", " << (x->_val).second << "}\n";
     }
 
     // set
     static void print_val_via_ptr(node_ptr x, bool is_dir, std::false_type) {
         if (is_dir) {
-            std::cout << "\033[0;33m" << x->_val << "\033[0m\n";
+            std::cout << BROWN << x->_val << END << '\n';
         }
-        else std::cout << x->_val << "\n";
+        else std::cout << x->_val << '\n';
     }
 
     static void print_val_is_dir(node_ptr x, bool is_dir) {
@@ -686,6 +690,10 @@ private:
         std::string prefix_shape = !is_last_child ? "|   " : "    ";
 
         std::cout << children_prefix << link_shape;
+        if (curr == nullptr) {
+            std::cout << BLUE << "null" << END << '\n';
+            return;
+        }
         if (has_children(curr)) {
             ++dir_count;
             print_val_is_dir(curr, true);
@@ -709,26 +717,18 @@ private:
             dfs_print_aux(curr, is_last_child, children_prefix, dir_count, file_count, curr_level, max_level);
         }*/
 
-        node_ptr curr{};
-        if ((curr = dir->_left) != nullptr) {
-            dfs_print_aux(curr, false, children_prefix, dir_count, file_count, curr_level, max_level);
-        }
-        else if (dir->_right != nullptr) {// only have right child, print left child as null (bold blue)
-            std::cout << children_prefix << "├── " << "\033[1;34m" << "null" << "\033[0m\n";
-        }
-
-        if ((curr = dir->_right) != nullptr) {
-            dfs_print_aux(curr, true, children_prefix, dir_count, file_count, curr_level, max_level);
-        }
-        else if (dir->_left != nullptr) {// only have left child, print right child as null (bold blue)
-            std::cout << children_prefix << "└── " << "\033[1;34m" << "null" << "\033[0m\n";
-        }
+        dfs_print_aux(dir->_left, false, children_prefix, dir_count, file_count, curr_level, max_level);
+        dfs_print_aux(dir->_right, true, children_prefix, dir_count, file_count, curr_level, max_level);
     }
 
     // precondition: dir != nullptr
     static bool has_children(node_ptr dir) noexcept {
         return dir->_left != nullptr || dir->_right != nullptr;
     }
+
+#undef BLUE
+#undef BROWN
+#undef END
 
     struct Tree_node {
         T _val;
