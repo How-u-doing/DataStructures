@@ -580,7 +580,7 @@ private:
      * The following two insert at tail are designed for 
      * retaining the relative orders in the same bucket,
      * while normal insertion happens at bucket head for
-     * the sake of updates (new inserted value can be 
+     * the sake of updates (newly inserted value can be
      * accessed before old ones, which works like cache).
      */
 
