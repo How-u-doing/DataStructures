@@ -14,6 +14,7 @@
 #include <string>
 #include <iterator> // std::reverse_iterator, std::distance
 #include <iostream> // std::cout
+#include "my_map_traits.h" // myst::get_map_key_t
 
 namespace mySymbolTable{
 
@@ -29,17 +30,6 @@ namespace mySymbolTable{
 #else
 #   define _assert(condition, message) do { } while (false)
 #endif
-
-
-template<typename T, bool IsMap>
-struct get_map_key_t {
-    using key_type = typename T::first_type;
-};
-
-template<typename T>
-struct get_map_key_t<T, false> {
-    using key_type = T;
-};
 
 // Binary Search Tree
 template<typename T, typename Compare, typename Alloc, bool IsMap>

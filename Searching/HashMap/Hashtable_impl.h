@@ -16,18 +16,9 @@
 #include <iomanip>
 #include <cmath>    // std::ceil
 #include <cassert>
+#include "my_map_traits.h"  // myst::get_map_key_t
 
 namespace mySymbolTable {
-
-template<typename T, bool IsMap>
-struct get_map_key_t {
-    using key_type = typename T::first_type;
-};
-
-template<typename T>
-struct get_map_key_t<T, false> {
-    using key_type = T;
-};
 
 // Separate Chaining
 template<typename T, typename Hash, typename KeyEqual, typename Alloc, bool IsMap>
