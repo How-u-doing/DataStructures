@@ -593,7 +593,7 @@ private:
         }
     }
 
-    void copy_node_link(node_ptr dest, node_ptr src) noexcept {
+    void copy_node_links(node_ptr dest, node_ptr src) noexcept {
         dest->_parent = src->_parent;
         dest->_left = src->_left;
         dest->_right = src->_right;
@@ -613,19 +613,16 @@ private:
         }
         else if (r_min == x->_right) {// x->_right->_left == nullptr
             r_min->_parent = x->_parent;
-            r_min->_left = x->_left; // copy_node_link(r_min, x) will result in a circle
+            r_min->_left = x->_left; // copy_node_links(r_min, x) will result in a circle
             set_parent_child(x, r_min);
             set_left_child_parent(x, r_min);
         }
         else { // r_min->_left == nullptr
-            if (r_min->_right == nullptr) {// r_min is leaf
-                r_min->_parent->_left = nullptr;
-            }
-            else {// hast right child
-                r_min->_parent->_left = r_min->_right;
+            r_min->_parent->_left = r_min->_right;
+            if (r_min->_right != nullptr) {
                 r_min->_right->_parent = r_min->_parent;
             }
-            copy_node_link(r_min, x);
+            copy_node_links(r_min, x);
             set_parent_child(x, r_min);
             set_left_child_parent(x, r_min);
             x->_right->_parent = r_min;
@@ -719,6 +716,7 @@ private:
 #undef BLUE
 #undef BROWN
 #undef END
+#undef ROOT
 
     struct Tree_node {
         T _val;
