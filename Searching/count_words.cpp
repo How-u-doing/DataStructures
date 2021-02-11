@@ -1,6 +1,6 @@
 /*
  *  Base file to be included.
- *  You can #define HASHMAP/TSTMAP/BSTMAP/STDMAP or leave
+ *  You can #define HASHMAP/TSTMAP/BSTMAP/AVLMAP/STDMAP or leave
  *  it to dedault option which is std::unordered_map.
  */
 
@@ -8,6 +8,8 @@
     #include "HashMap/HashMap.h"
 #elif defined(BSTMAP)
     #include "TreeMap/BstMap.h"
+#elif defined(AVLMAP)
+    #include "TreeMap/AvlMap.h"
 #elif defined(TSTMAP)
     #include "TreeMap/TST.h"
 #elif defined(STDMAP)
@@ -101,10 +103,12 @@ int main(int argc, char* argv[])
         auto t0 = clock();
         std::ios_base::sync_with_stdio(false);
         
-#if defined(HASHMAP)
+#if   defined(HASHMAP)
         mySymbolTable::HashMap<string, size_t> mp{};
 #elif defined(BSTMAP)
         mySymbolTable::BstMap<string, size_t> mp{};
+#elif defined(AVLMAP)
+        mySymbolTable::AvlMap<string, size_t> mp{};
 #elif defined(TSTMAP)
         mySymbolTable::TST<size_t> mp{};
 #elif defined(STDMAP)
@@ -127,8 +131,7 @@ int main(int argc, char* argv[])
             if (word.length() < n) continue; // dump short word 
             transform(word.begin(), word.end(), word.begin(), ::tolower); // note that tolower is of global namespace
             ++mp[word];
-        }
-        auto t1 = clock();
+        }        auto t1 = clock();
         if (k > mp.size()) k = mp.size();
         show_most_common_words(mp.begin(), mp.end(), k);
         auto t2 = clock();
@@ -141,6 +144,12 @@ int main(int argc, char* argv[])
             << "sort time:  " << sort_time << "s\n"
             << "total: used " << total_time << "s to find the top " << k
             << " most common words (words length >=" << n << ")\n";
+
+#if defined(BSTMAP) || defined(AVLMAP)
+        cout << "\ntree size: " << mp.size() <<
+            "\ntree height: " << mp.height() << '\n';
+#endif
+
     }
     catch (const exception& e) {
         cout << e.what() << endl;

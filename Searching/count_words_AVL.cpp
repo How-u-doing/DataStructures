@@ -1,2 +1,2 @@
-#define STDMAP 1
+#define AVLMAP 1
 #include "count_words.cpp"
