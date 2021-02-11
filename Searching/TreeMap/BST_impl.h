@@ -332,6 +332,30 @@ public:
     // print in a tree structure
     void print(size_t level = 10) const { print(ROOT, level); }
 
+    /* tree height interface */
+
+    // tree height (height of root),  i.e. the number of
+    // edges on the longest path from root node to a leaf
+    int height() const {
+        if (empty()) return -1; // -1 suggests it's empty
+        return height(ROOT) - 1;
+    }
+
+    int height(const_iterator pos) const {
+        if (pos == end()) return -1;
+        return height(pos.ptr()) - 1;
+    }
+
+private:
+    static int height(node_ptr x) {
+        if (x == nullptr) return 0;
+        return 1 + max(height(x->_left), height(x->_right));
+    }
+
+    static int max(size_t a, size_t b) noexcept {
+        return a > b ? a : b;
+    }
+
 private:
     // When using greater<T> (operator>) for comp, the
     // leftmost node is on the contrary the largest.
