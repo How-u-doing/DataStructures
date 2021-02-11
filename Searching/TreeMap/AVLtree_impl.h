@@ -594,15 +594,15 @@ private:
            X    b (-1)     ------------->       X     c         ------------>   (-1, 0) a     b (0, +1)
                / \          around b                 / \         around a              / \   / \
     (+/-1, 0) c   W                                 Y   b                             X   Y Z   W
-             / \                                       / \  
+             / \                                       / \
             Y   Z                                     Z   W
 
     */
     node_ptr rotate_right_left(node_ptr a) { // RL shape
         node_ptr b = a->_right, c = b->_left;
         int bf_c = c->_bf;
-        // The setups of balance factors are inaccurate and unnecessary
-        // since we rotate b while it's balanced, but the cost is trivial.
+        // The setups of balance factors are inaccurate and unnecessary, since
+        // we're rotating b while BF(b) isn't +/-2, but the cost is trivial.
         rotate_right(b);
         rotate_left(a);
         c->_bf = 0;
