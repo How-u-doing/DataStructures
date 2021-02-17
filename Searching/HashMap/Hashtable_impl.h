@@ -2,7 +2,7 @@
  *  internal header file for implementing
  *  unordered symbol tables:
  *  Hash (multi) map/set
- *  see following link for the latest version
+ *  see the following link for the latest version
  *  https://github.com/How-u-doing/DataStructures/tree/master/Searching/HashMap/Hashtable_impl.h
  */
 
@@ -194,8 +194,8 @@ public:
         return iterator(first.ptr());
     }
 
-    size_t erase(const key_type& val) {
-        auto r = equal_range(val);
+    size_t erase(const key_type& key) {
+        auto r = equal_range(key);
         size_t n = std::distance(r.first, r.second);
         erase(r.first, r.second);
         return n;
@@ -695,7 +695,7 @@ private:
         T _val;
         node_ptr _prev, _next;
 
-        Hash_node(T val, node_ptr prev, node_ptr next)
+        Hash_node(const T& val, node_ptr prev, node_ptr next)
             : _val(val), _prev(prev), _next(next) {}
 
         T* val_ptr() {

@@ -2,7 +2,7 @@
  *  internal header file for implementing
  *  ordered symbol tables:
  *  AVL (multi) map/set
- *  see following link for the latest version
+ *  see the following link for the latest version
  *  https://github.com/How-u-doing/DataStructures/tree/master/Searching/TreeMap/AVLtree_impl.h
  */
 
@@ -63,15 +63,9 @@ private:
 
     // create & initialize the header node
     void create_header() {
-        try {
-            _header = _alloc.allocate(1);
-            set_default_header();
-            // leave the value field uninitialized
-        }
-        catch (...) {
-            _alloc.deallocate(_header, 1);
-            throw;
-        }
+        _header = _alloc.allocate(1); // may throw
+        set_default_header();
+        // leave the value field uninitialized
     }
 
     // clear old data only when rhs is empty
@@ -182,43 +176,43 @@ public:
     }
 
     // Returns iterator pointing to the first (highest) element (in the order of
-    // operator++) that compares equivalent to val, end() is returned if not found.
-    iterator find(const key_type& val) {
+    // operator++) that compares equivalent to key, end() is returned if not found.
+    iterator find(const key_type& key) {
         if (empty()) return end();
-        return iterator(find(ROOT, val));
+        return iterator(find(ROOT, key));
     }
     
-    const_iterator find(const key_type& val) const {
+    const_iterator find(const key_type& key) const {
         if (empty()) return end();
-        return const_iterator(find(ROOT, val));
+        return const_iterator(find(ROOT, key));
     }
 
-    bool contains(const key_type& val) const {
-        return empty() ? false : find(ROOT, val) != _header;
+    bool contains(const key_type& key) const {
+        return empty() ? false : find(ROOT, key) != _header;
     }
 
-    // Returns iterator pointing to the first element that is not less than val.
+    // Returns iterator pointing to the first element that is not less than key.
     // Returns end() if not found.
-    iterator lower_bound(const key_type& val) {
+    iterator lower_bound(const key_type& key) {
         if (empty()) return end();
-        return iterator(lower_bound(ROOT, val));
+        return iterator(lower_bound(ROOT, key));
     }
 
-    const_iterator lower_bound(const key_type& val) const {
+    const_iterator lower_bound(const key_type& key) const {
         if (empty()) return end();
-        return const_iterator(lower_bound(ROOT, val));
+        return const_iterator(lower_bound(ROOT, key));
     }
 
-    // Returns iterator pointing to the first element that is greater than val.
+    // Returns iterator pointing to the first element that is greater than key.
     // Returns end() if not found.
-    iterator upper_bound(const key_type& val) {
+    iterator upper_bound(const key_type& key) {
         if (empty()) return end();
-        return iterator(upper_bound(ROOT, val));
+        return iterator(upper_bound(ROOT, key));
     }
     
-    const_iterator upper_bound(const key_type& val) const {
+    const_iterator upper_bound(const key_type& key) const {
         if (empty()) return end();
-        return const_iterator(upper_bound(ROOT, val));
+        return const_iterator(upper_bound(ROOT, key));
     }
 
     std::pair<iterator, iterator> equal_range(const key_type& key) {
@@ -295,15 +289,15 @@ public:
     }
 
     // Returns the number of elements removed.
-    size_t erase(const key_type& val) {
-        auto r = equal_range(val);
+    size_t erase(const key_type& key) {
+        auto r = equal_range(key);
         size_t n = std::distance(r.first, r.second);
         erase(r.first, r.second);
         return n;
     }
 
     void swap(AVLtree& rhs) noexcept(std::allocator_traits<Alloc>::is_always_equal::value
-                           &&     std::is_nothrow_swappable<Compare>::value)
+                              &&     std::is_nothrow_swappable<Compare>::value)
     {
         assert(_alloc == rhs._alloc && "allocator must be the same");
         if (std::allocator_traits<allocator_type>::propagate_on_container_swap::value) {
@@ -340,7 +334,7 @@ private:
         return 1 + max(height(x->_left), height(x->_right));
     }
 
-    static int max(size_t a, size_t b) noexcept {
+    static int max(int a, int b) noexcept {
         return a > b ? a : b;
     }
 
@@ -504,21 +498,21 @@ private:
     }
 
     // precondition: ROOT is dereferencable, i.e. size() > 0
-    node_ptr find(node_ptr x, const key_type& val) const {
+    node_ptr find(node_ptr x, const key_type& key) const {
         while (x != nullptr) {
-            if      (_comp(val, get_key(x))) x = x->_left;
-            else if (_comp(get_key(x), val)) x = x->_right;
+            if      (_comp(key, get_key(x))) x = x->_left;
+            else if (_comp(get_key(x), key)) x = x->_right;
             else return x;
         }
         return _header; // end(), not found
     }
 
     // precondition: x != NULL && size() > 0
-    node_ptr lower_bound(node_ptr x, const key_type& val) const {
+    node_ptr lower_bound(node_ptr x, const key_type& key) const {
         node_ptr parent = x->_parent;
         while (x != nullptr) {
-            if (_comp(get_key(x), val)) x = x->_right;
-            else {// x.val >= val
+            if (_comp(get_key(x), key)) x = x->_right;
+            else {// x.key >= key
                 parent = x;
                 x = x->_left;
             }
@@ -526,11 +520,11 @@ private:
         return parent; // _header if not found
     }
         
-    node_ptr upper_bound(node_ptr x, const key_type& val) const {
+    node_ptr upper_bound(node_ptr x, const key_type& key) const {
         node_ptr parent = x->_parent;
         while (x != nullptr) {
-            if (!_comp(val, get_key(x))) x = x->_right;
-            else {// x.val > val
+            if (!_comp(key, get_key(x))) x = x->_right;
+            else {// x.key > key
                 parent = x;
                 x = x->_left;
             }
@@ -990,7 +984,7 @@ private:
         node_ptr _parent, _left, _right;
         int _bf = 0; // though acctually we will only need 3 bits, [-2, 2]
 
-        AVLtree_node(T val, node_ptr parent, node_ptr left = nullptr, node_ptr right = nullptr) :
+        AVLtree_node(const T& val, node_ptr parent, node_ptr left = nullptr, node_ptr right = nullptr) :
             _val(val), _parent(parent), _left(left), _right(right) {}
 
         // in case operator& is overloaded

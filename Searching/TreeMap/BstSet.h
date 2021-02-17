@@ -1,7 +1,7 @@
 /*
  *  ordered symbol tables:
  *  BST set and multiset
- *  see following link for the latest version
+ *  see the following link for the latest version
  *  https://github.com/How-u-doing/DataStructures/tree/master/Searching/TreeMap/BstSet.h
  */
 
@@ -119,8 +119,8 @@ public:
 }; // class BstSet
 
 template <typename Key, typename Compare, typename Alloc>
-void swap( BstSet<Key, Compare, Alloc>& lhs,
-           BstSet<Key, Compare, Alloc>& rhs) noexcept(noexcept(lhs.swap(rhs)))
+void swap(BstSet<Key, Compare, Alloc>& lhs,
+          BstSet<Key, Compare, Alloc>& rhs) noexcept(noexcept(lhs.swap(rhs)))
 {
     lhs.swap(rhs);
 }
@@ -231,7 +231,7 @@ public:
 
 template <typename Key, typename Compare, typename Alloc>
 void swap(BstMultiset<Key, Compare, Alloc>& lhs,
-    BstMultiset<Key, Compare, Alloc>& rhs) noexcept(noexcept(lhs.swap(rhs)))
+          BstMultiset<Key, Compare, Alloc>& rhs) noexcept(noexcept(lhs.swap(rhs)))
 {
     lhs.swap(rhs);
 }

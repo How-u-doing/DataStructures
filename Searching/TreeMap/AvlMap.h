@@ -1,7 +1,7 @@
 /*
  *  ordered symbol tables:
  *  AVL map and multimap
- *  see following link for the latest version
+ *  see the following link for the latest version
  *  https://github.com/How-u-doing/DataStructures/tree/master/Searching/TreeMap/AvlMap.h
  */
 
@@ -161,8 +161,8 @@ public:
 }; // class AvlMap
 
 template <typename Key, typename T ,typename Compare, typename Alloc>
-void swap( AvlMap<std::pair<const Key, T>, Compare, Alloc>& lhs,
-           AvlMap<std::pair<const Key, T>, Compare, Alloc>& rhs) noexcept(noexcept(lhs.swap(rhs)))
+void swap(AvlMap<Key, T, Compare, Alloc>& lhs,
+          AvlMap<Key, T, Compare, Alloc>& rhs) noexcept(noexcept(lhs.swap(rhs)))
 {
     lhs.swap(rhs);
 }
@@ -287,8 +287,8 @@ public:
 }; // class AvlMultimap
 
 template <typename Key, typename T, typename Compare, typename Alloc>
-void swap(AvlMultimap<std::pair<const Key, T>, Compare, Alloc>& lhs,
-          AvlMultimap<std::pair<const Key, T>, Compare, Alloc>& rhs) noexcept(noexcept(lhs.swap(rhs)))
+void swap(AvlMultimap<Key, T, Compare, Alloc>& lhs,
+          AvlMultimap<Key, T, Compare, Alloc>& rhs) noexcept(noexcept(lhs.swap(rhs)))
 {
     lhs.swap(rhs);
 }

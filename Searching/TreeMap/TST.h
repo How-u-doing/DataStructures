@@ -1,6 +1,6 @@
 /*
- *  ordered symbol table with key specialized as string
- *  see following link for the latest version:
+ *  TST ordered symbol table with key specialized as string
+ *  see the following link for the latest version
  *  https://github.com/How-u-doing/DataStructures/tree/master/Searching/TreeMap/TST.h
  */
 #ifndef TST_H
@@ -218,7 +218,28 @@ public:
         print(root, hide_null_links, level);
     }
 
+    /* tree height interface */
+
+    // tree height (height of root),  i.e. the number of
+    // edges on the longest path from root node to a leaf
+    int height() const {
+        return height(root) - 1; // -1 if empty
+    }
+
+    int height(const_iterator pos) const {
+        return height(pos.ptr()) - 1;
+    }
+
 private:
+    static int height(node_ptr x) {
+        if (x == nullptr) return 0;
+        return 1 + max(max(height(x->left), height(x->right)), height(x->mid));
+    }
+
+    static int max(int a, int b) noexcept {
+        return a > b ? a : b;
+    }
+
     // print with a max level
     void print(node_ptr dir, bool hide_null_links, size_t max_level) const {
         if (dir == nullptr) return;

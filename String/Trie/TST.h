@@ -1,10 +1,12 @@
 /*
- *  symbol table with key specialized as string:
- *  see following link for the latest version
+ *  symbol table with key specialized as string
+ *  see the following link for the latest version
  *  https://github.com/How-u-doing/DataStructures/tree/master/String/Trie/TST.h
  */
+
 #ifndef TST_H
-#define TST_H
+#define TST_H 1
+
 #include <string>
 #include <vector>
 #include <stdexcept>

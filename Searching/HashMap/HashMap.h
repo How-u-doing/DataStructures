@@ -1,7 +1,7 @@
 /*
  *  unordered symbol tables:
  *  Hash map and multimap
- *  see following link for the latest version
+ *  see the following link for the latest version
  *  https://github.com/How-u-doing/DataStructures/tree/master/Searching/HashMap/HashMap.h
  */
 

@@ -1,7 +1,7 @@
 /*
  *  ordered symbol tables:
  *  BST map and multimap
- *  see following link for the latest version
+ *  see the following link for the latest version
  *  https://github.com/How-u-doing/DataStructures/tree/master/Searching/TreeMap/BstMap.h
  */
 
@@ -161,8 +161,8 @@ public:
 }; // class BstMap
 
 template <typename Key, typename T ,typename Compare, typename Alloc>
-void swap( BstMap<std::pair<const Key, T>, Compare, Alloc>& lhs,
-           BstMap<std::pair<const Key, T>, Compare, Alloc>& rhs) noexcept(noexcept(lhs.swap(rhs)))
+void swap(BstMap<Key, T, Compare, Alloc>& lhs,
+          BstMap<Key, T, Compare, Alloc>& rhs) noexcept(noexcept(lhs.swap(rhs)))
 {
     lhs.swap(rhs);
 }
@@ -287,8 +287,8 @@ public:
 }; // class BstMultimap
 
 template <typename Key, typename T, typename Compare, typename Alloc>
-void swap(BstMultimap<std::pair<const Key, T>, Compare, Alloc>& lhs,
-          BstMultimap<std::pair<const Key, T>, Compare, Alloc>& rhs) noexcept(noexcept(lhs.swap(rhs)))
+void swap(BstMultimap<Key, T, Compare, Alloc>& lhs,
+          BstMultimap<Key, T, Compare, Alloc>& rhs) noexcept(noexcept(lhs.swap(rhs)))
 {
     lhs.swap(rhs);
 }
@@ -296,4 +296,3 @@ void swap(BstMultimap<std::pair<const Key, T>, Compare, Alloc>& lhs,
 } // namespace mySymbolTable
 
 #endif // !BSTMAP_H
-

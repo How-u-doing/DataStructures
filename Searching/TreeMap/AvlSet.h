@@ -1,7 +1,7 @@
 /*
  *  ordered symbol tables:
  *  AVL set and multiset
- *  see following link for the latest version
+ *  see the following link for the latest version
  *  https://github.com/How-u-doing/DataStructures/tree/master/Searching/TreeMap/AvlSet.h
  */
 
@@ -119,8 +119,8 @@ public:
 }; // class AvlSet
 
 template <typename Key, typename Compare, typename Alloc>
-void swap( AvlSet<Key, Compare, Alloc>& lhs,
-           AvlSet<Key, Compare, Alloc>& rhs) noexcept(noexcept(lhs.swap(rhs)))
+void swap(AvlSet<Key, Compare, Alloc>& lhs,
+          AvlSet<Key, Compare, Alloc>& rhs) noexcept(noexcept(lhs.swap(rhs)))
 {
     lhs.swap(rhs);
 }
@@ -231,7 +231,7 @@ public:
 
 template <typename Key, typename Compare, typename Alloc>
 void swap(AvlMultiset<Key, Compare, Alloc>& lhs,
-    AvlMultiset<Key, Compare, Alloc>& rhs) noexcept(noexcept(lhs.swap(rhs)))
+          AvlMultiset<Key, Compare, Alloc>& rhs) noexcept(noexcept(lhs.swap(rhs)))
 {
     lhs.swap(rhs);
 }
