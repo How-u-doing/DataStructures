@@ -19,7 +19,7 @@
 
 namespace mySymbolTable {
 
-constexpr int SkipListMaxLevel = 32; // the probability to reach this is 1/(2^31), ZERO! 
+constexpr int SkipListMaxLevel = 32; // the probability to reach this is 1/(2^32), almost ZERO!
 
 template<typename T, typename Compare, typename Alloc, bool IsMap>
 class SkipList {
