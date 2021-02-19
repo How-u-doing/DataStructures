@@ -1,7 +1,7 @@
 /*
  *  Base file to be included.
- *  You can #define HASHMAP/TSTMAP/BSTMAP/AVLMAP/STDMAP or leave
- *  it to dedault option which is std::unordered_map.
+ *  You can #define HASHMAP/TSTMAP/BSTMAP/AVLMAP/STDMAP/SKIPLISTMAP
+ *  or leave it to default option which is std::unordered_map.
  */
 
 #if defined(HASHMAP)
@@ -14,6 +14,8 @@
     #include "TreeMap/TST.h"
 #elif defined(STDMAP)
     #include <map>
+#elif defined(SKIPLISTMAP)
+    #include "Randomized/SkiplistMap.h"
 #else
     #include <unordered_map>
 #endif
@@ -113,6 +115,8 @@ int main(int argc, char* argv[])
         mySymbolTable::TST<size_t> mp{};
 #elif defined(STDMAP)
         std::map<string, size_t> mp{};
+#elif defined(SKIPLISTMAP)
+        mySymbolTable::SkiplistMap<string, size_t> mp{};
 #else
         std::unordered_map<string, size_t> mp{};
 #endif
@@ -127,11 +131,14 @@ int main(int argc, char* argv[])
         ifstream ifs{ filename };
         if (!ifs.is_open()) { cerr << "Error opening file " << filename << endl; return 2; }
 
+        //size_t max_word_len = 0; // the height of a TST has something to do with string length
         for (string word; ifs >> word;) {
-            if (word.length() < n) continue; // dump short word 
+            if (word.length() < n) continue; // dump short word
+            //if (word.length() > max_word_len) max_word_len = word.length();
             transform(word.begin(), word.end(), word.begin(), ::tolower); // note that tolower is of global namespace
             ++mp[word];
-        }        auto t1 = clock();
+        }
+        auto t1 = clock();
         if (k > mp.size()) k = mp.size();
         show_most_common_words(mp.begin(), mp.end(), k);
         auto t2 = clock();
@@ -143,15 +150,19 @@ int main(int argc, char* argv[])
         cout << "\nbuild time: " << build_time << "s\n"
             << "sort time:  " << sort_time << "s\n"
             << "total: used " << total_time << "s to find the top " << k
-            << " most common words (words length >=" << n << ")\n";
+            << " most common words (word length >= " << n << ")\n";
 
-#if defined(BSTMAP) || defined(AVLMAP)
+#if defined(BSTMAP) || defined(AVLMAP) || defined(TSTMAP)
         cout << "\ntree size: " << mp.size() <<
             "\ntree height: " << mp.height() << '\n';
+#elif defined(SKIPLISTMAP)
+        cout << "\nskip list size: " << mp.size() <<
+            "\nskip list height (max level): " << mp.level() << '\n';
 #endif
 
+        //cout << "max word length: " << max_word_len << '\n';
     }
-    catch (const exception& e) {
+    catch (const std::exception& e) {
         cout << e.what() << endl;
     }
     catch (...) {

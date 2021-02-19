@@ -1,12 +1,15 @@
 # Count Words
-|   | std::unordered\_map | myst::[HashMap](https://github.com/How-u-doing/DataStructures/blob/master/Searching/HashMap/HashMap.h) | std::map | myst::[BstMap](https://github.com/How-u-doing/DataStructures/blob/master/Searching/TreeMap/BstMap.h) | myst::[AvlMap](https://github.com/How-u-doing/DataStructures/tree/master/Searching/TreeMap/AvlMap.h) | myst::[TST](https://github.com/How-u-doing/DataStructures/blob/master/Searching/TreeMap/TST.h) |
-|---| --- | --- | --- | --- | --- | --- |
-| build time | 5.088s | 4.978s | 6.902s | 6.937s | 6.827s | 5.671s |
-| sort time  | 0.045s | 0.070s | 0.073s | 0.070s | 0.076s | 0.106s |
-| total time | 5.133s | 5.048s | 6.975s | 7.007s | 6.903s | 5.777s |
-| tree height|        |        |        |   47   |   21   |        |
+|   | std::unordered\_map | myst::[Hashtable](https://github.com/How-u-doing/DataStructures/blob/master/Searching/HashMap/Hashtable_impl.h) | std::map | myst::[BST](https://github.com/How-u-doing/DataStructures/blob/master/Searching/TreeMap/BST_impl.h) | myst::[AVL](https://github.com/How-u-doing/DataStructures/tree/master/Searching/TreeMap/AVLtree_impl.h) | myst::[TST](https://github.com/How-u-doing/DataStructures/blob/master/Searching/TreeMap/TST.h) | myst::[SkipList](https://github.com/How-u-doing/DataStructures/blob/master/Searching/Randomized/SkipList_impl.h) |
+|   :---           | :---:  | :---:  | :---:  | :---:  | :---:  | :---:  | :---:   |
+| build time       | 5.126s | 5.181s | 7.047s | 7.037s | 6.877s | 5.745s | 10.545s |
+| sort time        | 0.042s | 0.062s | 0.068s | 0.068s | 0.066s | 0.107s |  0.086s |
+| total time       | 5.169s | 5.242s | 7.115s | 7.106s | 6.942s | 5.852s | 10.631s |
+| tree/list height |        |        |        |   47   |   21   |   97   |   18    |
 
-and the size of the lookup table (words length >= 8) is `278063`.
+and the size of the lookup table (word length >= 8) is `278063`.
+
+Note that `height(TST) >=  max_word_length`, which is `80` in this case.
+We can reduce a TST's height by hybriding TST with R^2-way branching at the root. 
 
 # Unordered
 ![](img/count_words_unordered.png)
