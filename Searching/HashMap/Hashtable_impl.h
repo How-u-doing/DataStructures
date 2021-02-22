@@ -6,8 +6,8 @@
  *  https://github.com/How-u-doing/DataStructures/tree/master/Searching/HashMap/Hashtable_impl.h
  */
 
-#ifndef HASHTABLE_H
-#define HASHTABLE_H
+#ifndef HASHTABLE_IMPL_H
+#define HASHTABLE_IMPL_H 1
 
 #include <utility>  // std::pair, std::swap
 #include <iterator> // std::distance
@@ -97,14 +97,14 @@ public:
         for (auto head : _hashtable) {
             if (head) return iterator(head);
         }
-        return iterator(nullptr); // end()
+        return end();
     }
 
     const_iterator begin() const noexcept {
         for (auto head : _hashtable) {
             if (head) return const_iterator(head);
         }
-        return const_iterator(nullptr);
+        return end();
     }
 
     const_iterator cbegin() const noexcept {
@@ -143,29 +143,14 @@ public:
 
 protected:
     // for non-duplicate hash map (set)
-    std::pair<iterator, bool> insert(const T& val) {
-        const auto& [p, inserted] = insert_unique(val);
-        return { iterator(p), inserted };
-    }
-
     template< typename InputIt >
-    void insert(InputIt first, InputIt last) {
+    void insert_unique(InputIt first, InputIt last) {
         while (first != last) {
-            insert(*first++);
+            insert_unique(*first++);
         }
     }
 
-    // only for hash map
-    std::pair<iterator, bool> insert_or_assign(const T& val) {
-        const auto& [p, inserted] = insert_or_assign_aux(val);
-        return { iterator(p), inserted };
-    }
-
     // for hash multi map (set)
-    iterator insert_multi(const T& val) {
-        return iterator(insert_multi_aux(val));
-    }
-
     template< typename InputIt >
     void insert_multi(InputIt first, InputIt last) {
         while (first != last) {
@@ -314,8 +299,8 @@ public:
         _hashtable.swap(newtable);
         for (node_ptr next; pos; pos = next) {
             next = pos->_next;
-            // insert while preserving old orders
-            // won't allocate new nodes, but relink old nodes
+            // Inserting while preserving relative orders if them go into the same
+            // bucket again. It won't allocate new nodes, but relink the old ones.
             rehash_insert_tail(bucket(get_key(pos)), pos);
         }
     }
@@ -411,7 +396,7 @@ private:
     }
 
 private:
-    // here n >= 3 and is odd number
+    // here n >= 5 and is odd number
     static bool is_odd_prime(size_t n) {
         // This is checked so that we can skip middle 5 numbers in below loop
         if (n % 3 == 0/* || n % 2 == 0 */) return false;
@@ -423,15 +408,15 @@ private:
         return true;
     }
 
-    // precondition: x >= 2 (the min prime/default bucket count)
     static size_t next_prime(size_t x) {
+        if (x == 1 || x == 0) return 2;
+        if (x == 2)           return 3;
         if (x % 2 == 0) ++x;    // turn it into an odd number
         else            x += 2; // get next odd number
         for (; true; x += 2)
             if (is_odd_prime(x)) return x;
     }
 
-    // equivalent to `new node(val, prev = 0, next = 0)`
     node_ptr new_node(const T& val, node_ptr prev = nullptr, node_ptr next = nullptr)
     {
         node_ptr p = _alloc.allocate(1);
@@ -452,11 +437,19 @@ private:
 
     // before calling it, you MUST set policies (members) first
     void copy_nodes(const _self& rhs) {
-        _count = 0; // insert_tail() will increment it automatically
+        _count = rhs._count;
+        node_ptr prev = nullptr;
         for (node_ptr pos = rhs.begin().ptr(); pos; pos = pos->_next) {
-            // insert at tail to retain relative orders in the same bucket
-            insert_tail(bucket(get_key(pos)), pos->_val);
+            // inserting at tail to retain relative orders in the same bucket
+            //insert_tail(bucket(get_key(pos)), pos->_val); // a little bit slower
+            prev = copying_insert_tail(bucket(get_key(pos)), pos->_val, prev);
         }
+    }
+
+    node_ptr copying_insert_tail(size_t n, const T& val, node_ptr prev) {
+        node_ptr newnode = new_node(val, prev, nullptr);
+        if (prev) prev->_next = newnode;
+        return _hashtable[n] ? newnode : _hashtable[n] = newnode;
     }
 
     void clear_nodes() noexcept {
@@ -560,8 +553,7 @@ private:
 
     // insert a new entry `val` at the beginning of bucket n
     node_ptr insert_head(size_t n, const T& val) {
-        node** head = &_hashtable[n];
-        node_ptr next = *head;
+        node_ptr next = _hashtable[n];
         node_ptr prev = next ? next->_prev : nullptr;
         if (!next) { // empty bucket
             const size_t N = _hashtable.size();
@@ -573,7 +565,7 @@ private:
         if (prev) prev->_next = newnode;
         if (next) next->_prev = newnode;
         ++_count;
-        return *head = newnode;
+        return _hashtable[n] = newnode;
     }
 
     /*
@@ -586,8 +578,7 @@ private:
 
     // insert a new entry `val` at the end of bucket n
     node_ptr insert_tail(size_t n, const T& val) {
-        node** head = &_hashtable[n];
-        node_ptr prev = *head;
+        node_ptr prev = _hashtable[n];
         set_tail(prev, n);
         node_ptr next = prev ? prev->_next : nullptr;
         if (!prev) { // empty bucket
@@ -603,13 +594,12 @@ private:
         if (prev) prev->_next = newnode;
         if (next) next->_prev = newnode;
         ++_count;
-        return *head ? newnode : *head = newnode;
+        return _hashtable[n] ? newnode : _hashtable[n] = newnode;
     }
 
     // insert an initialized `newnode` at the end of bucket n
     node_ptr rehash_insert_tail(size_t n, node_ptr newnode) {
-        node** head = &_hashtable[n];
-        node_ptr prev = *head;
+        node_ptr prev = _hashtable[n];
         set_tail(prev, n);
         node_ptr next = prev ? prev->_next : nullptr;
         if (!prev) { // empty bucket
@@ -621,7 +611,7 @@ private:
         newnode->_prev = prev; newnode->_next = next;
         if (prev) prev->_next = newnode;
         if (next) next->_prev = newnode;
-        return *head ? newnode : *head = newnode;
+        return _hashtable[n] ? newnode : _hashtable[n] = newnode;
     }
 
     void try_rehash() {
@@ -629,8 +619,9 @@ private:
             rehash(2 * size());
     }
 
+protected:
     // only for hash map
-    std::pair<node_ptr, bool> insert_or_assign_aux(const T& val) {
+    std::pair<iterator, bool> insert_or_assign(const T& val) {
         try_rehash();
         const key_type key = get_key(val);
         const size_t k = bucket(key);
@@ -641,7 +632,7 @@ private:
         return { insert_head(k, val), true };
     }
 
-    std::pair<node_ptr, bool> insert_unique(const T& val) {
+    std::pair<iterator, bool> insert_unique(const T& val) {
         try_rehash();
         const key_type key = get_key(val);
         const size_t k = bucket(key);
@@ -651,6 +642,19 @@ private:
         return { insert_head(k, val), true };
     }
 
+    iterator insert_multi(const T& val) {
+        try_rehash();
+        const key_type key = get_key(val);
+        const size_t k = bucket(key);
+        in_bucket_for_each_if_equal(key, k) {
+            if (pos == _hashtable[k]) break; // return insert_head(k, val)
+            return insert_before(pos, val);
+        }
+        // no dup or dup at first node
+        return insert_head(k, val);
+    }
+
+private:
     // precondition: x is NOT the first node in its bucket, otherwise
     // we will have to update the head pointer in the hashtable.
     node_ptr insert_before(node_ptr x, const T& val) {
@@ -659,19 +663,6 @@ private:
         x->_prev = newnode;
         ++_count;
         return newnode;
-    }
-
-    node_ptr insert_multi_aux(const T& val) {
-        try_rehash();
-        const key_type key = get_key(val);
-        const size_t k = bucket(key);
-        node_ptr head = _hashtable[k];
-        in_bucket_for_each_if_equal(key, k) {
-            if (pos == head) break; // return insert_head(k, val)
-            return insert_before(pos, val);
-        }
-        // no dup or dup at first node
-        return insert_head(k, val);
     }
 
     node_ptr erase_aux(node_ptr x) {
@@ -806,4 +797,4 @@ private:
 #undef set_prev
 #undef in_bucket_for_each_if_equal
 
-#endif // !HASHTABLE_H
+#endif // !HASHTABLE_IMPL_H

@@ -66,13 +66,13 @@ public:
     // (2) a
     template< typename InputIt >
     HashSet( InputIt first, InputIt last,
-             size_t bucket_count = 2,
+             size_t bucket_count = 1,
              const Hash& hash = Hash(),
              const key_equal& equal = key_equal(),
              const Alloc& alloc = Alloc() )
         : _base(bucket_count, hash, equal, alloc)
     {
-        _base::insert(first, last);
+        _base::insert_unique(first, last);
     }
 
     // (2) b
@@ -98,13 +98,13 @@ public:
 
     // (4) a
     HashSet( std::initializer_list<value_type> init,
-             size_t bucket_count = 2,
+             size_t bucket_count = 1,
              const Hash& hash = Hash(),
              const key_equal& equal = key_equal(),
              const Alloc& alloc = Alloc() )
         : _base(bucket_count, hash, equal, alloc)
     {
-        _base::insert(init.begin(), init.end());
+        _base::insert_unique(init.begin(), init.end());
     }
 
     // (4) b
@@ -133,16 +133,16 @@ public:
     /* unique insertion for hash set */
 
     std::pair<iterator, bool> insert(const value_type& val) {
-        return _base::insert(val);
+        return _base::insert_unique(val);
     }
 
     template < typename InputIt >
     void insert(InputIt first, InputIt last) {
-        return _base::insert(first, last);
+        return _base::insert_unique(first, last);
     }
 
     void insert(std::initializer_list<value_type> ilist) {
-        return _base::insert(ilist.begin(), ilist.end());
+        return _base::insert_unique(ilist.begin(), ilist.end());
     }
 
     void swap(HashSet& rhs) {
@@ -214,7 +214,7 @@ public:
     // (2) a
     template< typename InputIt >
     HashMultiset( InputIt first, InputIt last,
-                  size_t bucket_count = 2,
+                  size_t bucket_count = 1,
                   const Hash& hash = Hash(),
                   const key_equal& equal = key_equal(),
                   const Alloc& alloc = Alloc() )
@@ -246,7 +246,7 @@ public:
 
     // (4) a
     HashMultiset( std::initializer_list<value_type> init,
-                  size_t bucket_count = 2,
+                  size_t bucket_count = 1,
                   const Hash& hash = Hash(),
                   const key_equal& equal = key_equal(),
                   const Alloc& alloc = Alloc() )
@@ -313,4 +313,3 @@ template<
 } // namespace mySymbolTable
 
 #endif // !HASHSET_H
-

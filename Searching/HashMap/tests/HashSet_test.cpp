@@ -15,16 +15,7 @@ int main()
     //using Hashtable = myst::HashSet<int/*, myhash*/>;
     using Hashtable = myst::HashMultiset<int, myhash>;
     try {
-        Hashtable st;
-        st.insert(10);
-        st.insert(50);
-        st.insert(80);
-        st.insert(40);
-        st.insert(30);
-        st.insert(90);
-        st.insert(60);
-        st.insert(20);
-        st.insert(70);
+        Hashtable st = { 10,50,80,40,30,90,60,20,70 };
 
         // insert duplicates 
         st.insert(50);
@@ -70,7 +61,9 @@ int main()
         /*cout << "\n\nst2, after swapping with st: \n";
         for (auto it : st2) {
             cout << it << "  ";
-        }*/
+        }
+        std::cout << "\n\n";
+        st.print();*/
     }
     catch (const exception& e) {
         cout << e.what() << endl;

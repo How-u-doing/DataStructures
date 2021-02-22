@@ -68,13 +68,13 @@ public:
     // (2) a
     template< typename InputIt >
     HashMap( InputIt first, InputIt last,
-             size_t bucket_count = 2,
+             size_t bucket_count = 1,
              const Hash& hash = Hash(),
              const key_equal& equal = key_equal(),
              const Alloc& alloc = Alloc() )
         : _base(bucket_count, hash, equal, alloc)
     {
-        _base::insert(first, last);
+        _base::insert_unique(first, last);
     }
 
     // (2) b
@@ -100,13 +100,13 @@ public:
 
     // (4) a
     HashMap( std::initializer_list<value_type> init,
-             size_t bucket_count = 2,
+             size_t bucket_count = 1,
              const Hash& hash = Hash(),
              const key_equal& equal = key_equal(),
              const Alloc& alloc = Alloc() )
         : _base(bucket_count, hash, equal, alloc)
     {
-        _base::insert(init.begin(), init.end());
+        _base::insert_unique(init.begin(), init.end());
     }
 
     // (4) b
@@ -147,26 +147,29 @@ public:
     }
 
     T& operator[](const Key& key) {
-        return _base::insert({ key, T() }).first->second;
+        iterator it = this->find(key);
+        if (it == this->end())
+            it = _base::insert_unique({ key, T() }).first;
+        return it->second;
     }
 
     /* unique insertion for hash map */
 
     std::pair<iterator, bool> insert(const value_type& val) {
-        return _base::insert(val);
+        return _base::insert_unique(val);
     }
 
     std::pair<iterator, bool> insert(const Key& key, const T& val) {
-        return _base::insert({ key, val });
+        return _base::insert_unique({ key, val });
     }
 
     template < typename InputIt >
     void insert(InputIt first, InputIt last) {
-        return _base::insert(first, last);
+        return _base::insert_unique(first, last);
     }
 
     void insert(std::initializer_list<value_type> ilist) {
-        return _base::insert(ilist.begin(), ilist.end());
+        return _base::insert_unique(ilist.begin(), ilist.end());
     }
 
     std::pair<iterator, bool> insert_or_assign(const value_type& val) {
@@ -175,6 +178,13 @@ public:
 
     std::pair<iterator, bool> insert_or_assign(const Key& key, const T& val) {
         return _base::insert_or_assign({ key, val });
+    }
+
+    size_t erase(const key_type& key) {
+        iterator it = _base::find(key);
+        if (it == this->end()) return 0;
+        _base::erase(it);
+        return 1;
     }
 
     void swap(HashMap& rhs) {
@@ -247,7 +257,7 @@ public:
     // (2) a
     template< typename InputIt >
     HashMultimap( InputIt first, InputIt last,
-                  size_t bucket_count = 2,
+                  size_t bucket_count = 1,
                   const Hash& hash = Hash(),
                   const key_equal& equal = key_equal(),
                   const Alloc& alloc = Alloc() )
@@ -279,7 +289,7 @@ public:
 
     // (4) a
     HashMultimap( std::initializer_list<value_type> init,
-                  size_t bucket_count = 2,
+                  size_t bucket_count = 1,
                   const Hash& hash = Hash(),
                   const key_equal& equal = key_equal(),
                   const Alloc& alloc = Alloc() )
@@ -350,4 +360,3 @@ template<
 } // namespace mySymbolTable
 
 #endif // !HASHMAP_H
-

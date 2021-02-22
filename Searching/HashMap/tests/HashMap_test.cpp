@@ -25,16 +25,8 @@ int main()
     //using Hashtable = myst::HashMap<int, string/*, myhash*/>;
     using Hashtable = myst::HashMultimap<int, string/*, myhash*/>;
     try {
-        Hashtable st;
-        st.insert(10, "ten");
-        st.insert(50, "five");
-        st.insert(80, "eight");
-        st.insert(40, "four");
-        st.insert(30, "three");
-        st.insert(90, "nine");
-        st.insert(60, "six");
-        st.insert(20, "two");
-        st.insert(70, "seven");
+        Hashtable st = { {10, "ten"}, {50, "five"}, {80, "eight"}, {40, "four"},
+            {30, "three"}, {90, "nine"}, {60, "six"}, {20, "two"}, {70, "seven"} };
         
         // insert duplicates
         st.insert(50, "five * 1");
