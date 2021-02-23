@@ -74,10 +74,10 @@ public:
     explicit SkipList(const Compare& comp, const Alloc& alloc = Alloc())
         : _comp(comp), _alloc(alloc) { create_header(); }
 
-    explicit SkipList(const Alloc& alloc) : _alloc(alloc) {}
+    explicit SkipList(const Alloc& alloc) : _alloc(alloc) { create_header(); }
 
     // note that their levels of each node with same value (thus max level) can differ
-    SkipList(const _self& rhs) : _count(rhs._count), _comp(rhs._comp), _alloc(rhs._alloc)
+    SkipList(const _self& rhs) : _comp(rhs._comp), _alloc(rhs._alloc)
     {
         create_header();
         copy_nodes_from(rhs);
@@ -219,30 +219,15 @@ public:
     }
 
 protected:
-    // for non-duplicate map (set)
-    std::pair<iterator, bool> insert(const T& val) {
-        const auto& [p, inserted] = insert_unique(val);
-        return { iterator(p), inserted };
-    }
-
+    // for non-duplicate hash map (set)
     template< typename InputIt >
-    void insert(InputIt first, InputIt last) {
+    void insert_unique(InputIt first, InputIt last) {
         while (first != last) {
-            insert(*first++);
+            insert_unique(*first++);
         }
     }
 
-    // only for map
-    std::pair<iterator, bool> insert_or_assign(const T& val) {
-        const auto& [p, inserted] = insert_or_assign_aux(val);
-        return { iterator(p), inserted };
-    }
-
-    // for multi map (set)
-    iterator insert_multi(const T& val) {
-        return iterator(insert_multi_aux(val));
-    }
-
+    // for hash multi map (set)
     template< typename InputIt >
     void insert_multi(InputIt first, InputIt last) {
         while (first != last) {
@@ -312,7 +297,7 @@ private:
 
     void copy_nodes_from(const _self& rhs) {
         for (node_ptr x = rhs._header->_next[0]; x != rhs._header; x = x->_next[0]) {
-            insert_multi_aux(x->_val);
+            insert_multi(x->_val);
         }
     }
 
@@ -323,9 +308,10 @@ private:
         }
     }
 
+    // find the first key that compares equivalent to `key`
     node_ptr find_aux(const key_type& key, bool lower_bound = false) const {
         if (empty()) return _header;
-        node_ptr curr = _header, next;        
+        node_ptr curr = _header, next;
         for (int level = _header->_level - 1; level >= 0; --level) {
             while ((next = curr->_next[level]) != _header && _comp(get_key(next), key))
             {
@@ -336,15 +322,31 @@ private:
         if (curr == _header) return _header; // not found, key too large
         if (!_comp(key, get_key(curr))/* && !_comp(get_key(curr), key)*/)
             return curr; // found
-        else // not found
+        else // not found: curr->_prev < key < curr
             return lower_bound ? curr : _header;
     }
 
+#if 0
+    // lazy version
     node_ptr upper_bound_aux(const key_type& key) const {
         node_ptr curr = find_aux(key, /*lower_bound=*/true);
         while (curr != _header && !_comp(key, get_key(curr)))
             curr = curr->_next[0];
         return curr;
+    }
+#endif
+    // eager version
+    node_ptr upper_bound_aux(const key_type& key) const {
+        if (empty()) return _header;
+        node_ptr curr = _header, next = _header;
+        for (int level = _header->_level - 1; level >= 0; --level) {
+            while ((next = curr->_next[level]) != _header && !_comp(key, get_key(next)))
+            {
+                curr = next;
+            }
+        }
+        // now curr <= key < next or next == _header
+        return next;
     }
 
     // map
@@ -435,11 +437,12 @@ private:
         return newnode;
     }
 
+protected:
     // only for map
-    std::pair<node_ptr, bool> insert_or_assign_aux(const T& val) {
-        const key_type key = get_key(val);
+    std::pair<iterator, bool> insert_or_assign(const T& val) {
+        const key_type& key = get_key(val);
         node_ptr update[SkipListMaxLevel];
-        node_ptr curr = _header, next;        
+        node_ptr curr = _header, next;
         for (int level = _header->_level - 1; level >= 0; --level) {
             while ((next = curr->_next[level]) != _header && _comp(get_key(next), key))
                 curr = next;
@@ -453,8 +456,8 @@ private:
         else return { insert_after(curr, val, update), true };
     }
 
-    std::pair<node_ptr, bool> insert_unique(const T& val) {
-        const key_type key = get_key(val);
+    std::pair<iterator, bool> insert_unique(const T& val) {
+        const key_type& key = get_key(val);
         node_ptr update[SkipListMaxLevel];
         node_ptr curr = _header, next;
         for (int level = _header->_level - 1; level >= 0; --level) {
@@ -469,8 +472,8 @@ private:
         else return { insert_after(curr, val, update), true };
     }
 
-    node_ptr insert_multi_aux(const T& val) {
-        const key_type key = get_key(val);
+    iterator insert_multi(const T& val) {
+        const key_type& key = get_key(val);
         node_ptr update[SkipListMaxLevel];
         node_ptr curr = _header, next;
         for (int level = _header->_level - 1; level >= 0; --level) {
@@ -481,7 +484,24 @@ private:
         return insert_after(curr, val, update);
     }
 
-protected:
+    iterator insert_before_bottom_up(node_ptr x, const T& val) {
+        int level = random_level();
+        node_ptr newnode = new_node(val, level, x->_prev, nullptr);
+        newnode->_next[0] = x;
+        x->_prev->_next[0] = newnode;
+        x->_prev = newnode;
+        node_ptr curr = newnode->_prev;
+        for (int i = 1; i < level; ++i) {
+            while (curr != _header && curr->_level <= i)
+                curr = curr->_prev;
+            newnode->_next[i] = curr->_next[i];
+            curr->_next[i] = newnode;
+        }
+        if (level > _header->_level) _header->_level = level;
+        ++_count;
+        return newnode;
+    }
+
     // quick erasure for non-duplicate map/set or for
     // multi map/set when only wanting to delete one key
     size_t erase_one_top_down(const key_type& key) {
@@ -501,10 +521,8 @@ protected:
             update[i]->_next[i] = curr->_next[i];
         }
         delete_node(curr); --_count;
-        for (int i = _header->_level - 1; i >= 0; --i) {
-            if (_header->_next[i] == _header)
-                --_header->_level;
-        }
+        for (int i = _header->_level - 1; i >= 0 && _header->_next[i] == _header; --i)
+            --_header->_level;
         return 1;
     }
 
@@ -524,10 +542,8 @@ private:
             curr->_next[i] = x->_next[i];
         }
         delete_node(x); --_count;
-        for (int i = _header->_level - 1; i >= 0; --i) {
-            if (_header->_next[i] == _header)
-                --_header->_level;
-        }
+        for (int i = _header->_level - 1; i >= 0 && _header->_next[i] == _header; --i)
+            --_header->_level;
         return x_next;
     }
 
@@ -541,11 +557,13 @@ private:
             : _val(val), _level(level), _prev(prev)
         {
             _next = (node**) ::operator new(level * sizeof(node_ptr));
-            for (int i = 0; i < level; ++i) {
-                _next[i] = update[i]->_next[i];
-                update[i]->_next[i] = this;
+            if (update) {
+                for (int i = 0; i < level; ++i) {
+                    _next[i] = update[i]->_next[i];
+                    update[i]->_next[i] = this;
+                }
+                _next[0]->_prev = this;
             }
-            _next[0]->_prev = this;
         }
 
         ~SkipList_node() { ::operator delete(_next); }
@@ -574,6 +592,7 @@ private:
         SkipList_iter(node_ptr ptr) noexcept : _ptr(ptr) {}
 
         node_ptr ptr() const noexcept { return _ptr; }
+        int level() const noexcept { return _ptr->_level; }
 
         reference operator*() const {
             return *_ptr->val_ptr();
@@ -630,6 +649,7 @@ private:
         SkipList_const_iter(const SkipList_iter& other) : _ptr(other.ptr()) {}
 
         node_ptr ptr() const noexcept { return _ptr; }
+        int level() const noexcept { return _ptr->_level; }
 
         reference operator*() const {
             return *_ptr->val_ptr();

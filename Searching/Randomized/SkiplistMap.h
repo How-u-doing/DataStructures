@@ -65,7 +65,7 @@ public:
     SkiplistMap(InputIt first, InputIt last, const Compare& comp = Compare(),
         const Alloc& alloc = Alloc()) : _base(comp, alloc)
     {
-        _base::insert(first, last);
+        _base::insert_unique(first, last);
     }
 
     // (2) b
@@ -79,7 +79,7 @@ public:
     SkiplistMap(std::initializer_list<value_type> init, const Compare& comp = Compare(),
         const Alloc& alloc = Alloc()) : _base(comp, alloc)
     {
-        _base::insert(init.begin(), init.end());
+        _base::insert_unique(init.begin(), init.end());
     }
 
     // (3) b
@@ -116,26 +116,29 @@ public:
     }
 
     T& operator[](const Key& key) {
-        return _base::insert({ key, T() }).first->second;
+        iterator it = this->lower_bound(key); // it->first >= key
+        if (it == this->end() || key_comp()(key, it->first))
+            it = _base::insert_before_bottom_up(it.ptr(), { key, T() });
+        return it->second;
     }
 
     /* unique insertion for map */
 
     std::pair<iterator, bool> insert(const value_type& val) {
-        return _base::insert(val);
+        return _base::insert_unique(val);
     }
 
     std::pair<iterator, bool> insert(const Key& key, const T& val) {
-        return _base::insert({ key, val });
+        return _base::insert_unique({ key, val });
     }
 
     template <typename InputIt>
     void insert(InputIt first, InputIt last) {
-        return _base::insert(first, last);
+        return _base::insert_unique(first, last);
     }
 
     void insert(std::initializer_list<value_type> ilist) {
-        return _base::insert(ilist.begin(), ilist.end());
+        return _base::insert_unique(ilist.begin(), ilist.end());
     }
 
     std::pair<iterator, bool> insert_or_assign(const value_type& val) {

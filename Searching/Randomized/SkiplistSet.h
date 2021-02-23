@@ -53,7 +53,7 @@ public:
     SkiplistSet(InputIt first, InputIt last, const Compare& comp = Compare(),
         const Alloc& alloc = Alloc()) : _base(comp, alloc)
     {
-        _base::insert(first, last);
+        _base::insert_unique(first, last);
     }
 
     // (2) b
@@ -67,7 +67,7 @@ public:
     SkiplistSet(std::initializer_list<value_type> init, const Compare& comp = Compare(),
         const Alloc& alloc = Alloc()) : _base(comp, alloc)
     {
-        _base::insert(init.begin(), init.end());
+        _base::insert_unique(init.begin(), init.end());
     }
 
     // (3) b
@@ -92,16 +92,16 @@ public:
     /* unique insertion for set */
 
     std::pair<iterator, bool> insert(const value_type& val) {
-        return _base::insert(val);
+        return _base::insert_unique(val);
     }
 
     template <typename InputIt>
     void insert(InputIt first, InputIt last) {
-        return _base::insert(first, last);
+        return _base::insert_unique(first, last);
     }
 
     void insert(std::initializer_list<value_type> ilist) {
-        return _base::insert(ilist.begin(), ilist.end());
+        return _base::insert_unique(ilist.begin(), ilist.end());
     }
 
     size_t erase(const key_type& key) {
