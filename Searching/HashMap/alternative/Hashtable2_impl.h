@@ -564,7 +564,7 @@ protected:
     // only for hash map
     std::pair<iterator, bool> insert_or_assign(const T& val) {
         try_rehash();
-        const key_type key = get_key(val);
+        const key_type& key = get_key(val);
         const size_t k = bucket(key);
         in_bucket_for_each_if_equal(key, k) {
             (pos->_val).second = val.second;
@@ -575,7 +575,7 @@ protected:
 
     std::pair<iterator, bool> insert_unique(const T& val) {
         try_rehash();
-        const key_type key = get_key(val);
+        const key_type& key = get_key(val);
         const size_t k = bucket(key);
         in_bucket_for_each_if_equal(key, k) {
             return { iterator(pos, this, k), false };
@@ -585,7 +585,7 @@ protected:
 
     iterator insert_multi(const T& val) {
         try_rehash();
-        const key_type key = get_key(val);
+        const key_type& key = get_key(val);
         const size_t k = bucket(key);
         in_bucket_for_each_if_equal(key, k) {
             if (pos == _hashtable[k]) break; // go insert at head
