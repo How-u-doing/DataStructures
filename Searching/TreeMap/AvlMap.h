@@ -17,8 +17,8 @@
 namespace mySymbolTable {
 
 template<typename Key, typename T, typename Compare = std::less<Key>, typename Alloc = std::allocator<std::pair<const Key, T>>>
-class AvlMap : public AVLtree<std::pair<const Key, T>, Compare, Alloc, /*IsMap=*/true> {
-    using _base = AVLtree<std::pair<const Key, T>, Compare, Alloc, /*IsMap=*/true>;
+class AvlMap : public AVLtree<std::pair<const Key, T>, Compare, Alloc, /*IsMap=*/true, /*IsMulti=*/false> {
+    using _base = AVLtree<std::pair<const Key, T>, Compare, Alloc, /*IsMap=*/true, /*IsMulti=*/false>;
 public:
     using key_type = Key;
     using mapped_type = T;
@@ -116,26 +116,31 @@ public:
     }
 
     T& operator[](const Key& key) {
+#if 0
+        // if T() is cheap, we can just simply do this
         return _base::insert({ key, T() }).first->second;
+#elif 0
+        // otherwise we can do somthing like this
+        iterator it = this->lower_bound(key); // it->first >= key
+        if (it == this->end() || key_comp()(key, it->first))
+            it = _base::insert(it, { key, T() });
+        return it->second;
+#else
+        // but we have an even cooler one
+        auto p = this->cool_lower_bound(key); // p.it->first >= key
+        iterator it = p.it;
+        if (it == this->end() || key_comp()(key, it->first))
+            it = _base::insert_leaf_at(p.x, { key, T() }, p.x_parent);
+        return it->second;
+#endif
     }
 
-    /* unique insertion for map */
+    /* modifiers */
 
-    std::pair<iterator, bool> insert(const value_type& val) {
-        return _base::insert(val);
-    }
+    using _base::insert;
 
     std::pair<iterator, bool> insert(const Key& key, const T& val) {
         return _base::insert({ key, val });
-    }
-
-    template <typename InputIt>
-    void insert(InputIt first, InputIt last) {
-        return _base::insert(first, last);
-    }
-
-    void insert(std::initializer_list<value_type> ilist) {
-        return _base::insert(ilist.begin(), ilist.end());
     }
 
     std::pair<iterator, bool> insert_or_assign(const value_type& val) {
@@ -149,6 +154,8 @@ public:
     void swap(AvlMap& rhs) {
         _base::swap(rhs);
     }
+
+    /* observers */
 
     key_compare key_comp() const {
         return key_compare{};
@@ -169,8 +176,8 @@ void swap(AvlMap<Key, T, Compare, Alloc>& lhs,
 
 
 template<typename Key, typename T, typename Compare = std::less<Key>, typename Alloc = std::allocator<std::pair<const Key, T>>>
-class AvlMultimap : public AVLtree<std::pair<const Key, T>, Compare, Alloc, /*IsMap=*/true> {
-    using _base = AVLtree<std::pair<const Key, T>, Compare, Alloc, /*IsMap=*/true>;
+class AvlMultimap : public AVLtree<std::pair<const Key, T>, Compare, Alloc, /*IsMap=*/true, /*IsMulti=*/true> {
+    using _base = AVLtree<std::pair<const Key, T>, Compare, Alloc, /*IsMap=*/true, /*IsMulti=*/true>;
 public:
     using key_type = Key;
     using mapped_type = T;
@@ -217,7 +224,7 @@ public:
     AvlMultimap(InputIt first, InputIt last, const Compare& comp = Compare(),
         const Alloc& alloc = Alloc()) : _base(comp, alloc)
     {
-        _base::insert_multi(first, last);
+        _base::insert(first, last);
     }
 
     // (2) b
@@ -231,7 +238,7 @@ public:
     AvlMultimap(std::initializer_list<value_type> init, const Compare& comp = Compare(),
         const Alloc& alloc = Alloc()) : _base(comp, alloc)
     {
-        _base::insert_multi(init.begin(), init.end());
+        _base::insert(init.begin(), init.end());
     }
 
     // (3) b
@@ -253,28 +260,19 @@ public:
         return *this;
     }
 
-    /* duplicable insertion for multimap */
+    /* modifiers */
 
-    iterator insert(const value_type& val) {
-        return _base::insert_multi(val);
-    }
+    using _base::insert;
 
     iterator insert(const Key& key, const T& val) {
-        return _base::insert_multi({ key, val });
-    }
-
-    template <typename InputIt>
-    void insert(InputIt first, InputIt last) {
-        return _base::insert_multi(first, last);
-    }
-
-    void insert(std::initializer_list<value_type> ilist) {
-        return _base::insert_multi(ilist.begin(), ilist.end());
+        return _base::insert({ key, val });
     }
 
     void swap(AvlMultimap& rhs) {
         _base::swap(rhs);
     }
+
+    /* observers */
 
     key_compare key_comp() const {
         return key_compare{};

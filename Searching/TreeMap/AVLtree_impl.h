@@ -9,23 +9,26 @@
 #ifndef AVLTREE_IMPL_H
 #define AVLTREE_IMPL_H 1
 
+#include <type_traits> // std::enable_if
 #include <memory>   // std::addressof, std::allocator_tarits
 #include <utility>  // std::swap, std::pair
-#include <string>
 #include <iterator> // std::reverse_iterator, std::distance
+#ifndef NDEBUG
 #include <iostream> // std::cout
+#include <string>
+#endif
 #include <cassert>
 #include "my_map_traits.h"  // myst::get_map_key_t
 
 namespace mySymbolTable {
 
 // Adelson-Velsky and Landis' self-balancing binary search tree
-template<typename T, typename Compare, typename Alloc, bool IsMap>
+template<typename T, typename Compare, typename Alloc, bool IsMap, bool IsMulti>
 class AVLtree {
     struct AVLtree_node;
     class AVLtree_iter;
     class AVLtree_const_iter;
-    using _self = AVLtree<T, Compare, Alloc, IsMap>;
+    using _self = AVLtree<T, Compare, Alloc, IsMap, IsMulti>;
     using node = AVLtree_node;
     using node_ptr = node*;
     using NodeAl = typename std::allocator_traits<Alloc>::template rebind_alloc<node>;
@@ -83,12 +86,14 @@ public:
         create_header();
     }
 
-    explicit AVLtree(const Compare& comp, const Alloc& alloc = Alloc()) :
-        _count(0), _comp(comp), _alloc(alloc) {
+    explicit AVLtree(const Compare& comp, const Alloc& alloc = Alloc())
+        : _count(0), _comp(comp), _alloc(alloc) {
         create_header();
     }
 
-    explicit AVLtree(const Alloc& alloc) : _count(0), _comp(), _alloc(alloc) {}
+    explicit AVLtree(const Alloc& alloc) : _count(0), _comp(), _alloc(alloc) {
+        create_header();
+    }
 
     AVLtree(const _self& rhs) : _count(rhs._count), _comp(rhs._comp), _alloc(rhs._alloc) {
         create_header();
@@ -171,56 +176,49 @@ public:
     /* lookup */
 
     size_t count(const key_type& key) const {
-        auto r = equal_range(key);
-        return std::distance(r.first, r.second);
+        if constexpr (!IsMulti) {
+            return contains(key) ? 1 : 0;
+        }
+        else {
+            auto r = equal_range(key);
+            return std::distance(r.first, r.second);
+        }
     }
 
-    // Returns iterator pointing to the first (highest) element (in the order of
-    // operator++) that compares equivalent to key, end() is returned if not found.
     iterator find(const key_type& key) {
-        if (empty()) return end();
         return iterator(find(ROOT, key));
     }
     
     const_iterator find(const key_type& key) const {
-        if (empty()) return end();
         return const_iterator(find(ROOT, key));
     }
 
     bool contains(const key_type& key) const {
-        return empty() ? false : find(ROOT, key) != _header;
+        return find(ROOT, key) != _header;
     }
 
-    // Returns iterator pointing to the first element that is not less than key.
-    // Returns end() if not found.
     iterator lower_bound(const key_type& key) {
-        if (empty()) return end();
         return iterator(lower_bound(ROOT, key));
     }
 
     const_iterator lower_bound(const key_type& key) const {
-        if (empty()) return end();
         return const_iterator(lower_bound(ROOT, key));
     }
 
-    // Returns iterator pointing to the first element that is greater than key.
-    // Returns end() if not found.
     iterator upper_bound(const key_type& key) {
-        if (empty()) return end();
         return iterator(upper_bound(ROOT, key));
     }
     
     const_iterator upper_bound(const key_type& key) const {
-        if (empty()) return end();
         return const_iterator(upper_bound(ROOT, key));
     }
 
     std::pair<iterator, iterator> equal_range(const key_type& key) {
-        return { lower_bound(key), upper_bound(key) };
+        return equal_range_aux(key);
     }
     
     std::pair<const_iterator, const_iterator> equal_range(const key_type& key) const {
-        return { lower_bound(key), upper_bound(key) };
+        return equal_range_aux(key);
     }
 
     /* modifiers */
@@ -231,11 +229,36 @@ public:
         }
     }
 
-protected:
-    // for non-duplicate map (set)
-    std::pair<iterator, bool> insert(const T& val) {
-        const auto& [p, inserted] = insert_unique(&ROOT, val);
-        return { iterator(p), inserted };
+    std::conditional_t<!IsMulti, std::pair<iterator, bool>, iterator>
+    insert(const T& val) {
+        if constexpr (!IsMulti) return insert_aux(&ROOT, val);
+        else return insert_aux(&ROOT, val).first;
+    }
+
+    // Inserts value in the position as close as possible, just prior to hint.
+    // Complexity: Amortized constant if the insertion happens in the position
+    // just before the hint, logarithmic in the size of the container otherwise.
+    iterator insert(const_iterator hint, const T& val) {
+        if (empty()) return insert_leaf_at(&ROOT, val, _header);
+        node_ptr x = hint.ptr();
+        if (x == _header) {
+            if constexpr (!IsMulti) {
+                if (_comp(get_key(_header->_right), get_key(val))) // val > max
+                    return insert_leaf_at(&_header->_right->_right, val, _header->_right);
+            }
+            else {
+                if (!_comp(get_key(val), get_key(_header->_right))) // val >= max
+                    return insert_leaf_at(&_header->_right->_right, val, _header->_right);
+            }
+        }
+        else if (!_comp(get_key(val), get_key(x))) { // val >= x
+            if (!_comp(get_key(x), get_key(val))) {  // found
+                return iterator(hint.ptr());
+            }
+            return insert(val).first; // val > x
+        }
+        // now val < x, insert at the left subtree of x
+        return insert_aux(&x, val).first;
     }
 
     template< typename InputIt >
@@ -245,28 +268,16 @@ protected:
         }
     }
 
-    // only for map
+    void insert(std::initializer_list<value_type> ilist) {
+        return insert(ilist.begin(), ilist.end());
+    }
+
+protected:
     std::pair<iterator, bool> insert_or_assign(const T& val) {
-        const auto& [p, inserted] = insert_or_assign(&ROOT, val);
-        return { iterator(p), inserted };
-    }
-
-    // for multi map (set)
-    iterator insert_multi(const T& val) {
-        return iterator(insert_multi(&ROOT, val));
-    }
-
-    template< typename InputIt >
-    void insert_multi(InputIt first, InputIt last) {
-        while (first != last) {
-            insert_multi(*first++);
-        }
+        return insert_aux(&ROOT, val, /*assign=*/true);
     }
 
 public:
-    // References and iterators to the erased elements are invalidated.
-    // Other references and iterators are not affected.
-    // Retrurns iterator following the last removed element.
     iterator erase(iterator pos) {
         return iterator(erase(pos.ptr()));
     }
@@ -275,9 +286,7 @@ public:
         return iterator(erase(pos.ptr()));
     }
 
-    // Returns iterator following the last removed element.
     iterator erase(const_iterator first, const_iterator last) {
-        // quick erasing
         if (first == begin() && first == end()) {
             clear();
             return end();
@@ -288,12 +297,19 @@ public:
         return iterator(first.ptr());
     }
 
-    // Returns the number of elements removed.
     size_t erase(const key_type& key) {
-        auto r = equal_range(key);
-        size_t n = std::distance(r.first, r.second);
-        erase(r.first, r.second);
-        return n;
+        if constexpr (!IsMulti) {
+            iterator it = find(key);
+            if (it == end()) return 0;
+            erase(it);
+            return 1;
+        }
+        else {
+            auto r = equal_range(key);
+            size_t n = std::distance(r.first, r.second);
+            erase(r.first, r.second);
+            return n;
+        }
     }
 
     void swap(AVLtree& rhs) noexcept(std::allocator_traits<Alloc>::is_always_equal::value
@@ -308,11 +324,6 @@ public:
         std::swap(_count, rhs._count);
         std::swap(_comp, rhs._comp);
     }
-
-    /* visualization */
-
-    // print in a tree structure
-    void print(size_t level = 10) const { print(ROOT, level); }
 
     /* tree height interface */
 
@@ -340,6 +351,11 @@ private:
 
 #ifndef NDEBUG
 public:
+    /* visualization */
+
+    // print tree by lines
+    void print(size_t level = 10) const { print(ROOT, level); }
+
     /* debug */
 
     void check_bf() const {
@@ -357,6 +373,10 @@ private:
         int bf_x = bf(x);
         if (bf_x > 1 || bf_x < -1) return false;
         return is_balanced_aux(x->_left) && is_balanced_aux(x->_right);
+    }
+
+    static int bf(node_ptr x) {
+        return height(x->_right) - height(x->_left);
     }
 
     static void check_bf_aux(node_ptr x, std::false_type) {
@@ -377,10 +397,6 @@ private:
                       << "} : bf = " << x->_bf << ", but should be " << bf_x << "\033[0;m\n";
         check_bf_aux(x->_left,  std::bool_constant<true>{});
         check_bf_aux(x->_right, std::bool_constant<true>{});
-    }
-
-    static int bf(node_ptr x) {
-        return height(x->_right) - height(x->_left);
     }
 #endif
 
@@ -429,7 +445,6 @@ private:
         return parent; // _header if x points to the leftmost node
     }
 
-    // equivalent to `new node(val, parent, left = 0, right = 0)`
     node_ptr new_node(const T& val, node_ptr parent, node_ptr left  = nullptr,
                                                      node_ptr right = nullptr)
     {
@@ -497,8 +512,8 @@ private:
         return get_key_via_t(val, std::bool_constant<IsMap>{});
     }
 
-    // precondition: ROOT is dereferencable, i.e. size() > 0
     node_ptr find(node_ptr x, const key_type& key) const {
+        if (x == _header) return _header;
         while (x != nullptr) {
             if      (_comp(key, get_key(x))) x = x->_left;
             else if (_comp(get_key(x), key)) x = x->_right;
@@ -507,29 +522,113 @@ private:
         return _header; // end(), not found
     }
 
-    // precondition: x != NULL && size() > 0
-    node_ptr lower_bound(node_ptr x, const key_type& key) const {
+    std::pair<node_ptr, node_ptr> equal_range_aux(const key_type& key) const {
+        if constexpr (!IsMulti) {
+            const_iterator first = lower_bound(key), second = first;
+            if (second != end()) ++second;
+            return { first.ptr(), second.ptr() };
+        }
+        else {
+            return { lower_bound(ROOT, key), upper_bound(ROOT, key) };
+        }
+    }
+
+    node_ptr upper_bound(node_ptr x, const key_type& key) const {
+        if (x == _header) return _header;
         node_ptr parent = x->_parent;
         while (x != nullptr) {
-            if (_comp(get_key(x), key)) x = x->_right;
-            else {// x.key >= key
+            if (!_comp(key, get_key(x))) x = x->_right;
+            else {// x > key
                 parent = x;
                 x = x->_left;
             }
         }
         return parent; // _header if not found
     }
-        
-    node_ptr upper_bound(node_ptr x, const key_type& key) const {
+
+    node_ptr lower_bound(node_ptr x, const key_type& key) const {
+        if (x == _header) return _header;
         node_ptr parent = x->_parent;
         while (x != nullptr) {
-            if (!_comp(key, get_key(x))) x = x->_right;
-            else {// x.key > key
+            if (_comp(get_key(x), key)) x = x->_right;
+            else {// x >= key
                 parent = x;
                 x = x->_left;
             }
         }
         return parent; // _header if not found
+    }
+
+protected:
+    // I don't want to include the whole <tuple>,
+    // plus using a struct is more convenient :)
+    struct lower_bound_result {
+        iterator it;
+        node** x;
+        node_ptr x_parent;
+    };
+    // This subroutine is very helpful in implementing map::operator[], first
+    // we try to find it's lower bound (first position no less than key), if key
+    // is smaller than this lower bound (suggests the key doesn't exist) then we
+    // can use this cool lower bound's 2nd return value and insert exactly there.
+    lower_bound_result cool_lower_bound(const key_type& key) {
+        node** x = &ROOT;
+        if (*x == _header) return { end(), x, _header }; // empty container
+        node_ptr parent = _header, x_parent = _header;
+        while (*x != nullptr) {
+            x_parent = *x;
+            if (_comp(get_key(*x), key)) x = &(*x)->_right;
+            else {// x >= key
+                parent = *x;
+                x = &(*x)->_left;
+            }
+        }
+        return { iterator(parent), x, x_parent }; // end() if not found
+    }
+
+    node_ptr insert_leaf_at(node** x, const T& val, node_ptr parent) {
+        *x = new_node(val, parent);
+        ++_count;
+        if (_count == 1) {
+            _header->_parent = _header->_left = _header->_right = *x;
+        }
+        else {
+            if (*x == _header->_left->_left  ) _header->_left  = *x;
+            if (*x == _header->_right->_right) _header->_right = *x;
+        }
+        node_ptr newnode = *x; // balancing may change the link *x
+        balance_after_inserting(*x);
+        return newnode;
+    }
+
+private:
+    // precondition: *x != nullptr
+    std::pair<node_ptr, bool> insert_aux(node** x, const T& val, bool assign = false) {
+        if (empty()) return { insert_leaf_at(&ROOT, val, _header), true };
+        const key_type& key = get_key(val);
+        node_ptr parent = (*x)->_parent;
+        while (*x != nullptr) {
+            parent = *x;
+            if      (_comp(key, get_key(*x))) x = &(*x)->_left;
+            else if (_comp(get_key(*x), key)) x = &(*x)->_right;
+            else {
+                if constexpr (IsMulti) {
+                    x = &(*x)->_right;
+                    if (*x != nullptr) {
+                        parent = tree_min(*x);
+                        x = &parent->_left;
+                    }
+                    break;
+                }
+                else {
+                    if constexpr (IsMap) {
+                        if (assign)  (*x)->_val.second = val.second;
+                    }
+                    return { *x, false };
+                }
+            }
+        }
+        return { insert_leaf_at(x, val, parent), true };
     }
 
     // H(X)=h, H(b)=h+2, H(Z)=h+1, H(Y)=h (insertion at Z or deletion at X) or H(Y)=h+1 (deletion at X)
@@ -595,7 +694,7 @@ private:
     node_ptr rotate_right_left(node_ptr a) { // RL shape
         node_ptr b = a->_right, c = b->_left;
         int bf_c = c->_bf;
-        // The setups of balance factors are inaccurate and unnecessary, since
+        // The setups of balance factors are inaccurate and unnecessary since
         // we're rotating b while BF(b) isn't +/-2, but the cost is trivial.
         rotate_right(b);
         rotate_left(a);
@@ -647,7 +746,7 @@ private:
             else if (x == parent->_right)
                 ++parent->_bf;
 
-            if (parent->_bf == 0) return; // balanced, H(parent) doesn't change
+            if (parent->_bf == 0) return; // H(parent) doesn't change
 
             if (parent->_bf == 1 || parent->_bf == -1) { // keep retracing & updating ancestors' BFs
                 x = parent;
@@ -667,133 +766,14 @@ private:
                     else // x->_bf == 1, LR shape
                         rotate_left_right(parent);
                 }
-                // now the height of the subtree after rotation amounts
-                // to the height before insertion, and we can stop here.
                 return;
             }
         }
     }
 
-    node_ptr insert_leaf_at(node** x, const T& val, node_ptr parent) {
-        *x = new_node(val, parent);
-        ++_count;
-        if (_count == 1) {
-            _header->_parent = _header->_left = _header->_right = *x;
-        }
-        else {
-            if (*x == _header->_left->_left  ) _header->_left  = *x;
-            if (*x == _header->_right->_right) _header->_right = *x;
-        }
-        node_ptr newnode = *x; // balance may change the link *x 
-        balance_after_inserting(*x);
-        return newnode;
-    }
-    
-    // only for map
-    std::pair<node_ptr, bool> insert_or_assign(node** x, const T& val) {
-        node_ptr parent = (*x)->_parent;
-        if (_count > 0) {
-            while (*x != nullptr) {
-                parent = *x;
-                if      (_comp(get_key(val), get_key(*x))) x = &(*x)->_left;
-                else if (_comp(get_key(*x), get_key(val))) x = &(*x)->_right;
-                else {
-                    ((*x)->_val).second = val.second;
-                    return { *x, false };
-                }
-            }
-        }
-        return { insert_leaf_at(x, val, parent), true };
-    }
-
-    std::pair<node_ptr, bool> insert_unique(node** x, const T& val) {
-        node_ptr parent = (*x)->_parent;
-        if (_count > 0) {
-            while (*x != nullptr) {
-                parent = *x;
-                if      (_comp(get_key(val), get_key(*x))) x = &(*x)->_left;
-                else if (_comp(get_key(*x), get_key(val))) x = &(*x)->_right;
-                else return { *x, false };
-            }
-        }
-        return { insert_leaf_at(x, val, parent), true };
-    }
-
-    node_ptr insert_multi(node** x, const T& val) {
-        node_ptr parent = (*x)->_parent;
-        if (_count > 0) {
-            while (*x != nullptr) {
-                parent = *x;
-                if      (_comp(get_key(val), get_key(*x))) x = &(*x)->_left;
-                else if (_comp(get_key(*x), get_key(val))) x = &(*x)->_right;
-                else break;
-            }
-        }
-        if (_count == 0 || *x == nullptr) {
-            return insert_leaf_at(x, val, parent);
-        }
-        else { // now *x points to first node that compares equally to `val`
-            parent = *x;
-            x = &(*x)->_right;
-            if (*x != nullptr) {
-                parent = tree_min(*x);
-                x = &parent->_left;
-            }
-            return insert_leaf_at(x, val, parent);
-        }
-    }
-
-    void set_parent_child(node_ptr x, node_ptr val) noexcept {
-        if (x == ROOT) // x == x->_parent->_parent
-            ROOT = val == nullptr ? _header : val;
-        else if (x == x->_parent->_left)
-            x->_parent->_left = val;
-        else // x == x->_parent->_right
-            x->_parent->_right = val;
-    }
-
-    static void set_left_child_parent(node_ptr x, node_ptr val) noexcept {
-        if (x->_left != nullptr) {
-            x->_left->_parent = val;
-        }
-    }
-
-    static void copy_node_links(node_ptr dest, node_ptr src) noexcept {
-        dest->_parent = src->_parent;
-        dest->_left = src->_left;
-        dest->_right = src->_right;
-    }
-
-    void alter_parent_bf_in_removing_leaf(node_ptr x) noexcept {
-        if (x == ROOT) return;
-        else if (x == x->_parent->_left)
-            ++x->_parent->_bf;
-        else // x == x->_parent->_right
-            --x->_parent->_bf;
-    }
-
-    static node_ptr sibling(node_ptr x) noexcept {
-        return x == x->_parent->_left ?
-            x->_parent->_right : x->_parent->_left;
-    }
-
-    // known that one of parent's children is null
-    static int non_null_child_bf(node_ptr parent) noexcept {
-        node_ptr child = parent->_left ? parent->_left : parent->_right;
-        return child->_bf;
-    }
-
-    // `x` may be the doomed node to be erased or its left or right child or
-    // the root after LL rotation (i.e. `rotate_right`) with BF(`x`) = 0.
-    // In the first case, `x` doesn't really be linked to its parent but
-    // merely retains a link to its parent (and the whole node will be
-    // destoryed after finishing this balancing routine), and the old child
-    // link of parent to which node `x` was pointed is now set to nullptr.
-    // If `x` is the node to be erased, then node `x` is a leaf node.
+    // balance from leaf x
     void balance_for_deletion_from(node_ptr x) {
         for (node_ptr parent = x->_parent; parent != _header;) {
-            // At first time, parent's bf was already set if `x` is a leaf node,
-            // since if so `x` is not linked to (not a child of) its parent.
             if (x == parent->_left)
                 ++parent->_bf;
             else if (x == parent->_right)
@@ -807,8 +787,7 @@ private:
                 continue;
             }
             else { // parent->_bf == +/-2, do some rotations
-                int sibling_bf = (x == parent->_left || x == parent->_right) ?
-                    sibling(x)->_bf : non_null_child_bf(parent);
+                int sibling_bf = sibling(x)->_bf;
                 if (parent->_bf == 2) { // right-heavy
                     if (sibling_bf >= 0) // 0 or 1, RR shape
                         x = rotate_left(parent);
@@ -821,72 +800,96 @@ private:
                     else // sibling_bf == 1, LR shape
                         x = rotate_left_right(parent);
                 }
-                // now x (the root after rotation) amounts to the
-                // parent in previous retracing if statement, i.e.
-                // `if (parent->_bf == 0)`
+
                 if (x->_bf == 0) parent = x->_parent; // keep retracing
                 else /* x->_bf == +/- 1 */ return;
             }
         }
     }
 
-    // precondition: x != nulllptr
+    bool unlink_leaf(node_ptr x, node_ptr& balance_pos) {
+        bool height_decreased = true;
+        node_ptr parent = x->_parent;
+        node_ptr sibling = x == parent->_left ? parent->_right : parent->_left;
+        if (sibling) {
+            if (has_children(sibling)) {
+                if (x == parent->_left) {
+                    parent->_left = nullptr;
+                    if (sibling->_bf == -1) { // sibling only has left, RL shape
+                        balance_pos = rotate_right_left(x->_parent);
+                    }
+                    else { // sibling->_bf == 1 or 0, has right or both, RR shape
+                        balance_pos = rotate_left(x->_parent);
+                    }
+                }
+                else {
+                    parent->_right = nullptr;
+                    if (sibling->_bf == 1) { // sibling only has right, LR shape
+                        balance_pos = rotate_left_right(x->_parent);
+                    }
+                    else { // sibling->_bf == -1 or 0, has left or both, LL shape
+                        balance_pos = rotate_right(x->_parent);
+                    }
+                }
+
+                if (balance_pos->_bf != 0) { // -1 or 1, sibling has two children
+                    height_decreased = false;
+                }
+            }
+            else { // won't change the height of parent
+                if (x == parent->_left) {
+                    parent->_bf = 1;
+                    parent->_left = nullptr;
+                }
+                else {
+                    parent->_bf = -1;
+                    parent->_right = nullptr;
+                }
+                height_decreased = false;
+            }
+        }
+        else { // decrease of 1 in the height of parent
+            parent->_bf = 0;
+            balance_pos = parent;
+            parent->_left = parent->_right = nullptr;
+        }
+        return height_decreased;
+    }
+
+
     node_ptr erase(node_ptr x) {
         assert(x != _header && "cannot erase end() iterator");
-        if (x == _header->_left ) _header->_left  = tree_next(x);
-        if (x == _header->_right) _header->_right = tree_prev(x);
         node_ptr next = tree_next(x); // for return
+        bool height_decreased = true;
         node_ptr balance_pos = x;
 
-        node_ptr r_min = x->_right == nullptr ? nullptr : tree_min(x->_right);
-        if (r_min == nullptr) {// x->_right == nullptr
-            if (x->_left) balance_pos = x->_left;
-            else alter_parent_bf_in_removing_leaf(x);
+        if (_count == 1 && x == ROOT) {
+            set_default_header();
+            goto destroy_node;
+        }
+        if      (x == _header->_left ) _header->_left  = next;
+        else if (x == _header->_right) _header->_right = tree_prev(x);
+
+        if (x->_left && !x->_right) {
             set_parent_child(x, x->_left);
-            set_left_child_parent(x, x->_parent);
+            x->_left->_parent = x->_parent;
+            balance_pos = x->_left;
         }
-        else if (r_min == x->_right) {// x->_right->_left == nullptr
-            r_min->_parent = x->_parent;
-            r_min->_left = x->_left; // copy_node_links(r_min, x) will result in a circle
-            set_parent_child(x, r_min);
-            set_left_child_parent(x, r_min);
-            if (x->_left) {
-                if (has_children(x->_left)) {
-                    if (r_min->_right) { // doesn't change height
-                        r_min->_bf = -1;
-                        goto destroy_node;
-                    }
-                    else { // LL shape
-                        balance_pos = rotate_right(r_min);
-                        if (balance_pos->_bf == 1) goto destroy_node;
-                        // otherwise balance_pos->_bf == 0, go balancing & retrace
-                    }
-                }
-                else { // deletion doesn't change height, so no need to balance
-                    r_min->_bf = r_min->_right ? 0 : -1;
-                    goto destroy_node;
-                }
-            }
-            else balance_pos = r_min;
+        else if (!x->_left && x->_right) {
+            set_parent_child(x, x->_right);
+            x->_right->_parent = x->_parent;
+            balance_pos = x->_right;
         }
-        else { // r_min->_left == nullptr
-            node_ptr r_min_parent = r_min->_parent;
-            if (r_min->_right) {
-                r_min->_right->_parent = r_min->_parent;
-                balance_pos = r_min->_right;
-            }
-            else alter_parent_bf_in_removing_leaf(r_min);
-            r_min->_parent->_left = r_min->_right;
-            copy_node_links(r_min, x);
-            set_parent_child(x, r_min);
-            set_left_child_parent(x, r_min);
-            x->_right->_parent = r_min;
-            r_min->_bf = x->_bf;
-
-            x->_parent = r_min_parent; // will be used when r_min is leaf
+        else if (!x->_left && !x->_right) { // x is a leaf
+            height_decreased = unlink_leaf(x, balance_pos);
+        }
+        else { // has both children
+            node_ptr r_min = tree_min(x->_right);
+            swap_node(x, r_min);
+            height_decreased = unlink_leaf(x, balance_pos);
         }
 
-        balance_for_deletion_from(balance_pos);
+        if (height_decreased) balance_for_deletion_from(balance_pos);
 
     destroy_node:
         delete_node(x);
@@ -894,6 +897,64 @@ private:
         return next;
     }
 
+    // x has two children, r_min is the smallest on the right subtree of x.
+    // Swap x with r_min first, if r_min is not a leaf (has right child) then
+    // swap x with r_min's right child again. This makes sure x become a leaf.
+    void swap_node(node_ptr x, node_ptr r_min) noexcept {
+        node_ptr r_min_parent = r_min->_parent; // r_min is the left child
+        r_min->_bf = x->_bf;
+        r_min->_parent = x->_parent;
+        set_parent_child(x, r_min);
+        r_min->_left = x->_left;
+        x->_left->_parent = r_min;
+        if (r_min == x->_right) {
+            node_ptr r_min_right = r_min->_right;
+            if (r_min_right) { // is a leaf since r_min->_left is nil
+                r_min_right->_right = x; // left or right are both okay
+                x->_parent = r_min_right;
+                r_min_right->_bf = 1; // as we choosed right, otherwise -1
+            }
+            else {
+                r_min->_right = x;
+                x->_parent = r_min;
+            }
+        }
+        else {
+            node_ptr r_min_right = r_min->_right;
+            r_min->_right = x->_right;
+            x->_right->_parent = r_min;
+            if (r_min_right) { // is a leaf since r_min->_left is nil
+                r_min_parent->_left = r_min_right;
+                r_min_right->_parent = r_min_parent;
+                r_min_right->_right = x;
+                x->_parent = r_min_right;
+                r_min_right->_bf = 1;
+            }
+            else {
+                r_min_parent->_left = x;
+                x->_parent = r_min_parent;
+            }
+        }
+    }
+
+    void set_parent_child(node_ptr x, node_ptr val) noexcept {
+        if (x == ROOT) // x == x->_parent->_parent
+            ROOT = val == nullptr ? _header : val;
+        else if (x == x->_parent->_left)
+            x->_parent->_left = val;
+        else // x == x->_parent->_right
+            x->_parent->_right = val;
+    }
+
+    static node_ptr sibling(node_ptr x) noexcept {
+        return x == x->_parent->_left ? x->_parent->_right : x->_parent->_left;
+    }
+
+    static bool has_children(node_ptr x) noexcept {
+        return x->_left || x->_right;
+    }
+
+#ifndef NDEBUG
     // print with a max level
     void print(node_ptr dir, size_t max_level) const {
         if (empty()) return; // to prevent infinite loop
@@ -968,11 +1029,7 @@ private:
         dfs_print_aux(dir->_left, false, children_prefix, dir_count, file_count, curr_level, max_level);
         dfs_print_aux(dir->_right, true, children_prefix, dir_count, file_count, curr_level, max_level);
     }
-
-    // precondition: dir != nullptr
-    static bool has_children(node_ptr dir) noexcept {
-        return dir->_left || dir->_right;
-    }
+#endif
 
 #undef BLUE
 #undef BROWN
@@ -984,8 +1041,8 @@ private:
         node_ptr _parent, _left, _right;
         int _bf = 0; // though acctually we will only need 3 bits, [-2, 2]
 
-        AVLtree_node(const T& val, node_ptr parent, node_ptr left = nullptr, node_ptr right = nullptr) :
-            _val(val), _parent(parent), _left(left), _right(right) {}
+        AVLtree_node(const T& val, node_ptr parent, node_ptr left, node_ptr right)
+            : _val(val), _parent(parent), _left(left), _right(right) {}
 
         // in case operator& is overloaded
         T* val_ptr() {

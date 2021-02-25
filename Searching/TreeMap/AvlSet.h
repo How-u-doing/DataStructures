@@ -16,8 +16,8 @@
 namespace mySymbolTable {
 
 template<typename Key, typename Compare = std::less<Key>, typename Alloc = std::allocator<Key>>
-class AvlSet : public AVLtree<Key, Compare, Alloc, /*IsMap=*/false> {
-    using _base = AVLtree<Key, Compare, Alloc, /*IsMap=*/false>;
+class AvlSet : public AVLtree<Key, Compare, Alloc, /*IsMap=*/false, /*IsMulti=*/false> {
+    using _base = AVLtree<Key, Compare, Alloc, /*IsMap=*/false, /*IsMulti=*/false>;
 public:
     using key_type = Key;
     using value_type = Key;
@@ -89,24 +89,13 @@ public:
         return *this;
     }
 
-    /* unique insertion for set */
-
-    std::pair<iterator, bool> insert(const value_type& val) {
-        return _base::insert(val);
-    }
-
-    template <typename InputIt>
-    void insert(InputIt first, InputIt last) {
-        return _base::insert(first, last);
-    }
-
-    void insert(std::initializer_list<value_type> ilist) {
-        return _base::insert(ilist.begin(), ilist.end());
-    }
+    /* modifiers */
 
     void swap(AvlSet& rhs) {
         _base::swap(rhs);
     }
+
+    /* observers */
 
     key_compare key_comp() const {
         return key_compare{};
@@ -127,8 +116,8 @@ void swap(AvlSet<Key, Compare, Alloc>& lhs,
 
 
 template<typename Key, typename Compare = std::less<Key>, typename Alloc = std::allocator<Key>>
-class AvlMultiset : public AVLtree<Key, Compare, Alloc, /*IsMap=*/false> {
-    using _base = AVLtree<Key, Compare, Alloc, /*IsMap=*/false>;
+class AvlMultiset : public AVLtree<Key, Compare, Alloc, /*IsMap=*/false, /*IsMulti=*/true> {
+    using _base = AVLtree<Key, Compare, Alloc, /*IsMap=*/false, /*IsMulti=*/true>;
 public:
     using key_type = Key;
     using value_type = Key;
@@ -164,7 +153,7 @@ public:
     AvlMultiset(InputIt first, InputIt last, const Compare& comp = Compare(),
         const Alloc& alloc = Alloc()) : _base(comp, alloc)
     {
-        _base::insert_multi(first, last);
+        _base::insert(first, last);
     }
 
     // (2) b
@@ -178,7 +167,7 @@ public:
     AvlMultiset(std::initializer_list<value_type> init, const Compare& comp = Compare(),
         const Alloc& alloc = Alloc()) : _base(comp, alloc)
     {
-        _base::insert_multi(init.begin(), init.end());
+        _base::insert(init.begin(), init.end());
     }
 
     // (3) b
@@ -200,24 +189,13 @@ public:
         return *this;
     }
 
-    /* duplicable insertion for multiset */
-
-    iterator insert(const value_type& val) {
-        return _base::insert_multi(val);
-    }
-
-    template <typename InputIt>
-    void insert(InputIt first, InputIt last) {
-        return _base::insert_multi(first, last);
-    }
-
-    void insert(std::initializer_list<value_type> ilist) {
-        return _base::insert_multi(ilist.begin(), ilist.end());
-    }
+    /* modifiers */
 
     void swap(AvlMultiset& rhs) {
         _base::swap(rhs);
     }
+
+    /* observers */
 
     key_compare key_comp() const {
         return key_compare{};
