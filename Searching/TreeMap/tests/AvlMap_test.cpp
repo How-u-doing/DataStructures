@@ -44,6 +44,10 @@ int main()
             cout << '{' << i->first << ", " << i->second << "} ";
         }
 
+        st.insert(st.find(70), { 65, "sixty five" });
+        cout << "\n\n";
+        st.print();
+
         size_t count1 = st.erase(50);
         size_t count2 = st.erase(60);
 #ifndef NDEBUG

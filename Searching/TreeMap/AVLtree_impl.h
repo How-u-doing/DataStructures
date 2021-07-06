@@ -235,30 +235,85 @@ public:
         else return insert_aux(&ROOT, val).first;
     }
 
+private:
+    iterator insert_hint_unique(node_ptr hint, const T& val) {
+        const key_type& key = get_key(val);
+        if (hint == _header) { // end()
+            if (_comp(get_key(_header->_right), key)) // max < key
+                return insert_leaf_at(&_header->_right->_right, val, _header->_right);
+            else return insert_aux(&ROOT, val).first;
+        }
+        else if (_comp(key, get_key(hint))) { // key < hint
+            if (hint == _header->_left) // key < min
+                return insert_leaf_at(&_header->_left->_left, val, _header->_left);
+            node_ptr prev = tree_prev(hint);
+            if (_comp(get_key(prev), key)) { // prev < key < hint
+                if (prev->_right == nullptr) // prev is the rightmost of the left subtree of hint
+                    return insert_leaf_at(&prev->_right, val, prev);
+                else // otherwise hint->_left is null
+                    return insert_leaf_at(&hint->_left, val, hint);
+            }
+            return insert_aux(&ROOT, val).first;
+        }
+        else if (_comp(get_key(hint), key)) { // hint < key
+            if (hint == _header->_right) // max < key
+                return insert_leaf_at(&_header->_right->_right, val, _header->_right);
+            node_ptr next = tree_next(hint);
+            if (_comp(key, get_key(next))) { // hint < key < next
+                if (next->_left == nullptr)  // next is the leftmost of the right subtree of hint
+                    return insert_leaf_at(&next->_left, val, next);
+                else // otherwise hint->_right is null
+                    return insert_leaf_at(&hint->_right, val, hint);
+            }
+            return insert_aux(&ROOT, val).first;
+        }
+        else // equivalent keys
+            return iterator(hint);
+    }
+
+    iterator insert_hint_multi(node_ptr hint, const T& val) {
+        const key_type& key = get_key(val);
+        if (hint == _header) { // end()
+            if (!_comp(key, get_key(_header->_right))) // key >= max
+                return insert_leaf_at(&_header->_right->_right, val, _header->_right);
+            else return insert_aux(&ROOT, val).first;
+        }
+        else if (!_comp(get_key(hint), key)) { // key <= hint
+            if (hint == _header->_left) // key <= min
+                return insert_leaf_at(&_header->_left->_left, val, _header->_left);
+            node_ptr prev = tree_prev(hint);
+            if (!_comp(key, get_key(prev))) { // prev <= key <= hint
+                if (prev->_right == nullptr)  // prev is the rightmost of the left subtree of hint
+                    return insert_leaf_at(&prev->_right, val, prev);
+                else // otherwise hint->_left is null
+                    return insert_leaf_at(&hint->_left, val, hint);
+            }
+            return insert_aux(&ROOT, val).first;
+        }
+        else { // hint < key
+            if (hint == _header->_right) // max < key
+                return insert_leaf_at(&_header->_right->_right, val, _header->_right);
+            node_ptr next = tree_next(hint);
+            if (!_comp(get_key(next), key)) { // hint < key <= next
+                if (next->_left == nullptr)   // next is the leftmost of the right subtree of hint
+                    return insert_leaf_at(&next->_left, val, next);
+                else // otherwise hint->_right is null
+                    return insert_leaf_at(&hint->_right, val, hint);
+            }
+            return insert_aux(&ROOT, val).first;
+        }
+    }
+
+public:
     // Inserts value in the position as close as possible, just prior to hint.
     // Complexity: Amortized constant if the insertion happens in the position
     // just before the hint, logarithmic in the size of the container otherwise.
     iterator insert(const_iterator hint, const T& val) {
         if (empty()) return insert_leaf_at(&ROOT, val, _header);
-        node_ptr x = hint.ptr();
-        if (x == _header) {
-            if constexpr (!IsMulti) {
-                if (_comp(get_key(_header->_right), get_key(val))) // val > max
-                    return insert_leaf_at(&_header->_right->_right, val, _header->_right);
-            }
-            else {
-                if (!_comp(get_key(val), get_key(_header->_right))) // val >= max
-                    return insert_leaf_at(&_header->_right->_right, val, _header->_right);
-            }
-        }
-        else if (!_comp(get_key(val), get_key(x))) { // val >= x
-            if (!_comp(get_key(x), get_key(val))) {  // found
-                return iterator(hint.ptr());
-            }
-            return insert(val).first; // val > x
-        }
-        // now val < x, insert at the left subtree of x
-        return insert_aux(&x, val).first;
+        if constexpr (!IsMulti)
+            return insert_hint_unique(hint.ptr(), val);
+        else
+            return insert_hint_multi(hint.ptr(), val);
     }
 
     template< typename InputIt >
@@ -899,7 +954,7 @@ private:
 
     // x has two children, r_min is the smallest on the right subtree of x.
     // Swap x with r_min first, if r_min is not a leaf (has right child) then
-    // swap x with r_min's right child again. This makes sure x become a leaf.
+    // swap x with r_min's right child again. This makes sure x becomes a leaf.
     void swap_node(node_ptr x, node_ptr r_min) noexcept {
         node_ptr r_min_parent = r_min->_parent; // r_min is the left child
         r_min->_bf = x->_bf;
@@ -912,7 +967,7 @@ private:
             if (r_min_right) { // is a leaf since r_min->_left is nil
                 r_min_right->_right = x; // left or right are both okay
                 x->_parent = r_min_right;
-                r_min_right->_bf = 1; // as we choosed right, otherwise -1
+                r_min_right->_bf = 1; // as we chose right, otherwise -1
             }
             else {
                 r_min->_right = x;
