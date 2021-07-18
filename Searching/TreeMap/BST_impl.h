@@ -100,7 +100,9 @@ public:
         create_header();
     }
 
-    explicit Tree(const Alloc& alloc) : _count(0), _comp(), _alloc(alloc) {}
+    explicit Tree(const Alloc& alloc) : _count(0), _comp(), _alloc(alloc) {
+        create_header();
+    }
 
     Tree(const _self& rhs) : _count(rhs._count), _comp(rhs._comp), _alloc(rhs._alloc) {
         create_header();
@@ -596,25 +598,12 @@ private:
         return *x;
     }
 
-    void set_parent_child(node_ptr x, node_ptr val) noexcept {
-        if (x == x->_parent->_left)
-            x->_parent->_left = val;
-        else if (x == x->_parent->_right)
-            x->_parent->_right = val;
-        else // x == ROOT
-            ROOT = val == nullptr ? _header : val;
-    }
-
-    void set_left_child_parent(node_ptr x, node_ptr val) noexcept {
-        if (x->_left != nullptr) {
-            x->_left->_parent = val;
-        }
-    }
-
-    void copy_node_links(node_ptr dest, node_ptr src) noexcept {
-        dest->_parent = src->_parent;
-        dest->_left = src->_left;
-        dest->_right = src->_right;
+    // replace node x with node y
+    void replace(node_ptr x, node_ptr y) noexcept {
+        if      (x == x->_parent->_left ) x->_parent->_left = y;
+        else if (x == x->_parent->_right) x->_parent->_right = y;
+        else     /* x == ROOT */          ROOT = y == nullptr ? _header : y;
+        if (y) y->_parent = x->_parent;
     }
 
     // precondition: x != nulllptr
@@ -624,26 +613,18 @@ private:
         if (x == _header->_right) _header->_right = tree_prev(x);
         node_ptr next = tree_next(x); // for return
 
-        node_ptr r_min = x->_right == nullptr ? nullptr : tree_min(x->_right);
-        if (r_min == nullptr) {// x->_right == nullptr
-            set_parent_child(x, x->_left);
-            set_left_child_parent(x, x->_parent);
-        }
-        else if (r_min == x->_right) {// x->_right->_left == nullptr
-            r_min->_parent = x->_parent;
-            r_min->_left = x->_left; // copy_node_links(r_min, x) will result in a circle
-            set_parent_child(x, r_min);
-            set_left_child_parent(x, r_min);
-        }
-        else { // r_min->_left == nullptr
-            r_min->_parent->_left = r_min->_right;
-            if (r_min->_right != nullptr) {
-                r_min->_right->_parent = r_min->_parent;
+        if      (!x->_left ) replace(x, x->_right);
+        else if (!x->_right) replace(x, x->_left);
+        else {
+            node_ptr r_min = tree_min(x->_right);
+            if (r_min != x->_right) {
+                replace(r_min, r_min->_right);
+                r_min->_right = x->_right;
+                x->_right->_parent = r_min;
             }
-            copy_node_links(r_min, x);
-            set_parent_child(x, r_min);
-            set_left_child_parent(x, r_min);
-            x->_right->_parent = r_min;
+            replace(x, r_min);
+            r_min->_left = x->_left;
+            x->_left->_parent = r_min;
         }
 
         delete_node(x);

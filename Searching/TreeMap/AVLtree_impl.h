@@ -652,7 +652,7 @@ protected:
             if (*x == _header->_right->_right) _header->_right = *x;
         }
         node_ptr newnode = *x; // balancing may change the link *x
-        balance_after_inserting(*x);
+        rebalance_after_inserting(*x);
         return newnode;
     }
 
@@ -699,9 +699,8 @@ private:
         node_ptr b = a->_right;
         a->_right = b->_left;
         if (b->_left) b->_left->_parent = a;
+        replace(a, b);
         b->_left = a;
-        b->_parent = a->_parent;
-        set_parent_child(a, b);
         a->_parent = b;
         if (b->_bf == 1) { // insertion at Z or deletion at X
             a->_bf = b->_bf = 0;
@@ -718,9 +717,8 @@ private:
         node_ptr b = a->_left;
         a->_left = b->_right;
         if (b->_right) b->_right->_parent = a;
+        replace(a, b);
         b->_right = a;
-        b->_parent = a->_parent;
-        set_parent_child(a, b);
         a->_parent = b;
         if (b->_bf == -1) { // insertion or deletion
             a->_bf = b->_bf = 0;
@@ -735,7 +733,7 @@ private:
     // H(X)=h, H(b)=h+2, H(W)=h, H(c)=h+1,
     // H(Y)=H(Z)=h (deletion at X) or
     // H(Y)=h-1, H(Z)=h (insertion at Z or deletion at X) or
-    // H(Y)=h, H(Z)=h-1 (insertion at Z or deletion at X)
+    // H(Y)=h, H(Z)=h-1 (insertion at Y or deletion at X)
     /*
               a  (+2)                              a                                       c   (0)
             /  \            rotate right         /   \           rotate left             /   \
@@ -793,8 +791,8 @@ private:
         return c;
     }
 
-    // balance via retracing ancestors of newly inserted node x
-    void balance_after_inserting(node_ptr x) {
+    // rebalance via retracing ancestors of newly inserted node x
+    void rebalance_after_inserting(node_ptr x) {
         for (node_ptr parent = x->_parent; parent != _header;) {
             if (x == parent->_left)
                 --parent->_bf;
@@ -826,8 +824,8 @@ private:
         }
     }
 
-    // balance from leaf x
-    void balance_for_deletion_from(node_ptr x) {
+    // rebalance from leaf x
+    void rebalance_for_deletion_from(node_ptr x) {
         for (node_ptr parent = x->_parent; parent != _header;) {
             if (x == parent->_left)
                 ++parent->_bf;
@@ -926,13 +924,11 @@ private:
         else if (x == _header->_right) _header->_right = tree_prev(x);
 
         if (x->_left && !x->_right) {
-            set_parent_child(x, x->_left);
-            x->_left->_parent = x->_parent;
+            replace(x, x->_left);
             balance_pos = x->_left;
         }
         else if (!x->_left && x->_right) {
-            set_parent_child(x, x->_right);
-            x->_right->_parent = x->_parent;
+            replace(x, x->_right);
             balance_pos = x->_right;
         }
         else if (!x->_left && !x->_right) { // x is a leaf
@@ -944,7 +940,7 @@ private:
             height_decreased = unlink_leaf(x, balance_pos);
         }
 
-        if (height_decreased) balance_for_deletion_from(balance_pos);
+        if (height_decreased) rebalance_for_deletion_from(balance_pos);
 
     destroy_node:
         delete_node(x);
@@ -957,13 +953,12 @@ private:
     // swap x with r_min's right child again. This makes sure x becomes a leaf.
     void swap_node(node_ptr x, node_ptr r_min) noexcept {
         node_ptr r_min_parent = r_min->_parent; // r_min is the left child
+        node_ptr r_min_right = r_min->_right;
+        replace(x, r_min);
         r_min->_bf = x->_bf;
-        r_min->_parent = x->_parent;
-        set_parent_child(x, r_min);
         r_min->_left = x->_left;
         x->_left->_parent = r_min;
         if (r_min == x->_right) {
-            node_ptr r_min_right = r_min->_right;
             if (r_min_right) { // is a leaf since r_min->_left is nil
                 r_min_right->_right = x; // left or right are both okay
                 x->_parent = r_min_right;
@@ -975,7 +970,6 @@ private:
             }
         }
         else {
-            node_ptr r_min_right = r_min->_right;
             r_min->_right = x->_right;
             x->_right->_parent = r_min;
             if (r_min_right) { // is a leaf since r_min->_left is nil
@@ -992,15 +986,15 @@ private:
         }
     }
 
-    void set_parent_child(node_ptr x, node_ptr val) noexcept {
-        if (x == ROOT) // x == x->_parent->_parent
-            ROOT = val == nullptr ? _header : val;
-        else if (x == x->_parent->_left)
-            x->_parent->_left = val;
-        else // x == x->_parent->_right
-            x->_parent->_right = val;
+    // replace node x with a non-null node y
+    void replace(node_ptr x, node_ptr y) noexcept {
+        if (x == ROOT) ROOT = y;
+        else if (x == x->_parent->_left)    x->_parent->_left = y;
+        else /*  x == x->_parent->_right */ x->_parent->_right = y;
+        y->_parent = x->_parent;
     }
 
+    // precondition: x != ROOT
     static node_ptr sibling(node_ptr x) noexcept {
         return x == x->_parent->_left ? x->_parent->_right : x->_parent->_left;
     }
