@@ -644,14 +644,12 @@ protected:
     node_ptr insert_leaf_at(node** x, const T& val, node_ptr parent) {
         *x = new_node(val, parent);
         ++_count;
-        if (_count == 1) {
-            _header->_parent = _header->_left = _header->_right = *x;
-        }
-        else {
-            if (*x == _header->_left->_left  ) _header->_left  = *x;
-            if (*x == _header->_right->_right) _header->_right = *x;
-        }
-        node_ptr newnode = *x; // balancing may change the link *x
+        if (_count == 1)
+            return _header->_parent = _header->_left = _header->_right = *x;
+
+        if      (*x == _header->_left->_left  ) _header->_left  = *x;
+        else if (*x == _header->_right->_right) _header->_right = *x;
+        node_ptr newnode = *x; // rebalancing may change the link *x
         rebalance_after_inserting(*x);
         return newnode;
     }
@@ -695,7 +693,7 @@ private:
           Y   Z            deletion  at X                X   Y
 
     */
-    node_ptr rotate_left(node_ptr a) { // RR shape
+    node_ptr rotate_left(node_ptr a) noexcept { // RR shape
         node_ptr b = a->_right;
         a->_right = b->_left;
         if (b->_left) b->_left->_parent = a;
@@ -712,8 +710,8 @@ private:
         return b;
     }
 
-    // mirror-image of `rotate_left`
-    node_ptr rotate_right(node_ptr a) { // LL shape
+    // mirror image of `rotate_left`
+    node_ptr rotate_right(node_ptr a) noexcept { // LL shape
         node_ptr b = a->_left;
         a->_left = b->_right;
         if (b->_right) b->_right->_parent = a;
@@ -744,7 +742,7 @@ private:
             Y   Z                                     Z   W
 
     */
-    node_ptr rotate_right_left(node_ptr a) { // RL shape
+    node_ptr rotate_right_left(node_ptr a) noexcept { // RL shape
         node_ptr b = a->_right, c = b->_left;
         int bf_c = c->_bf;
         // The setups of balance factors are inaccurate and unnecessary since
@@ -768,8 +766,8 @@ private:
         return c;
     }
 
-    // mirror-image of `rotate_right_left`
-    node_ptr rotate_left_right(node_ptr a) { // LR shape
+    // mirror image of `rotate_right_left`
+    node_ptr rotate_left_right(node_ptr a) noexcept { // LR shape
         node_ptr b = a->_left, c = b->_right;
         int bf_c = c->_bf;
         rotate_left(b);
@@ -792,7 +790,7 @@ private:
     }
 
     // rebalance via retracing ancestors of newly inserted node x
-    void rebalance_after_inserting(node_ptr x) {
+    void rebalance_after_inserting(node_ptr x) noexcept {
         for (node_ptr parent = x->_parent; parent != _header;) {
             if (x == parent->_left)
                 --parent->_bf;
@@ -825,7 +823,7 @@ private:
     }
 
     // rebalance from leaf x
-    void rebalance_for_deletion_from(node_ptr x) {
+    void rebalance_for_deletion_from(node_ptr x) noexcept {
         for (node_ptr parent = x->_parent; parent != _header;) {
             if (x == parent->_left)
                 ++parent->_bf;
@@ -860,7 +858,7 @@ private:
         }
     }
 
-    bool unlink_leaf(node_ptr x, node_ptr& balance_pos) {
+    bool unlink_leaf(node_ptr x, node_ptr& balance_pos) noexcept {
         bool height_decreased = true;
         node_ptr parent = x->_parent;
         node_ptr sibling = x == parent->_left ? parent->_right : parent->_left;
@@ -910,7 +908,7 @@ private:
     }
 
 
-    node_ptr erase(node_ptr x) {
+    node_ptr erase(node_ptr x) noexcept {
         assert(x != _header && "cannot erase end() iterator");
         node_ptr next = tree_next(x); // for return
         bool height_decreased = true;
@@ -1102,7 +1100,7 @@ private:
         }
     };
 
-    static bool is_header(node_ptr x) {
+    static bool is_header(node_ptr x) noexcept {
         if (x->_left == x) return true; // container's empty
         if (x->_left == nullptr || x->_right == nullptr) return false;
         return x->_left->_parent != x;

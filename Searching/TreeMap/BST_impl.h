@@ -506,8 +506,8 @@ private:
             _header->_parent = _header->_left = _header->_right = *x;
         }
         else {
-            if (*x == _header->_left->_left  ) _header->_left  = *x;
-            if (*x == _header->_right->_right) _header->_right = *x;
+            if      (*x == _header->_left->_left  ) _header->_left  = *x;
+            else if (*x == _header->_right->_right) _header->_right = *x;
         }
     }
     
