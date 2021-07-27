@@ -6,10 +6,13 @@ BSTDEP   := ../BST_impl.h
 
 AVLTESTS := AvlSet_test AvlMap_test
 AVLDEP   := ../AVLtree_impl.h
+AVL_INS_DEL_TESTS := AVL_insertion_test AVL_deletion_test
 
-AVL_INSERTION_DELETION_TESTS := AVL_insertion_test AVL_deletion_test
+RBTESTS := RbSet_test RbMap_test
+RBDEP   := ../RBtree_impl.h
+RB_INS_DEL_TESTS := RB_insertion_test RB_deletion_test
 
-TESTS := TST_test $(BSTTESTS) $(AVLTESTS) $(AVL_INSERTION_DELETION_TESTS)
+TESTS := TST_test $(BSTTESTS) $(AVLTESTS) $(AVL_INS_DEL_TESTS) $(RBTESTS) $(RB_INS_DEL_TESTS)
 
 .PHONY: all clean
 
@@ -24,7 +27,13 @@ $(BSTTESTS): %_test : %_test.cpp ../%.h $(BSTDEP)
 $(AVLTESTS): %_test : %_test.cpp ../%.h $(AVLDEP)
 	$(CXX) $(CXXFLAGS) -o $@ $<
 
-$(AVL_INSERTION_DELETION_TESTS): % : %.cpp ../AvlMap.h $(AVLDEP)
+$(AVL_INS_DEL_TESTS): % : %.cpp ../AvlMap.h $(AVLDEP)
+	$(CXX) $(CXXFLAGS) -o $@ $<
+
+$(RBTESTS): %_test : %_test.cpp ../%.h $(RBDEP)
+	$(CXX) $(CXXFLAGS) -o $@ $<
+
+$(RB_INS_DEL_TESTS): % : %.cpp ../RbMap.h $(RBDEP)
 	$(CXX) $(CXXFLAGS) -o $@ $<
 
 clean:
