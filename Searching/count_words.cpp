@@ -1,15 +1,19 @@
 /*
  *  Base file to be included.
- *  You can #define HASHMAP/TSTMAP/BSTMAP/AVLMAP/STDMAP/SKIPLISTMAP
+ *  You can #define HASHMAP(2)/TSTMAP/BSTMAP/AVLMAP/RBMAP/STDMAP/SKIPLISTMAP
  *  or leave it to default option which is std::unordered_map.
  */
 
 #if defined(HASHMAP)
     #include "HashMap/HashMap.h"
+#elif defined(HASHMAP2)
+    #include "HashMap/alternative/HashMap2.h"
 #elif defined(BSTMAP)
     #include "TreeMap/BstMap.h"
 #elif defined(AVLMAP)
     #include "TreeMap/AvlMap.h"
+#elif defined(RBMAP)
+    #include "TreeMap/RbMap.h"
 #elif defined(TSTMAP)
     #include "TreeMap/TST.h"
 #elif defined(STDMAP)
@@ -104,26 +108,39 @@ int main(int argc, char* argv[])
     try {
         auto t0 = clock();
         std::ios_base::sync_with_stdio(false);
-        
+        const char* method{};
 #if   defined(HASHMAP)
         mySymbolTable::HashMap<string, size_t> mp{};
+        method = "myst::Hashtable";
+#elif defined(HASHMAP2)
+        mySymbolTable::alternative::HashMap<string, size_t> mp{};
+        method = "myst::Hashtable2";
 #elif defined(BSTMAP)
         mySymbolTable::BstMap<string, size_t> mp{};
+        method = "myst::BST";
 #elif defined(AVLMAP)
         mySymbolTable::AvlMap<string, size_t> mp{};
+        method = "myst::AVL";
+#elif defined(RBMAP)
+        mySymbolTable::RbMap<string, size_t> mp{};
+        method = "myst::RBtree";
 #elif defined(TSTMAP)
         mySymbolTable::TST<size_t> mp{};
+        method = "myst::TST";
 #elif defined(STDMAP)
         std::map<string, size_t> mp{};
+        method = "std::map";
 #elif defined(SKIPLISTMAP)
         mySymbolTable::SkiplistMap<string, size_t> mp{};
+        method = "myst::SkipList";
 #else
         std::unordered_map<string, size_t> mp{};
+        method = "std::unordered_map";
 #endif
         
         size_t n{};  // pick out words whose length are >= n
         size_t k{};  // show top k most common words
-        if (argc < 2) { cerr << "Too few arguments" << endl; return 1; }
+        if      (argc == 1) { cerr << "lack of filename" << endl; return 1; }
         else if (argc == 2) { n = 1; k = 10; }
         else if (argc == 3) { n = std::stoi(argv[2]); k = 10; }
         else { n = std::stoi(argv[2]); k = std::stoi(argv[3]); }
@@ -152,15 +169,24 @@ int main(int argc, char* argv[])
             << "total: used " << total_time << "s to find the top " << k
             << " most common words (word length >= " << n << ")\n";
 
-#if defined(BSTMAP) || defined(AVLMAP) || defined(TSTMAP)
+        [[maybe_unused]] int height = 0;
+#if defined(BSTMAP) || defined(AVLMAP) || defined(RBMAP) || defined(TSTMAP)
         cout << "\ntree size: " << mp.size() <<
-            "\ntree height: " << mp.height() << '\n';
+            "\ntree height: " << (height = mp.height()) << '\n';
 #elif defined(SKIPLISTMAP)
         cout << "\nskip list size: " << mp.size() <<
-            "\nskip list height (max level): " << mp.level() << '\n';
+            "\nskip list height (max level): " << (height = mp.level()) << '\n';
 #endif
 
         //cout << "max word length: " << max_word_len << '\n';
+
+        // write results to a file
+        ofstream("results.txt", std::ios_base::app) // rvalue overload
+            << "| " << method << " | " << build_time << "s | " << sort_time << "s | " << total_time << "s |"
+#if defined(BSTMAP) || defined(AVLMAP) || defined(RBMAP) || defined(TSTMAP) || defined(SKIPLISTMAP)
+            << ' ' << height << " |"
+#endif
+            << '\n';
     }
     catch (const std::exception& e) {
         cout << e.what() << endl;

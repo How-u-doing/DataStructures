@@ -1,0 +1,11 @@
+| container type | build time | sort time | total time | tree/list height |
+| :---: | :---: | :---: | :---: | :---: |
+| std::unordered_map | 5.06675s | 0.039016s | 5.10576s |
+| myst::Hashtable | 4.98942s | 0.064644s | 5.05407s |
+| myst::Hashtable2 | 4.80352s | 0.022256s | 4.82578s |
+| std::map | 7.03038s | 0.07091s | 7.10129s |
+| myst::BST | 6.92974s | 0.071617s | 7.00136s | 47 |
+| myst::AVL | 6.98031s | 0.067521s | 7.04783s | 21 |
+| myst::RBtree | 7.06189s | 0.071231s | 7.13312s | 21 |
+| myst::TST | 5.67627s | 0.096076s | 5.77235s | 97 |
+| myst::SkipList | 10.3788s | 0.089552s | 10.4684s | 19 |
