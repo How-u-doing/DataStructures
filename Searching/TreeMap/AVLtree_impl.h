@@ -822,179 +822,100 @@ private:
         }
     }
 
-    // rebalance from leaf x
-    void rebalance_for_deletion_from(node_ptr x) noexcept {
-        for (node_ptr parent = x->_parent; parent != _header;) {
-            if (x == parent->_left)
-                ++parent->_bf;
-            else if (x == parent->_right)
-                --parent->_bf;
+    node_ptr erase(node_ptr z) noexcept {
+        assert(z != _header && "cannot erase end() iterator");
+        node_ptr next = tree_next(z); // for return
+        node_ptr x = nullptr, x_parent = nullptr;
 
-            if (parent->_bf == 1 || parent->_bf == -1) return; // deletion doesn't change H(parent)
-
-            if (parent->_bf == 0) { // keep retracing & updating ancestors' BFs
-                x = parent;
-                parent = x->_parent;
-                continue;
-            }
-            else { // parent->_bf == +/-2, do some rotations
-                int sibling_bf = sibling(x)->_bf;
-                if (parent->_bf == 2) { // right-heavy
-                    if (sibling_bf >= 0) // 0 or 1, RR shape
-                        x = rotate_left(parent);
-                    else // sibling_bf == -1, RL shape
-                        x = rotate_right_left(parent);
-                }
-                else { // parent->_bf == -2, left-heavy
-                    if (sibling_bf <= 0) // -1 or 0, LL shape
-                        x = rotate_right(parent);
-                    else // sibling_bf == 1, LR shape
-                        x = rotate_left_right(parent);
-                }
-
-                if (x->_bf == 0) parent = x->_parent; // keep retracing
-                else /* x->_bf == +/- 1 */ return;
-            }
-        }
-    }
-
-    bool unlink_leaf(node_ptr x, node_ptr& balance_pos) noexcept {
-        bool height_decreased = true;
-        node_ptr parent = x->_parent;
-        node_ptr sibling = x == parent->_left ? parent->_right : parent->_left;
-        if (sibling) {
-            if (has_children(sibling)) {
-                if (x == parent->_left) {
-                    parent->_left = nullptr;
-                    if (sibling->_bf == -1) { // sibling only has left, RL shape
-                        balance_pos = rotate_right_left(x->_parent);
-                    }
-                    else { // sibling->_bf == 1 or 0, has right or both, RR shape
-                        balance_pos = rotate_left(x->_parent);
-                    }
-                }
-                else {
-                    parent->_right = nullptr;
-                    if (sibling->_bf == 1) { // sibling only has right, LR shape
-                        balance_pos = rotate_left_right(x->_parent);
-                    }
-                    else { // sibling->_bf == -1 or 0, has left or both, LL shape
-                        balance_pos = rotate_right(x->_parent);
-                    }
-                }
-
-                if (balance_pos->_bf != 0) { // -1 or 1, sibling has two children
-                    height_decreased = false;
-                }
-            }
-            else { // won't change the height of parent
-                if (x == parent->_left) {
-                    parent->_bf = 1;
-                    parent->_left = nullptr;
-                }
-                else {
-                    parent->_bf = -1;
-                    parent->_right = nullptr;
-                }
-                height_decreased = false;
-            }
-        }
-        else { // decrease of 1 in the height of parent
-            parent->_bf = 0;
-            balance_pos = parent;
-            parent->_left = parent->_right = nullptr;
-        }
-        return height_decreased;
-    }
-
-
-    node_ptr erase(node_ptr x) noexcept {
-        assert(x != _header && "cannot erase end() iterator");
-        node_ptr next = tree_next(x); // for return
-        bool height_decreased = true;
-        node_ptr balance_pos = x;
-
-        if (_count == 1 && x == ROOT) {
+        if (_count == 1 && z == ROOT) {
             set_default_header();
             goto destroy_node;
         }
-        if      (x == _header->_left ) _header->_left  = next;
-        else if (x == _header->_right) _header->_right = tree_prev(x);
+        if      (z == _header->_left ) _header->_left  = next;
+        else if (z == _header->_right) _header->_right = tree_prev(z);
 
-        if (x->_left && !x->_right) {
-            replace(x, x->_left);
-            balance_pos = x->_left;
+        if (!z->_left) { // z has at most one non-null child
+            x = z->_right; // might be null
+            x_parent = z->_parent;
+            replace(z, x);
         }
-        else if (!x->_left && x->_right) {
-            replace(x, x->_right);
-            balance_pos = x->_right;
-        }
-        else if (!x->_left && !x->_right) { // x is a leaf
-            height_decreased = unlink_leaf(x, balance_pos);
+        else if (!z->_right) { // z has exactly one non-null child
+            x = z->_left; // not null
+            x_parent = z->_parent;
+            replace(z, x);
         }
         else { // has both children
-            node_ptr r_min = tree_min(x->_right);
-            swap_node(x, r_min);
-            height_decreased = unlink_leaf(x, balance_pos);
+            node_ptr y = tree_min(z->_right); // node to be actually deleted
+            x = y->_right; // might be null, y's left is null
+            if (y == z->_right) {
+                x_parent = y;
+            }
+            else {
+                x_parent = y->_parent;
+                replace(y, x);
+                y->_right = z->_right;
+                z->_right->_parent = y;
+            }
+            replace(z, y);
+            y->_left = z->_left;
+            z->_left->_parent = y;
+            y->_bf = z->_bf;
         }
 
-        if (height_decreased) rebalance_for_deletion_from(balance_pos);
+        if (!x_parent->_left && !x_parent->_right) { // both x and its sibling are null
+            // in this case we can't tell if x is x_parent's left or right child
+            // but we can set x_parent->_bf to 0 and start retracing from it
+            x_parent->_bf = 0;
+            x = x_parent;
+            x_parent = x->_parent;
+        }
+
+        // rebalance
+        while (x_parent != _header) {
+            if (x == x_parent->_left)
+                ++x_parent->_bf;
+            else if (x == x_parent->_right)
+                --x_parent->_bf;
+
+            if (x_parent->_bf == 1 || x_parent->_bf == -1) break; // deletion doesn't change H(x_parent)
+
+            if (x_parent->_bf == 0) { // keep retracing & updating ancestors' BFs
+                x = x_parent;
+                x_parent = x->_parent;
+                continue;
+            }
+            else { // x_parent->_bf == +/-2, do some rotations
+                node_ptr sibling = x == x_parent->_left ? x_parent->_right : x_parent->_left;
+                if (x_parent->_bf == 2) { // right-heavy
+                    if (sibling->_bf >= 0) // 0 or 1, RR shape
+                        x = rotate_left(x_parent);
+                    else // sibling->_bf == -1, RL shape
+                        x = rotate_right_left(x_parent);
+                }
+                else { // x_parent->_bf == -2, left-heavy
+                    if (sibling->_bf <= 0) // -1 or 0, LL shape
+                        x = rotate_right(x_parent);
+                    else // sibling->_bf == 1, LR shape
+                        x = rotate_left_right(x_parent);
+                }
+
+                if (x->_bf == 0) x_parent = x->_parent; // keep retracing
+                else /* x->_bf == +/- 1 */ break;
+            }
+        }
 
     destroy_node:
-        delete_node(x);
+        delete_node(z);
         --_count;
         return next;
     }
 
-    // x has two children, r_min is the smallest on the right subtree of x.
-    // Swap x with r_min first, if r_min is not a leaf (has right child) then
-    // swap x with r_min's right child again. This makes sure x becomes a leaf.
-    void swap_node(node_ptr x, node_ptr r_min) noexcept {
-        node_ptr r_min_parent = r_min->_parent; // r_min is the left child
-        node_ptr r_min_right = r_min->_right;
-        replace(x, r_min);
-        r_min->_bf = x->_bf;
-        r_min->_left = x->_left;
-        x->_left->_parent = r_min;
-        if (r_min == x->_right) {
-            if (r_min_right) { // is a leaf since r_min->_left is nil
-                r_min_right->_right = x; // left or right are both okay
-                x->_parent = r_min_right;
-                r_min_right->_bf = 1; // as we chose right, otherwise -1
-            }
-            else {
-                r_min->_right = x;
-                x->_parent = r_min;
-            }
-        }
-        else {
-            r_min->_right = x->_right;
-            x->_right->_parent = r_min;
-            if (r_min_right) { // is a leaf since r_min->_left is nil
-                r_min_parent->_left = r_min_right;
-                r_min_right->_parent = r_min_parent;
-                r_min_right->_right = x;
-                x->_parent = r_min_right;
-                r_min_right->_bf = 1;
-            }
-            else {
-                r_min_parent->_left = x;
-                x->_parent = r_min_parent;
-            }
-        }
-    }
-
-    // replace node x with a non-null node y
+    // replace node x with node y
     void replace(node_ptr x, node_ptr y) noexcept {
         if (x == ROOT) ROOT = y;
         else if (x == x->_parent->_left)    x->_parent->_left = y;
         else /*  x == x->_parent->_right */ x->_parent->_right = y;
-        y->_parent = x->_parent;
-    }
-
-    // precondition: x != ROOT
-    static node_ptr sibling(node_ptr x) noexcept {
-        return x == x->_parent->_left ? x->_parent->_right : x->_parent->_left;
+        if (y) y->_parent = x->_parent;
     }
 
     static bool has_children(node_ptr x) noexcept {
