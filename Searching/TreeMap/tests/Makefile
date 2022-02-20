@@ -12,11 +12,14 @@ RBTESTS := RbSet_test RbMap_test
 RBDEP   := ../RBtree_impl.h
 RB_INS_DEL_TESTS := RB_insertion_test RB_deletion_test
 
-TESTS := TST_test $(BSTTESTS) $(AVLTESTS) $(AVL_INS_DEL_TESTS) $(RBTESTS) $(RB_INS_DEL_TESTS)
+TESTS := AVL_unit_tests TST_test $(BSTTESTS) $(AVLTESTS) $(AVL_INS_DEL_TESTS) $(RBTESTS) $(RB_INS_DEL_TESTS)
 
 .PHONY: all clean
 
 all: $(TESTS)
+
+AVL_unit_tests: AVL_unit_tests.cpp ../AvlMap.h $(AVLDEP)
+	$(CXX) $(CXXFLAGS) -o $@ $<
 
 TST_test: TST_test.cpp ../TST.h
 	$(CXX) $(CXXFLAGS) -o $@ $<

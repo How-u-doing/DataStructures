@@ -5,6 +5,8 @@
  *  https://github.com/How-u-doing/DataStructures/tree/master/Searching/TreeMap/AvlMap.h
  */
 
+#include <tuple>
+#include <utility>
 #ifndef AVLMAP_H
 #define AVLMAP_H 1
 
@@ -88,18 +90,13 @@ public:
 
     /* IV */
 
-    AvlMap(const AvlMap& other) : _base(other) {}
+    AvlMap(const AvlMap& other) = default;
 
-    AvlMap& operator=(const AvlMap& other) {
-        _base::operator=(other);
-        return *this;
-    }
+    AvlMap(AvlMap&& other) = default;
 
-    AvlMap& operator=(std::initializer_list<value_type> ilist) {
-        AvlMap tmp{ ilist };
-        this->swap(tmp);
-        return *this;
-    }
+    AvlMap& operator=(const AvlMap& other) = default;
+    AvlMap& operator=(AvlMap&& other) = default;
+    AvlMap& operator=(std::initializer_list<value_type> ilist) { _base::operator=(ilist); }
 
     /* element access */
 
@@ -120,6 +117,9 @@ public:
         // if T() is cheap, we can just simply do this
         return _base::insert({ key, T() }).first->second;
 #elif 0
+        // equivalent to the above one
+        return this->try_emplace(key).first->second;
+#elif 0
         // otherwise we can do somthing like this
         iterator it = this->lower_bound(key); // it->first >= key
         if (it == this->end() || key_comp()(key, it->first))
@@ -127,28 +127,80 @@ public:
         return it->second;
 #else
         // but we have an even cooler one
+        // constructs T() only when needed
         auto p = this->cool_lower_bound(key); // p.it->first >= key
         iterator it = p.it;
         if (it == this->end() || key_comp()(key, it->first))
-            it = _base::insert_leaf_at(p.x, { key, T() }, p.x_parent);
+            it = _base::insert_leaf_at(p.x, p.x_parent, key, std::move(T()));
+        return it->second;
+#endif
+    }
+
+    T& operator[](key_type&& key) {
+#if 0
+        return _base::insert({ std::move(key), T() }).first->second;
+#elif 0
+        return this->try_emplace(std::move(key)).first->second;
+#elif 0
+        iterator it = this->lower_bound(key); // it->first >= key
+        if (it == this->end() || key_comp()(key, it->first))
+            it = _base::insert(it, { std::move(key), T() });
+        return it->second;
+#else
+        auto p = this->cool_lower_bound(key); // p.it->first >= key
+        iterator it = p.it;
+        if (it == this->end() || key_comp()(key, it->first))
+            it = _base::insert_leaf_at(p.x, p.x_parent, std::move(key), std::move(T()));
         return it->second;
 #endif
     }
 
     /* modifiers */
 
-    using _base::insert;
+    // inherited many from base
 
-    std::pair<iterator, bool> insert(const Key& key, const T& val) {
-        return _base::insert({ key, val });
+    template<typename M>
+    std::pair<iterator, bool> insert_or_assign(const key_type& key, M&& obj) {
+        return _base::try_emplace(/*assign=*/true, key, std::forward<M>(obj));
     }
 
-    std::pair<iterator, bool> insert_or_assign(const value_type& val) {
-        return _base::insert_or_assign(val);
+    template<typename M>
+    std::pair<iterator, bool> insert_or_assign(key_type&& key, M&& obj) {
+        return _base::try_emplace(/*assign=*/true, std::move(key), std::forward<M>(obj));
     }
 
-    std::pair<iterator, bool> insert_or_assign(const Key& key, const T& val) {       
-        return _base::insert_or_assign({ key, val });
+    template<typename M>
+    iterator insert_or_assign(const_iterator hint, const key_type& key, M&& obj) {
+        return _base::insert_hint(hint, /*assign=*/true, key, std::forward<M>(obj));
+    }
+
+    template<typename M>
+    iterator insert_or_assign(const_iterator hint, key_type&& key, M&& obj) {
+        return _base::insert_hint(hint, /*assign=*/true, std::move(key), std::forward<M>(obj));
+    }
+
+    template<typename... Args>
+    std::pair<iterator, bool> try_emplace(const key_type& key, Args&&... args) {
+        return _base::try_emplace(/*assign=*/false, std::piecewise_construct, std::forward_as_tuple(key),
+                                  std::forward_as_tuple(std::forward<Args>(args)...));
+    }
+
+    template<typename... Args>
+    std::pair<iterator, bool> try_emplace(key_type&& key, Args&&... args) {
+        return _base::try_emplace(/*assign=*/false, std::piecewise_construct, std::forward_as_tuple(std::move(key)),
+                                  std::forward_as_tuple(std::forward<Args>(args)...));
+    }
+
+    template<typename... Args>
+    iterator try_emplace(const_iterator hint, const key_type& key, Args&&... args) {
+        return _base::insert_hint(hint, /*assign=*/false, std::piecewise_construct, std::forward_as_tuple(key),
+                                  std::forward_as_tuple(std::forward<Args>(args)...));
+    }
+
+    template<typename... Args>
+    iterator try_emplace(const_iterator hint, key_type&& key, Args&&... args) {
+        return _base::insert_hint(hint, /*assign=*/false, std::piecewise_construct, std::forward_as_tuple(std::move(key)),
+                                  std::forward_as_tuple(std::forward<Args>(args)...));
     }
 
     void swap(AvlMap& rhs) {
@@ -167,7 +219,7 @@ public:
 
 }; // class AvlMap
 
-template <typename Key, typename T ,typename Compare, typename Alloc>
+template <typename Key, typename T, typename Compare, typename Alloc>
 void swap(AvlMap<Key, T, Compare, Alloc>& lhs,
           AvlMap<Key, T, Compare, Alloc>& rhs) noexcept(noexcept(lhs.swap(rhs)))
 {
@@ -247,26 +299,17 @@ public:
 
     /* IV */
 
-    AvlMultimap(const AvlMultimap& other) : _base(other) {}
+    AvlMultimap(const AvlMultimap& other) = default;
 
-    AvlMultimap& operator=(const AvlMultimap& other) {
-        _base::operator=(other);
-        return *this;
-    }
+    AvlMultimap(AvlMultimap&& other) = default;
 
-    AvlMultimap& operator=(std::initializer_list<value_type> ilist) {
-        AvlMultimap tmp{ ilist };
-        this->swap(tmp);
-        return *this;
-    }
+    AvlMultimap& operator=(const AvlMultimap& other) = default;
+    AvlMultimap& operator=(AvlMultimap&& other) = default;
+    AvlMultimap& operator=(std::initializer_list<value_type> ilist) { _base::operator=(ilist); }
 
     /* modifiers */
 
-    using _base::insert;
-
-    iterator insert(const Key& key, const T& val) {
-        return _base::insert({ key, val });
-    }
+    // inherited many from base
 
     void swap(AvlMultimap& rhs) {
         _base::swap(rhs);

@@ -21,25 +21,25 @@ int main()
     try {
         AVL st = { {10, "ten"}, {50, "five"}, {80, "eight"}, {40, "four"},
             {30, "three"}, {90, "nine"}, {60, "six"}, {20, "two"}, {70, "seven"} };
-        
+
         // insert duplicates
-        st.insert(50, "five");
-        st.insert(60, "six");
-        st.insert(60, "six");
-        st.insert(60, "six");
-        st.insert(60, "six");
-        st.insert(60, "six");
+        st.emplace(50, "five");
+        st.emplace(60, "six");
+        st.emplace(60, "six");
+        st.emplace(60, "six");
+        st.emplace(60, "six");
+        st.emplace(60, "six");
         // only for map
         //st.insert_or_assign(60, "six * six");
         //st[60] = "six * six";
 
-        print_map("st:\n", st);        
+        print_map("st:\n", st);
         cout << "\n\nst printed by lines: \n";
         st.print();
         cout << "height: " << st.height() << '\n';
 
         AVL st2 = st;
-        cout << "\n\nst2=st, in reverse order:\n";
+        cout << "\n\nst2st, in reverse order:\n";
         for (auto i = st2.rbegin(); i != st2.crend(); ++i) {
             cout << '{' << i->first << ", " << i->second << "} ";
         }

@@ -6,12 +6,15 @@
  *  https://github.com/How-u-doing/DataStructures/tree/master/Searching/TreeMap/AVLtree_impl.h
  */
 
+#include <cstdlib>
+#include <exception>
+#include <tuple>
 #ifndef AVLTREE_IMPL_H
 #define AVLTREE_IMPL_H 1
 
 #include <type_traits> // std::enable_if
 #include <memory>   // std::addressof, std::allocator_tarits
-#include <utility>  // std::swap, std::pair
+#include <utility>  // std::swap, std::pair, std::forward
 #include <iterator> // std::reverse_iterator, std::distance
 #ifndef NDEBUG
 #include <iostream> // std::cout
@@ -100,12 +103,34 @@ public:
         copy(rhs);
     }
 
+    AVLtree(_self&& rhs) : _count(rhs._count), _comp(rhs._comp), _alloc(rhs._alloc) {
+        create_header();
+        _header->_parent = rhs._header->_parent; // root
+        _header->_left = rhs._header->_left;
+        _header->_right = rhs._header->_right;
+        // IMPORTANT: update root node's parent link to new header
+        ROOT->_parent = _header;
+        rhs._count = 0;
+        rhs.set_default_header();
+    }
+
     ~AVLtree() { clear(); _alloc.deallocate(_header, 1); }
 
     _self& operator=(const _self& rhs) {
         if (this == &rhs) return *this;
         clear();
         copy(rhs);
+        return *this;
+    }
+
+    _self& operator=(_self&& rhs) {
+        swap(rhs);
+        return *this;
+    }
+
+    _self& operator=(std::initializer_list<value_type> ilist) {
+        clear();
+        insert(ilist);
         return *this;
     }
 
@@ -188,7 +213,7 @@ public:
     iterator find(const key_type& key) {
         return iterator(find(ROOT, key));
     }
-    
+
     const_iterator find(const key_type& key) const {
         return const_iterator(find(ROOT, key));
     }
@@ -208,7 +233,7 @@ public:
     iterator upper_bound(const key_type& key) {
         return iterator(upper_bound(ROOT, key));
     }
-    
+
     const_iterator upper_bound(const key_type& key) const {
         return const_iterator(upper_bound(ROOT, key));
     }
@@ -216,7 +241,7 @@ public:
     std::pair<iterator, iterator> equal_range(const key_type& key) {
         return equal_range_aux(key);
     }
-    
+
     std::pair<const_iterator, const_iterator> equal_range(const key_type& key) const {
         return equal_range_aux(key);
     }
@@ -230,90 +255,116 @@ public:
     }
 
     std::conditional_t<!IsMulti, std::pair<iterator, bool>, iterator>
-    insert(const T& val) {
-        if constexpr (!IsMulti) return insert_aux(&ROOT, val);
-        else return insert_aux(&ROOT, val).first;
+    insert(const value_type& val) {
+        if constexpr (!IsMulti) return insert_aux(&ROOT, /*assign=*/false, val);
+        else return insert_aux(&ROOT, /*assign=*/false, val).first;
+    }
+
+    std::conditional_t<!IsMulti, std::pair<iterator, bool>, iterator>
+    insert(value_type&& val) {
+        if constexpr (!IsMulti) return insert_aux(&ROOT, /*assign=*/false, std::move(val));
+        else return insert_aux(&ROOT, /*assign=*/false, std::move(val)).first;
     }
 
 private:
-    iterator insert_hint_unique(node_ptr hint, const T& val) {
+    template<typename... Args>
+    iterator insert_hint_unique(node_ptr hint, bool assign, Args&&... args) {
+        value_type val(std::forward<Args>(args)...);
         const key_type& key = get_key(val);
         if (hint == _header) { // end()
             if (_comp(get_key(_header->_right), key)) // max < key
-                return insert_leaf_at(&_header->_right->_right, val, _header->_right);
-            else return insert_aux(&ROOT, val).first;
+                return insert_leaf_at(&_header->_right->_right, _header->_right, std::move(val));
+            else return insert_aux(&ROOT, assign, std::move(val)).first;
         }
         else if (_comp(key, get_key(hint))) { // key < hint
-            if (hint == _header->_left) // key < min
-                return insert_leaf_at(&_header->_left->_left, val, _header->_left);
+            if (hint == _header->_left)       // key < min
+                return insert_leaf_at(&_header->_left->_left, _header->_left, std::move(val));
             node_ptr prev = tree_prev(hint);
-            if (_comp(get_key(prev), key)) { // prev < key < hint
-                if (prev->_right == nullptr) // prev is the rightmost of the left subtree of hint
-                    return insert_leaf_at(&prev->_right, val, prev);
+            if (_comp(get_key(prev), key)) {  // prev < key < hint
+                if (prev->_right == nullptr)  // prev is the rightmost of the left subtree of hint
+                    return insert_leaf_at(&prev->_right, prev, std::move(val));
                 else // otherwise hint->_left is null
-                    return insert_leaf_at(&hint->_left, val, hint);
+                    return insert_leaf_at(&hint->_left, hint, std::move(val));
             }
-            return insert_aux(&ROOT, val).first;
+            return insert_aux(&ROOT, assign, std::move(val)).first;
         }
         else if (_comp(get_key(hint), key)) { // hint < key
-            if (hint == _header->_right) // max < key
-                return insert_leaf_at(&_header->_right->_right, val, _header->_right);
+            if (hint == _header->_right)      // max < key
+                return insert_leaf_at(&_header->_right->_right, _header->_right, std::move(val));
             node_ptr next = tree_next(hint);
-            if (_comp(key, get_key(next))) { // hint < key < next
-                if (next->_left == nullptr)  // next is the leftmost of the right subtree of hint
-                    return insert_leaf_at(&next->_left, val, next);
+            if (_comp(key, get_key(next))) {  // hint < key < next
+                if (next->_left == nullptr)   // next is the leftmost of the right subtree of hint
+                    return insert_leaf_at(&next->_left, next, std::move(val));
                 else // otherwise hint->_right is null
-                    return insert_leaf_at(&hint->_right, val, hint);
+                    return insert_leaf_at(&hint->_right, hint, std::move(val));
             }
-            return insert_aux(&ROOT, val).first;
+            return insert_aux(&ROOT, assign, std::move(val)).first;
         }
         else // equivalent keys
             return iterator(hint);
     }
 
-    iterator insert_hint_multi(node_ptr hint, const T& val) {
+    template<typename... Args>
+    iterator insert_hint_multi(node_ptr hint, Args&&... args) {
+        value_type val(std::forward<Args>(args)...);
         const key_type& key = get_key(val);
         if (hint == _header) { // end()
             if (!_comp(key, get_key(_header->_right))) // key >= max
-                return insert_leaf_at(&_header->_right->_right, val, _header->_right);
-            else return insert_aux(&ROOT, val).first;
+                return insert_leaf_at(&_header->_right->_right, _header->_right, std::move(val));
+            else return insert_aux(&ROOT, /*assign=*/false, std::move(val)).first;
         }
         else if (!_comp(get_key(hint), key)) { // key <= hint
-            if (hint == _header->_left) // key <= min
-                return insert_leaf_at(&_header->_left->_left, val, _header->_left);
+            if (hint == _header->_left)        // key <= min
+                return insert_leaf_at(&_header->_left->_left, _header->_left, std::move(val));
             node_ptr prev = tree_prev(hint);
-            if (!_comp(key, get_key(prev))) { // prev <= key <= hint
-                if (prev->_right == nullptr)  // prev is the rightmost of the left subtree of hint
-                    return insert_leaf_at(&prev->_right, val, prev);
+            if (!_comp(key, get_key(prev))) {  // prev <= key <= hint
+                if (prev->_right == nullptr)   // prev is the rightmost of the left subtree of hint
+                    return insert_leaf_at(&prev->_right, prev, std::move(val));
                 else // otherwise hint->_left is null
-                    return insert_leaf_at(&hint->_left, val, hint);
+                    return insert_leaf_at(&hint->_left, hint, std::move(val));
             }
-            return insert_aux(&ROOT, val).first;
+            return insert_aux(&ROOT, /*assign=*/false, std::move(val)).first;
         }
         else { // hint < key
-            if (hint == _header->_right) // max < key
-                return insert_leaf_at(&_header->_right->_right, val, _header->_right);
+            if (hint == _header->_right)      // max < key
+                return insert_leaf_at(&_header->_right->_right, _header->_right, std::move(val));
             node_ptr next = tree_next(hint);
             if (!_comp(get_key(next), key)) { // hint < key <= next
                 if (next->_left == nullptr)   // next is the leftmost of the right subtree of hint
-                    return insert_leaf_at(&next->_left, val, next);
+                    return insert_leaf_at(&next->_left, next, std::move(val));
                 else // otherwise hint->_right is null
-                    return insert_leaf_at(&hint->_right, val, hint);
+                    return insert_leaf_at(&hint->_right, hint, std::move(val));
             }
-            return insert_aux(&ROOT, val).first;
+            return insert_aux(&ROOT, /*assign=*/false, std::move(val)).first;
         }
+    }
+
+protected:
+    template<typename... Args>
+    iterator insert_hint(const_iterator hint, bool assign, Args&&... args) {
+        if (empty()) return insert_leaf_at(&ROOT, _header, std::forward<Args>(args)...);
+        if constexpr (!IsMulti)
+            return insert_hint_unique(hint.ptr(), assign, std::forward<Args>(args)...);
+        else
+            return insert_hint_multi(hint.ptr(), std::forward<Args>(args)...);
+    }
+
+    // only for map
+    template<typename... Args>
+    std::pair<iterator, bool> try_emplace(bool assign, Args&&... args) {
+        return insert_aux(&ROOT, assign, std::forward<Args>(args)...);
     }
 
 public:
     // Inserts value in the position as close as possible, just prior to hint.
     // Complexity: Amortized constant if the insertion happens in the position
     // just before the hint, logarithmic in the size of the container otherwise.
-    iterator insert(const_iterator hint, const T& val) {
-        if (empty()) return insert_leaf_at(&ROOT, val, _header);
-        if constexpr (!IsMulti)
-            return insert_hint_unique(hint.ptr(), val);
-        else
-            return insert_hint_multi(hint.ptr(), val);
+    iterator insert(const_iterator hint, const value_type& val) {
+        return insert_hint(hint, /*assign=*/false, val);
+    }
+
+    iterator insert(const_iterator hint, value_type&& val) {
+        return insert_hint(hint, /*assign=*/false, std::move(val));
     }
 
     template< typename InputIt >
@@ -327,12 +378,20 @@ public:
         return insert(ilist.begin(), ilist.end());
     }
 
-protected:
-    std::pair<iterator, bool> insert_or_assign(const T& val) {
-        return insert_aux(&ROOT, val, /*assign=*/true);
+    template<typename... Args>
+    std::conditional_t<!IsMulti, std::pair<iterator, bool>, iterator>
+    emplace(Args&&... args) {
+        if constexpr (!IsMulti)
+            return insert_aux(&ROOT, /*assign=*/false, std::forward<Args>(args)...);
+        else
+            return insert_aux(&ROOT, /*assign=*/false, std::forward<Args>(args)...).first;
     }
 
-public:
+    template<typename... Args>
+    iterator emplace_hint(const_iterator hint, Args&&... args) {
+        return insert_hint(hint, /*assign=*/false, std::forward<Args>(args)...);
+    }
+
     iterator erase(iterator pos) {
         return iterator(erase(pos.ptr()));
     }
@@ -478,8 +537,8 @@ private:
             return tree_min(x->_right);
         // ROOT being rightmost, go to _header
         if (x == x->_parent->_parent) return x->_parent;
-        node_ptr parent = x->_parent;// root->_parent == _header
-        while (x == parent->_right) {// root == _header->_parent
+        node_ptr parent = x->_parent;  // root->_parent == _header
+        while (x == parent->_right) {  // root == _header->_parent
             x = parent;
             parent = x->_parent;
         }
@@ -492,20 +551,20 @@ private:
             return tree_max(x->_left);
         // ROOT being leftmost, go to _header
         if (x == x->_parent->_parent) return x->_parent;
-        node_ptr parent = x->_parent;// root->_parent == _header
-        while (x == parent->_left) { // root == _header->_parent
+        node_ptr parent = x->_parent;  // root->_parent == _header
+        while (x == parent->_left) {   // root == _header->_parent
             x = parent;
             parent = x->_parent;
         }
         return parent; // _header if x points to the leftmost node
     }
 
-    node_ptr new_node(const T& val, node_ptr parent, node_ptr left  = nullptr,
-                                                     node_ptr right = nullptr)
+    template<typename... Args>
+    node_ptr new_node(node_ptr parent, Args&&... args)
     {
         node_ptr p = _alloc.allocate(1);
         try {
-            ::new ((void*)p) node(val, parent, left, right);
+            ::new ((void*)p) node(parent, std::forward<Args>(args)...);
         }
         catch (...) {
             _alloc.deallocate(p, 1);
@@ -521,7 +580,7 @@ private:
 
     node_ptr copy_nodes(node_ptr x, node_ptr parent) {
         if (x != nullptr) {
-            node_ptr t = new_node(x->_val, parent);
+            node_ptr t = new_node(parent, x->_val);
             t->_bf = x->_bf;
             t->_left  = copy_nodes(x->_left,  t);
             t->_right = copy_nodes(x->_right, t);
@@ -554,16 +613,16 @@ private:
     }
 
     // map
-    static const key_type& get_key_via_t(const T& val, std::true_type) {
+    static const key_type& get_key_via_t(const value_type& val, std::true_type) {
         return val.first;
     }
 
     // set
-    static const key_type& get_key_via_t(const T& val, std::false_type) {
+    static const key_type& get_key_via_t(const value_type& val, std::false_type) {
         return val;
     }
 
-    static const key_type& get_key(const T& val) {
+    static const key_type& get_key(const value_type& val) {
         return get_key_via_t(val, std::bool_constant<IsMap>{});
     }
 
@@ -593,7 +652,7 @@ private:
         node_ptr parent = x->_parent;
         while (x != nullptr) {
             if (!_comp(key, get_key(x))) x = x->_right;
-            else {// x > key
+            else { // x > key
                 parent = x;
                 x = x->_left;
             }
@@ -606,7 +665,7 @@ private:
         node_ptr parent = x->_parent;
         while (x != nullptr) {
             if (_comp(get_key(x), key)) x = x->_right;
-            else {// x >= key
+            else { // x >= key
                 parent = x;
                 x = x->_left;
             }
@@ -633,7 +692,7 @@ protected:
         while (*x != nullptr) {
             x_parent = *x;
             if (_comp(get_key(*x), key)) x = &(*x)->_right;
-            else {// x >= key
+            else { // x >= key
                 parent = *x;
                 x = &(*x)->_left;
             }
@@ -641,8 +700,9 @@ protected:
         return { iterator(parent), x, x_parent }; // end() if not found
     }
 
-    node_ptr insert_leaf_at(node** x, const T& val, node_ptr parent) {
-        *x = new_node(val, parent);
+    template<typename... Args>
+    node_ptr insert_leaf_at(node** x, node_ptr parent, Args&&... args) {
+        *x = new_node(parent, std::forward<Args>(args)...);
         ++_count;
         if (_count == 1)
             return _header->_parent = _header->_left = _header->_right = *x;
@@ -656,8 +716,16 @@ protected:
 
 private:
     // precondition: *x != nullptr
-    std::pair<node_ptr, bool> insert_aux(node** x, const T& val, bool assign = false) {
-        if (empty()) return { insert_leaf_at(&ROOT, val, _header), true };
+    // Here args can be of type value_type or of a few types (to be forwarded)
+    template<typename... Args>
+    std::pair<node_ptr, bool> insert_aux(node** x, bool assign, Args&&... args) {
+        if (empty()) return { insert_leaf_at(&ROOT, _header, std::forward<Args>(args)...), true };
+        // This is acctually a fake emplace routine as we will have an extra move operation.
+        // But it does make life much easier because it can serve as the base implementation
+        // of  insert( [const_iterator hint,] value_type&& value ),
+        //     insert_or_assign( [const_iterator hint,] Key&& k, M&& obj ),
+        //     [try_]emplace[_hint]( [const_iterator hint,] Args&&... args ).  :)
+        value_type val(std::forward<Args>(args)...);
         const key_type& key = get_key(val);
         node_ptr parent = (*x)->_parent;
         while (*x != nullptr) {
@@ -681,14 +749,14 @@ private:
                 }
             }
         }
-        return { insert_leaf_at(x, val, parent), true };
+        return { insert_leaf_at(x, parent, std::move(val)), true };
     }
 
     // H(X)=h, H(b)=h+2, H(Z)=h+1, H(Y)=h (insertion at Z or deletion at X) or H(Y)=h+1 (deletion at X)
     /*
          a  (+2)                                              b  (0 or -1)
         /  \                  rotate left                   /   \
-       X    b (+1 or 0)   ------------------->   (0 or +1) a     Z 
+       X    b (+1 or 0)   ------------------->   (0 or +1) a     Z
            / \             insertion at Z or              / \
           Y   Z            deletion  at X                X   Y
 
@@ -1005,18 +1073,19 @@ private:
 #undef ROOT
 
     struct AVLtree_node {
-        T _val;
-        node_ptr _parent, _left, _right;
+        node_ptr _parent, _left = nullptr, _right = nullptr;
         int _bf = 0; // though acctually we will only need 3 bits, [-2, 2]
+        T _val;
 
-        AVLtree_node(const T& val, node_ptr parent, node_ptr left, node_ptr right)
-            : _val(val), _parent(parent), _left(left), _right(right) {}
+        template<typename... Args>
+        AVLtree_node(node_ptr parent, Args&&... args)
+            : _parent(parent), _val(std::forward<Args>(args)...) {}
 
         // in case operator& is overloaded
-        T* val_ptr() {
+        value_type* val_ptr() {
             return std::addressof(_val); // return &_val;
         }
-        const T* val_ptr() const {
+        const value_type* val_ptr() const {
             return std::addressof(_val);
         }
     };
@@ -1035,8 +1104,8 @@ private:
         using iterator_category = std::bidirectional_iterator_tag;
         using value_type = T;
         using difference_type = ptrdiff_t;
-        using pointer = T*;
-        using reference = T&;
+        using pointer = value_type*;
+        using reference = value_type&;
 
         AVLtree_iter() noexcept : _ptr(nullptr) {}
         AVLtree_iter(node_ptr ptr) noexcept : _ptr(ptr) {}
@@ -1093,8 +1162,8 @@ private:
         using iterator_category = std::bidirectional_iterator_tag;
         using value_type = T;
         using difference_type = ptrdiff_t;
-        using pointer = const T*;
-        using reference = const T&;
+        using pointer = const value_type*;
+        using reference = const value_type&;
 
         AVLtree_const_iter() : _ptr(nullptr) {}
         AVLtree_const_iter(node_ptr ptr) : _ptr(ptr) {}

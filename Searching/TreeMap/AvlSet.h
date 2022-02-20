@@ -76,18 +76,12 @@ public:
 
     /* IV */
 
-    AvlSet(const AvlSet& other) : _base(other) {}
+    AvlSet(const AvlSet& other) = default;
+    AvlSet(AvlSet&& other) = default;
 
-    AvlSet& operator=(const AvlSet& other) {
-        _base::operator=(other);
-        return *this;
-    }
-
-    AvlSet& operator=(std::initializer_list<value_type> ilist) {
-        AvlSet tmp{ ilist };
-        this->swap(tmp);
-        return *this;
-    }
+    AvlSet& operator=(const AvlSet& other) = default;
+    AvlSet& operator=(AvlSet&& other) = default;
+    AvlSet& operator=(std::initializer_list<value_type> ilist) { _base::operator=(ilist); }
 
     /* modifiers */
 
@@ -176,18 +170,13 @@ public:
 
     /* IV */
 
-    AvlMultiset(const AvlMultiset& other) : _base(other) {}
+    AvlMultiset(const AvlMultiset& other) = default;
 
-    AvlMultiset& operator=(const AvlMultiset& other) {
-        _base::operator=(other);
-        return *this;
-    }
+    AvlMultiset(AvlMultiset&& other) = default;
 
-    AvlMultiset& operator=(std::initializer_list<value_type> ilist) {
-        AvlMultiset tmp{ ilist };
-        this->swap(tmp);
-        return *this;
-    }
+    AvlMultiset& operator=(const AvlMultiset& other) = default;
+    AvlMultiset& operator=(AvlMultiset&& other) = default;
+    AvlMultiset& operator=(std::initializer_list<value_type> ilist) { _base::operator=(ilist); }
 
     /* modifiers */
 
