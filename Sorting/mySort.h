@@ -20,7 +20,7 @@ namespace mySortingAlgo{
 
 #ifdef NDEBUG
     const int ISORT_MAX = 32;   // maximum size for insertion sort
-#else 
+#else
     const int ISORT_MAX = 4;    // for test
 #endif
 
@@ -114,7 +114,7 @@ void merge(RandomIt low, RandomIt mid, RandomIt high, Compare comp)
     auto b = new typename std::iterator_traits<RandomIt>::value_type[m]{};
 
     auto it = low;
-    for (auto i = 0; i < m; ++i) {// copy a[lo..mid] to b[0..m-1]
+    for (auto i = 0; i < m; ++i) { // copy a[lo..mid] to b[0..m-1]
         b[i] = *it++;
     }
 
@@ -142,7 +142,7 @@ void merge_sort(RandomIt first, RandomIt last, Compare comp)
 }
 
 namespace myHeap {
-    // implementation of stl-like func: make_heap, push_heap, etc. 
+    // implementation of stl-like func: make_heap, push_heap, etc.
     // note that it's simplified (no error handling)
     // see <https://en.cppreference.com/w/cpp/algorithm/push_heap>
     // see relative algorithms at CLRS-3e - heapsort
@@ -170,19 +170,16 @@ namespace myHeap {
     template <typename RandIt, typename Compare = std::less<typename std::iterator_traits<RandIt>::value_type>>
     void make_heap(RandIt first, RandIt last, Compare comp = Compare{}) {
         //========================================================================================================
-        //
         // About the template argument deduction see
         // <https://en.cppreference.com/w/cpp/language/template_argument_deduction> &
         // <https://stackoverflow.com/questions/24277974/couldnt-deduce-template-parameter-from-function-parameters-default-argument>
-        // When we want to deduce template arg for default arg,  set the template arg (i.e. type) default 
+        // When we want to deduce template arg for default arg,  set the template arg (i.e. type) default
         // rather than function parameter, as there might be numerious template arg types can attain such
         // goal. e.g. Compare_type_1 = long,   comp = std::less<int>,
-        //            Compare_type_2 = string, comp = std::less<int>, 
+        //            Compare_type_2 = string, comp = std::less<int>,
         //            ...       (don't forget template specialization)
         // the compiler has so many choices to select, and it's getting confused!
-        //
         //========================================================================================================
-
         auto n = last - first;   // number of nodes
         int i = (n - 1) >> 1;    // parent node of last leaf
         while (i >= 0) {
@@ -191,7 +188,7 @@ namespace myHeap {
     }
 
     template <typename RandIt, typename Compare>
-    void sift_up(size_t pos, RandIt A, size_t n, Compare comp) {
+    void sift_up(size_t pos, RandIt A, Compare comp) {
         size_t parent{};
         while (pos > 0 && comp(*(A + (parent = (pos - 1) >> 1)), *(A + pos))) {
             myHeap::swap(*(A + parent), *(A + pos));
@@ -203,7 +200,7 @@ namespace myHeap {
     // heap defined by the range [first, last-1)
     template <typename RandIt, typename Compare = std::less<typename std::iterator_traits<RandIt>::value_type>>
     inline void push_heap(RandIt first, RandIt last, Compare comp = Compare{}) {
-        myHeap::sift_up(last - first - 1, first, last - first, comp);
+        myHeap::sift_up(last - first - 1, first, comp);
     }
 
     // Swap the value in the pos first and the value in the pos
@@ -233,7 +230,7 @@ namespace myHeap {
             myHeap::pop_heap(first, last--, comp);
         }
     }
-}// namespace myHeap
+} // namespace myHeap
 
 template<typename RandomIt, typename Compare>
 void heapsort(RandomIt first, RandomIt last, Compare comp)
@@ -247,18 +244,18 @@ template<typename RandomIt, typename Compare>
 inline void mid3(RandomIt low, RandomIt high, Compare comp)
 {
     auto mid = low + ((high - low) >> 1);
-    if (comp(*mid, *low))  iter_swap(low, mid);
+    if (comp(*mid,  *low)) iter_swap(low, mid);
     if (comp(*high, *low)) iter_swap(low, high);
     if (comp(*mid, *high)) iter_swap(mid, high);
 }
 
 template<typename RandomIt, typename Compare>
 RandomIt Lomuto_partition(RandomIt low, RandomIt high, Compare comp)
-{    
+{
     // See 'CLRS-3e' p171-172 (illustration, Fig7.1).
     // See also <https://en.wikipedia.org/wiki/quicksort#Lomuto_partition_scheme>.
-    mid3(low, high, comp); // make high = median of {low, mid, high}
-    auto pivot = *high;       // choose the rightmost element as pivot
+    mid3(low, high, comp);  // make high = median of {low, mid, high}
+    auto pivot = *high;     // choose the rightmost element as pivot
     auto i = low;
     for (auto j = low; j != high; ++j) {
         if (comp(*j, pivot))
@@ -296,24 +293,24 @@ void quicksort(RandomIt first, RandomIt last, Compare comp)
         insertion_sort(first, last, comp);
         return;
     }
-#if defined QUICK3WAY_PARTITION
-    // See also 'Algorithms-4e' p298-299. 3-way quicksort is based on Dutch National Flag algorithm 
+#if defined(QUICK3WAY_PARTITION)
+    // See also 'Algorithms-4e' p298-299. 3-way quicksort is based on Dutch National Flag algorithm
     // (see <https://www.geeksforgeeks.org/sort-an-array-of-0s-1s-and-2s/>).
-    // Dijkstra's solution is based on a single left-to-right pass through the array that maintains a 
-    // pointer lt such that a[lo..lt-1] is less than v, a pointer gt such that a[gt+1..hi] is greater 
+    // Dijkstra's solution is based on a single left-to-right pass through the array that maintains a
+    // pointer lt such that a[lo..lt-1] is less than v, a pointer gt such that a[gt+1..hi] is greater
     // than v, and a pointer i such that a[lt..i-1] are equal to v, and a[i..gt] are not yet examined.
-        
     auto lt = first, i = first + 1, gt = last - 1;
     auto pivot = *first;
     while (i <= gt) {
-        if        (comp(*i, pivot)) iter_swap(lt++, i++);
+        if      (comp(*i, pivot)) iter_swap(lt++, i++);
         else if (comp(pivot, *i)) iter_swap(i, gt--);
         else                      ++i;
-    }    // Now a[lo..lt-1] < pivot = a[lt..gt] < a[gt+1..hi].
-    quicksort(first, lt, comp);       // sort a[lo..lt-1]
-    quicksort(gt + 1, last, comp);    // sort a[gt+1..hi]
+    }
+    // Now a[lo..lt-1] < pivot = a[lt..gt] < a[gt+1..hi].
+    quicksort(first, lt, comp);      // sort a[lo..lt-1]
+    quicksort(gt + 1, last, comp);   // sort a[gt+1..hi]
 
-#elif defined FAST3WAY_PARTITION // by J. Bentley and D. McIlroy
+#elif defined(FAST3WAY_PARTITION) // by J. Bentley and D. McIlroy
     // See 'Algorithms-4e' p306 CREATIVE PROBLEMS 2.3.22
     // Note that this partitioning scheme does extra swaps for keys equal to the partitioning item's key,
     // while Quick3way does extra swaps for keys that are NOT equal to the partitioning item's key.
@@ -336,7 +333,7 @@ void quicksort(RandomIt first, RandomIt last, Compare comp)
         // stop when iterators cross
         if (first + i >= j) break;
 
-        // swap, so that smaller goes on left and greater goes on right 
+        // swap, so that smaller goes on left and greater goes on right
         iter_swap(first + i, j);
 
         // move all same left occurrence of pivot to beginning of array
@@ -351,7 +348,7 @@ void quicksort(RandomIt first, RandomIt last, Compare comp)
     }
 
     // move pivot element to its correct index
-    if (comp(pivot, *(first + i)))    // *(first+i)>=pivot
+    if (comp(pivot, *(first + i)))  // *(first+i)>=pivot
         iter_swap(first + i, last - 1);
 
     // move all left same occurrences from beginning to adjacent to a[i]
@@ -377,7 +374,7 @@ void quicksort(RandomIt first, RandomIt last, Compare comp)
     quicksort(first, j + 1, comp);    // sort a[lo..j]
     quicksort(first + i, last, comp); // sort a[i..hi]
 
-#elif defined LOMUTO_PARTITION
+#elif defined(LOMUTO_PARTITION)
     auto pivot = Lomuto_partition(first, last - 1, comp);
     quicksort(first, pivot, comp);       // sort a[first..pivot-1]
     quicksort(pivot + 1, last, comp);    // sort a[pivot+1..last-1]
@@ -385,7 +382,7 @@ void quicksort(RandomIt first, RandomIt last, Compare comp)
     auto pivot = Hoare_partition(first, last - 1, comp);
     quicksort(first, pivot + 1, comp);   // sort a[frist..pivot]
     quicksort(pivot + 1, last, comp);    // sort a[pivot+1..last-1]
-#endif // defined Quick3way_partition
+#endif
 }
 
 template<typename RandomIt, typename Compare>
@@ -395,13 +392,13 @@ void shellsort(RandomIt first, RandomIt last, Compare comp)
     int len = last - first;
     int gap = len;
     while (gap > 1) {
-        gap = gap / 3 + 1;    // gap by Donald E. Knuth
+        gap = gap / 3 + 1;   // suggested by Donald E. Knuth
         for (int i = gap; i < len; i += gap) {
             // insert a[i] into the sorted sequence a[0..i-1] (every gap count 1)
             for (int j = i; j > 0 && comp(*(first + j), *(first + j - gap)); j -= gap) {
                 iter_swap(first + j, first + j - gap);
             }
-        }    
+        }
     }
 }
 
@@ -425,8 +422,8 @@ void bubble_sort(RandomIt first, RandomIt last, Compare comp)
 
 /*
  * Example: list{2,3,4,5,1}, which would only need to go through one pass (indeed 1.5 pass, one
- * more left-to-rigth comparison) of cocktail sort to become sorted, but if using an ascending 
- * bubble sort would take four passes. However one cocktail sort pass should be counted as two 
+ * more left-to-rigth comparison) of cocktail sort to become sorted, but if using an ascending
+ * bubble sort would take four passes. However one cocktail sort pass should be counted as two
  * bubble sort passes. Typically cocktail sort is less than two times faster than bubble sort.
  * See also <https://en.wikipedia.org/wiki/Cocktail_shaker_sort>
  */
@@ -448,7 +445,7 @@ void cocktail_shaker_sort(RandomIt first, RandomIt last, Compare comp)
         }
         n = lastRightSwappedIndex;
 
-        if (n == 0)    // no swap, no need to compare right-to-left back
+        if (n == 0)  // no swap, no need to compare right-to-left back
             return;
 
         for (int j = n - 1; j >= m; --j) {
@@ -501,7 +498,7 @@ void counting_sort_unstable(RandomIt first, RandomIt last)
 
     for (it = first; it != last; ++it) {
         assert(*it >= 0 && "pointed value must be non-negative"); // especially string
-        ++freq[*it];
+        ++freq[(unsigned) *it];
     }
 
     for (it = first, c = 0; c < r; ++c) {
@@ -517,7 +514,7 @@ void counting_sort(RandomIt first, RandomIt last)
 {
     typedef typename std::iterator_traits<RandomIt>::value_type Key;
     constexpr int r = std::numeric_limits<Key>::max() + 1; // radix
-    static_assert(r > 0); // to avoid int or size_t type
+    static_assert(r > 0);  // to avoid int or size_t type
     const int n = last - first;
     int count[r + 1]{ 0 };
     Key* aux = new Key[n]; // vector or std::unique_ptr<Key[]> aux{ new Key[n] };
@@ -533,7 +530,7 @@ void counting_sort(RandomIt first, RandomIt last)
 
     // distribute a[i] to aux[j] (the right position)
     for (RandomIt i = first; i != last; ++i)
-        aux[count[*i]++] = *i;
+        aux[count[(unsigned) *i]++] = *i;
 
     // copy back
     for (int i = 0; i < n; ++i)
@@ -638,7 +635,8 @@ struct string_traits<charT*>
 };
 
 /*
- * Radix sort an array of fixed-size strings with D digits.
+ * LSD radix sort sorts an array of fixed-size strings with W characters.
+ * Time complexity: O(N*W), space complexity: O(N+R).
  * Works for: vector<string>, string[] ;
  *            vector<[const] char*>, [const] char* [], etc.
  * Note that  char(*) [D + 1]  may look better than char* [] since it
@@ -651,7 +649,7 @@ struct string_traits<charT*>
  * So, we DON'T support char(*)[D+1] as it would incur lots of copies.
  */
 template<typename RandomIt>
-void radix_sort(RandomIt first, RandomIt last, size_t D)
+void radix_sort(RandomIt first, RandomIt last, size_t W)
 {
     typedef typename std::iterator_traits<RandomIt>::value_type String;
     typedef typename string_traits<String>::value_type charT;
@@ -669,9 +667,9 @@ void radix_sort(RandomIt first, RandomIt last, size_t D)
     auto a = & *first; // raw data of the arr, of type String*
     std::vector<String> aux(n);
 
-    // sort d-th digit by counting sort
-    for (int d = D - 1; d >= 0; --d) {
-        std::vector<int> count(Radix + 1, 0);
+    // sort the dth character by counting sort
+    for (int d = W - 1; d >= 0; --d) {
+        int count[Radix + 1]{ 0 };
 
         // count frequencies
         for (int i = 0; i < n; ++i)
@@ -689,6 +687,96 @@ void radix_sort(RandomIt first, RandomIt last, size_t D)
         for (int i = 0; i < n; ++i)
             a[i] = std::move(aux[i]);
     }
+}
+
+// MSD sort sorts subarrays whose first d characters
+// are equal, starting at the dth character.
+template<typename RandomIt>
+void MSD_sort(RandomIt first, RandomIt last, size_t d)
+{
+    const int n = last - first;
+    if (n < 2) return;
+    typedef typename std::iterator_traits<RandomIt>::value_type String;
+    typedef typename string_traits<String>::value_type charT;
+    constexpr int min = std::numeric_limits<charT>::min();
+    constexpr int Radix = std::numeric_limits<charT>::max() - min + 1;
+    static_assert(Radix > 0);
+    auto a = & *first; // raw data of the arr, of type String*
+    std::vector<String> aux(n);
+
+#if 0  // compare this version with LSD radix sort
+    int count[Radix + 1]{ 0 };
+
+    /* sort the dth character by counting sort */
+    // count frequencies
+    for (int i = 0; i < n; ++i)
+        ++count[a[i][d] - min + 1];
+    // transform counts to indices
+    for (int r = 0; r < Radix; ++r)
+        count[r + 1] += count[r];
+    // distribute
+    for (int i = 0; i < n; ++i)
+        aux[count[a[i][d] - min]++] = std::move(a[i]);
+    // copy back
+    for (int i = 0; i < n; ++i)
+        a[i] = std::move(aux[i]);
+
+    /* sort subarrays recursively */
+    // Note that all non-zero values of count arrary have increased to the next
+    // value in the distribution step above. Therefore, count[0] can be greater
+    // than zero. The solution to avoid the special case below is to make a copy
+    // of count array immediately after transforming counts to indices (before
+    // the distribution step) or make a new array = [0, count_arr], or make count
+    // array of size Radix+2 to leave one more space in advance, thus leading to
+    // the next version.
+    if (count[0] > 1 && a[count[0]][d] != 0)
+        MSD_sort(first, first + count[0], d+1);
+    for (int r = 0; r < Radix - 1; ++r)
+        if (count[r+1] - count[r] > 1 && a[count[r]][d] != '\0')
+            MSD_sort(first + count[r], first + count[r+1], d+1);
+#else
+    int count[Radix + 2]{ 0 };
+
+    /* sort the dth character by counting sort */
+    // count frequencies
+    for (int i = 0; i < n; ++i)
+        ++count[a[i][d] - min + 2];
+    // transform counts to indices
+    for (int r = 0; r <= Radix; ++r)
+        count[r + 1] += count[r];
+    // distribute
+    for (int i = 0; i < n; ++i)
+        aux[count[a[i][d] - min + 1]++] = std::move(a[i]);
+    // copy back
+    for (int i = 0; i < n; ++i)
+        a[i] = std::move(aux[i]);
+
+    /* sort subarrays recursively */
+    for (int r = 0; r < Radix; ++r)
+        if (count[r+1] - count[r] > 1 && a[count[r]][d] != '\0')
+            MSD_sort(first + count[r], first + count[r+1], d+1);
+#endif
+}
+
+/*
+ * MSD (general-purpose) radix sort, which can handle variable-length strings.
+ * Time complexity: O(N~N*w), space complexity: O(N+W*R).
+ * Works for: vector<string>, string[] ;
+ *            vector<[const] char*>, [const] char* [], etc.
+ * NOTE: strings must be null-terminated. In C++, std::string operator[] with
+ * pos == size() is well defined so that it always returns a reference to the
+ * character with value CharT() (the null character '\0'). And we rely on it
+ * in our implementation for proper termination. The C strings, for example,
+ * "abcd", implicitly contains a '\0' character in the end. That's great, but
+ * we cannot handle this: char arr[] = {'a','b','c','d'}; It's not null-ended
+ * (has exactly 4 characters, whereas "abcd" has 5 characters) and it's very
+ * dangerous (though it's valid) in general use.
+ */
+template<typename RandomIt>
+void radix_sort(RandomIt first, RandomIt last)
+{
+    // recursively sort subarrarys
+    MSD_sort(first, last, 0);
 }
 
 /* Some popular sorting algorithms */
@@ -774,17 +862,17 @@ void sort(RandomIt first, RandomIt last, bool (*comp)(
  * See also https://en.wikipedia.org/wiki/Partial_sorting, and
  * https://www.geeksforgeeks.org/sort-vs-partial_sort-vs-nth_element-sort-in-c-stl/
  * Alternative implementations:
- * 
+ *
  * 1. Partial heapsort: Build a heap containing all n elements and then
  *    perform pop_heap() k times, giving time complexity O(n+klog(n)).
- * 
- * 2. Use selection algorithms (say quickselect) to partition the array, 
+ *
+ * 2. Use selection algorithms (say quickselect) to partition the array,
  *    and then sort these k smallest (largest) elements, at a total cost
  *    of O(n+klog(k)) operations.
- * 
+ *
  * 3. Specialized partial sorting algorithms based on mergesort and quicksort,
  *    with expected time O(n+klog(k)).
- */ 
+ */
 template<typename RandomIt, typename Compare = std::less<typename std::iterator_traits<RandomIt>::value_type>>
 void partial_sort(RandomIt first, RandomIt middle, RandomIt last, Compare comp = Compare{})
 {
@@ -826,6 +914,6 @@ void partial_quicksort(RandomIt first, RandomIt kth, RandomIt last, Compare comp
         partial_quicksort(pivot + 1, kth, last, comp);
 }
 
-}// namespace mySortingAlgo
+} // namespace mySortingAlgo
 
 #endif // !MYSORT_H
