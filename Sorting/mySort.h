@@ -34,8 +34,8 @@ inline void iter_swap(Iter it_1, Iter it_2)
     *it_2 = std::move(tmp);
 }
 
-template<typename RandomIt, typename Compare>
-void insertion_sort(RandomIt first, RandomIt last, Compare comp)
+template<typename RandomIt, typename Compare = std::less<typename std::iterator_traits<RandomIt>::value_type>>
+void insertion_sort(RandomIt first, RandomIt last, Compare comp = Compare{})
 {
     // see also <https://en.wikipedia.org/wiki/Insertion_sort>
     auto len = last - first;
@@ -73,8 +73,8 @@ RandomIt binary_insertion_search(RandomIt first, RandomIt last, RandomIt target,
     return L;
 }
 
-template<typename RandomIt, typename Compare>
-void binary_insertion_sort(RandomIt first, RandomIt last, Compare comp)
+template<typename RandomIt, typename Compare = std::less<typename std::iterator_traits<RandomIt>::value_type>>
+void binary_insertion_sort(RandomIt first, RandomIt last, Compare comp = Compare{})
 {
     // When we have massive data items, we can save some comparison time by using binary search.
     for (auto it = first + 1; it != last; ++it) {
@@ -88,8 +88,8 @@ void binary_insertion_sort(RandomIt first, RandomIt last, Compare comp)
     }
 }
 
-template<typename RandomIt, typename Compare>
-void selection_sort(RandomIt first, RandomIt last, Compare comp)
+template<typename RandomIt, typename Compare = std::less<typename std::iterator_traits<RandomIt>::value_type>>
+void selection_sort(RandomIt first, RandomIt last, Compare comp = Compare{})
 {
     // see also <https://en.wikipedia.org/wiki/Selection_sort>
     for (auto i = first; i != last - 1; ++i) {
@@ -130,8 +130,8 @@ void merge(RandomIt low, RandomIt mid, RandomIt high, Compare comp)
     delete[] b;
 }
 
-template<typename RandomIt, typename Compare>
-void merge_sort(RandomIt first, RandomIt last, Compare comp)
+template<typename RandomIt, typename Compare = std::less<typename std::iterator_traits<RandomIt>::value_type>>
+void merge_sort(RandomIt first, RandomIt last, Compare comp = Compare{})
 {
     // see also <https://en.wikipedia.org/wiki/Merge_sort>
     if (last - first < 2) return;
@@ -232,8 +232,8 @@ namespace myHeap {
     }
 } // namespace myHeap
 
-template<typename RandomIt, typename Compare>
-void heapsort(RandomIt first, RandomIt last, Compare comp)
+template<typename RandomIt, typename Compare = std::less<typename std::iterator_traits<RandomIt>::value_type>>
+void heapsort(RandomIt first, RandomIt last, Compare comp = Compare{})
 {
     myHeap::heapsort(first, last, comp);
 }
@@ -284,8 +284,8 @@ RandomIt Hoare_partition(RandomIt low, RandomIt high, Compare comp)
     // Then quicksort a[lo..j] & a[j+1..hi].
 }
 
-template<typename RandomIt, typename Compare>
-void quicksort(RandomIt first, RandomIt last, Compare comp)
+template<typename RandomIt, typename Compare = std::less<typename std::iterator_traits<RandomIt>::value_type>>
+void quicksort(RandomIt first, RandomIt last, Compare comp = Compare{})
 {
     // see also <https://en.wikipedia.org/wiki/quicksort>
     if (last - first < 2) return;
@@ -385,8 +385,8 @@ void quicksort(RandomIt first, RandomIt last, Compare comp)
 #endif
 }
 
-template<typename RandomIt, typename Compare>
-void shellsort(RandomIt first, RandomIt last, Compare comp)
+template<typename RandomIt, typename Compare = std::less<typename std::iterator_traits<RandomIt>::value_type>>
+void shellsort(RandomIt first, RandomIt last, Compare comp = Compare{})
 {
     // see also <https://en.wikipedia.org/wiki/shellsort>
     int len = last - first;
@@ -402,8 +402,8 @@ void shellsort(RandomIt first, RandomIt last, Compare comp)
     }
 }
 
-template<typename RandomIt, typename Compare>
-void bubble_sort(RandomIt first, RandomIt last, Compare comp)
+template<typename RandomIt, typename Compare = std::less<typename std::iterator_traits<RandomIt>::value_type>>
+void bubble_sort(RandomIt first, RandomIt last, Compare comp = Compare{})
 {
     // see also <https://en.wikipedia.org/wiki/Bubble_sort#Optimizing_bubble_sort>
     int n = last - first;    // unsorted length
@@ -427,8 +427,8 @@ void bubble_sort(RandomIt first, RandomIt last, Compare comp)
  * bubble sort passes. Typically cocktail sort is less than two times faster than bubble sort.
  * See also <https://en.wikipedia.org/wiki/Cocktail_shaker_sort>
  */
-template<typename RandomIt, typename Compare>
-void cocktail_shaker_sort(RandomIt first, RandomIt last, Compare comp)
+template<typename RandomIt, typename Compare = std::less<typename std::iterator_traits<RandomIt>::value_type>>
+void cocktail_shaker_sort(RandomIt first, RandomIt last, Compare comp = Compare{})
 {
     int n = last - first;
     int m = 1;
@@ -461,8 +461,8 @@ void cocktail_shaker_sort(RandomIt first, RandomIt last, Compare comp)
 // The main idea is like shellsort, but based on
 // bubble sort (shellsort is based on insertion sort).
 // See also <https://en.wikipedia.org/wiki/Comb_sort>
-template<typename RandomIt, typename Compare>
-void comb_sort(RandomIt first, RandomIt last, Compare comp)
+template<typename RandomIt, typename Compare = std::less<typename std::iterator_traits<RandomIt>::value_type>>
+void comb_sort(RandomIt first, RandomIt last, Compare comp = Compare{})
 {
     int n = last - first; // unsorted length
     int gap = n;
@@ -696,6 +696,18 @@ void MSD_sort(RandomIt first, RandomIt last, size_t d)
 {
     const int n = last - first;
     if (n < 2) return;
+    /* For a small number of strings using MSD radix sort can be overkill,
+     * as it would create lots of (empty) subarrays. Hence, again, we use
+     * a hybrid solution, with insertion sort, like we did in quicksort.
+     */
+    // It is more efficient if we implement another less(s1, s2, d) struct
+    // that works both on std::string and [const] char*, since the first d
+    // characters are all the same. But for a small number of strings the
+    // difference shouldn't be significant and we won't bother to do that.
+    if (n <= ISORT_MAX) { // change the threshold as you like
+        insertion_sort(first, last);
+        return;
+    }
     typedef typename std::iterator_traits<RandomIt>::value_type String;
     typedef typename string_traits<String>::value_type charT;
     constexpr int min = std::numeric_limits<charT>::min();
@@ -729,7 +741,7 @@ void MSD_sort(RandomIt first, RandomIt last, size_t d)
     // the distribution step) or make a new array = [0, count_arr], or make count
     // array of size Radix+2 to leave one more space in advance, thus leading to
     // the next version.
-    if (count[0] > 1 && a[count[0]][d] != 0)
+    if (count[0] > 1 && a[count[0]][d] != '\0')
         MSD_sort(first, first + count[0], d+1);
     for (int r = 0; r < Radix - 1; ++r)
         if (count[r+1] - count[r] > 1 && a[count[r]][d] != '\0')
