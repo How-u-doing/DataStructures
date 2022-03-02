@@ -14,9 +14,10 @@
 #include <limits>     // std::numeric_limits<T>::max()
 #include <cstddef>    // std::ptrdiff_t
 #include <cmath>      // std::floor
+#include <cstring>    // std::strcmp
 #include <cassert>
 
-namespace mySortingAlgo{
+namespace mySortingAlgo {
 
 #ifdef NDEBUG
     const int ISORT_MAX = 32;   // maximum size for insertion sort
@@ -299,6 +300,10 @@ void quicksort(RandomIt first, RandomIt last, Compare comp = Compare{})
     // Dijkstra's solution is based on a single left-to-right pass through the array that maintains a
     // pointer lt such that a[lo..lt-1] is less than v, a pointer gt such that a[gt+1..hi] is greater
     // than v, and a pointer i such that a[lt..i-1] are equal to v, and a[i..gt] are not yet examined.
+    // But we use the opposite of Dijkstra's approach, given mid3() makes hi the midian :)
+#if 0
+    mid3(first, last - 1, comp);
+    iter_swap(first, last - 1);  // or we can do one more swap
     auto lt = first, i = first + 1, gt = last - 1;
     auto pivot = *first;
     while (i <= gt) {
@@ -306,6 +311,16 @@ void quicksort(RandomIt first, RandomIt last, Compare comp = Compare{})
         else if (comp(pivot, *i)) iter_swap(i, gt--);
         else                      ++i;
     }
+#else
+    mid3(first, last - 1, comp);
+    auto lt = first, i = last - 2, gt = last - 1;
+    auto pivot = *gt;
+    while (i >= lt) {
+        if      (comp(*i, pivot)) iter_swap(lt++, i);
+        else if (comp(pivot, *i)) iter_swap(i--, gt--);
+        else                      --i;
+    }
+#endif
     // Now a[lo..lt-1] < pivot = a[lt..gt] < a[gt+1..hi].
     quicksort(first, lt, comp);      // sort a[lo..lt-1]
     quicksort(gt + 1, last, comp);   // sort a[gt+1..hi]
@@ -628,10 +643,10 @@ struct string_traits
 };
 
 // for const char*, etc
-template<typename charT>
-struct string_traits<charT*>
+template<typename CharT>
+struct string_traits<CharT*>
 {
-    typedef std::remove_cv_t<charT> value_type;
+    typedef std::remove_cv_t<CharT> value_type;
 };
 
 /*
@@ -652,8 +667,8 @@ template<typename RandomIt>
 void radix_sort(RandomIt first, RandomIt last, size_t W)
 {
     typedef typename std::iterator_traits<RandomIt>::value_type String;
-    typedef typename string_traits<String>::value_type charT;
-    constexpr int min = std::numeric_limits<charT>::min();
+    typedef typename string_traits<String>::value_type CharT;
+    typedef std::make_unsigned_t<CharT> UCharT;
     /*
      * On Linux, sizeof( wchar_t ) is 4, while 2 on Windows. So, here
      * wstring on Linux might incur integer overflow, thus Radix == 0.
@@ -661,7 +676,7 @@ void radix_sort(RandomIt first, RandomIt last, size_t W)
      * alway use it on Windows. See more detail at
      * https://stackoverflow.com/questions/402283/stdwstring-vs-stdstring/402918#402918
      */
-    constexpr int Radix = std::numeric_limits<charT>::max() - min + 1;
+    constexpr int Radix = std::numeric_limits<UCharT>::max() + 1;
     static_assert(Radix > 0);
     const int n = last - first;
     auto a = & *first; // raw data of the arr, of type String*
@@ -673,7 +688,7 @@ void radix_sort(RandomIt first, RandomIt last, size_t W)
 
         // count frequencies
         for (int i = 0; i < n; ++i)
-            ++count[a[i][d] - min + 1];
+            ++count[(UCharT) a[i][d] + 1];
 
         // transform counts to indices
         for (int r = 0; r < Radix; ++r)
@@ -681,7 +696,7 @@ void radix_sort(RandomIt first, RandomIt last, size_t W)
 
         // distribute
         for (int i = 0; i < n; ++i)
-            aux[count[a[i][d] - min]++] = std::move(a[i]);
+            aux[count[(UCharT) a[i][d]]++] = std::move(a[i]);
 
         // copy back
         for (int i = 0; i < n; ++i)
@@ -696,6 +711,10 @@ void MSD_sort(RandomIt first, RandomIt last, size_t d)
 {
     const int n = last - first;
     if (n < 2) return;
+    typedef typename std::iterator_traits<RandomIt>::value_type String;
+    typedef typename string_traits<String>::value_type CharT;
+    typedef std::remove_cv_t<std::remove_pointer_t<String>>* StringNoConst;
+    typedef std::make_unsigned_t<CharT> UCharT;
     /* For a small number of strings using MSD radix sort can be overkill,
      * as it would create lots of (empty) subarrays. Hence, again, we use
      * a hybrid solution, with insertion sort, like we did in quicksort.
@@ -704,14 +723,19 @@ void MSD_sort(RandomIt first, RandomIt last, size_t d)
     // that works both on std::string and [const] char*, since the first d
     // characters are all the same. But for a small number of strings the
     // difference shouldn't be significant and we won't bother to do that.
+#if 1
     if (n <= ISORT_MAX) { // change the threshold as you like
-        insertion_sort(first, last);
+        if constexpr (std::is_same_v<StringNoConst, char*>)
+            insertion_sort(first, last,  // C strings
+                    [](const char* a, const char* b) {
+                        return std::strcmp(a, b) < 0;
+                    });
+        else
+            insertion_sort(first, last); // std::string
         return;
     }
-    typedef typename std::iterator_traits<RandomIt>::value_type String;
-    typedef typename string_traits<String>::value_type charT;
-    constexpr int min = std::numeric_limits<charT>::min();
-    constexpr int Radix = std::numeric_limits<charT>::max() - min + 1;
+#endif
+    constexpr int Radix = std::numeric_limits<UCharT>::max() + 1;
     static_assert(Radix > 0);
     auto a = & *first; // raw data of the arr, of type String*
     std::vector<String> aux(n);
@@ -722,13 +746,13 @@ void MSD_sort(RandomIt first, RandomIt last, size_t d)
     /* sort the dth character by counting sort */
     // count frequencies
     for (int i = 0; i < n; ++i)
-        ++count[a[i][d] - min + 1];
+        ++count[(UCharT) a[i][d] + 1];
     // transform counts to indices
     for (int r = 0; r < Radix; ++r)
         count[r + 1] += count[r];
     // distribute
     for (int i = 0; i < n; ++i)
-        aux[count[a[i][d] - min]++] = std::move(a[i]);
+        aux[count[(UCharT) a[i][d]]++] = std::move(a[i]);
     // copy back
     for (int i = 0; i < n; ++i)
         a[i] = std::move(aux[i]);
@@ -752,13 +776,13 @@ void MSD_sort(RandomIt first, RandomIt last, size_t d)
     /* sort the dth character by counting sort */
     // count frequencies
     for (int i = 0; i < n; ++i)
-        ++count[a[i][d] - min + 2];
+        ++count[(UCharT) a[i][d] + 2];
     // transform counts to indices
     for (int r = 0; r <= Radix; ++r)
         count[r + 1] += count[r];
     // distribute
     for (int i = 0; i < n; ++i)
-        aux[count[a[i][d] - min + 1]++] = std::move(a[i]);
+        aux[count[(UCharT) a[i][d] + 1]++] = std::move(a[i]);
     // copy back
     for (int i = 0; i < n; ++i)
         a[i] = std::move(aux[i]);
@@ -789,6 +813,59 @@ void radix_sort(RandomIt first, RandomIt last)
 {
     // recursively sort subarrarys
     MSD_sort(first, last, 0);
+}
+
+template<typename RandomIt>
+void quick3string(RandomIt first, RandomIt last, size_t d)
+{
+    if (last - first < 2) return;
+    typedef typename std::iterator_traits<RandomIt>::value_type String;
+    typedef typename string_traits<String>::value_type CharT;
+    typedef std::make_unsigned_t<CharT> UCharT;
+
+    RandomIt lt = first, i = first + 1, gt = last - 1;
+    /* make lo = median of {lo, mid, hi} */
+    RandomIt mid = lt + ((gt - lt) >> 1);
+    if ((*mid)[d] < (*lt)[d]) iter_swap(lt, mid);
+    if ((*mid)[d] < (*gt)[d]) iter_swap(gt, mid);
+    // now mid is the largest of the three, then make lo the median
+    if ((*lt)[d] < (*gt)[d]) iter_swap(lt, gt);
+
+    UCharT pivot = (*first)[d];
+    while (i <= gt) {
+        int diff = (UCharT) (*i)[d] - pivot;
+        if      (diff < 0) iter_swap(lt++, i++);
+        else if (diff > 0) iter_swap(i, gt--);
+        else               ++i;
+    }
+    // Now a[lo..lt-1] < pivot = a[lt..gt] < a[gt+1..hi].
+    quick3string(first, lt, d);      // sort a[lo..lt-1]
+    if (pivot != '\0')
+        quick3string(lt, gt+1, d+1); // sort a[lt..gt] on following character
+    quick3string(gt+1, last, d);     // sort a[gt+1..hi]
+}
+
+/*
+ * Three-way string quicksort.
+ * Similar to MSD radix sort, we first sort the array on the leading character
+ * (using quicksort), then apply this method recursively on the subarrays. On
+ * first sorting, a pivot v is chosen, then partition it in 3 parts, strings
+ * whose first character are less than v, equal to v, and greater than v. Just
+ * like the partitioning in classic quicksort but with comparing only the 1st
+ * character instead of the whole string. After partitioning, only the middle
+ * (equal-to-v) part can sort on the following character (index of d+1). The
+ * other two recursively sort on the same depth (index of d) because these two
+ * haven't been sorted on the dth character (just partitioned them: <v or >v).
+ *
+ * Time complexity: O(N~N*lgN), space complexity: O(lgN).
+ * Explaination: N * string length (for partitioning, find equal-to-v part) +
+ *               O(N*lgN) (to do the quicksort thing)
+ * character comparisons (instead of string comparisons in normal quicksort).
+ */
+template<typename RandomIt>
+void str_qsort(RandomIt first, RandomIt last)
+{
+    quick3string(first, last, 0);
 }
 
 /* Some popular sorting algorithms */

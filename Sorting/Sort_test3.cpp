@@ -151,10 +151,51 @@ void MSD_radix_sort_tests()
     cout << "================================\n";
 }
 
+void str_qsort_tests()
+{
+    cout << "\nThree-way string quicksort tests:\n";
+    char p[] = {'b', 'c', '\x9', '\x80', '\0'};
+    //string arr[] = {
+    const char* arr[] = {
+        p, "a\x1rng", "ab", "a\x1rn", "a\xffv", "a\xffw", "aa", "a",
+        "a\xffu", "a\x80z", "a\x80yz", "a", "a\xffp", "a\xffk",
+        "alien", "a", "abs", "abc", "a\x81pi=3.14", "akin", "alike",
+        "\0ab", "a\x80xyz", "aha", "amazing", "also", "ai", "alphaa",
+        "appreciated", "abcd", "an", "apple", "amazon", "google",
+        "she", "sells", "seashells", "by", "the", "sea", "shore",
+        "the", "shells", "she", "sells", "are", "surely", "seashells"};
+    //mysa::str_qsort(arr, arr + sizeof arr / sizeof(string));
+    mysa::str_qsort(arr, arr + sizeof arr / sizeof(const char*));
+    //mysa::quicksort(arr, arr + sizeof arr / sizeof(const char*),
+    //        [](const char* a, const char* b) {
+    //            return std::strcmp(a, b) < 0;
+    //        });
+
+    cout << "================================\n";
+    for (const auto& x : arr)
+        cout << x << '\n';
+    cout << "================================\n";
+
+    vector<string> arr2;
+    cout << "Input your strings to be sorted:\n";
+    string s;
+    while ( cin >> s ) {
+        arr2.emplace_back(s);
+    }
+    mysa::str_qsort(arr2.begin(), arr2.end());
+
+    cout << "\nAfter sorting:\n";
+    cout << "================================\n";
+    for (const auto& x : arr2)
+        cout << x << '\n';
+    cout << "================================\n";
+}
+
 int main()
 {
     counting_bucket_sort_tests();
     LSD_radix_sort_tests();
     MSD_radix_sort_tests();
+    str_qsort_tests();
     return 0;
 }
