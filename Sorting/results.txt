@@ -1,5 +1,3 @@
-| Method | Time |
-| --- | --- |
 | Hoare | 7.8792s |
 | Quick3Way | 7.5074s |
 | Fast3Way | 5.78015s |
@@ -8,5 +6,3 @@
 | Heapsort | 32.8318s |
 | MergeSort | 16.94s |
 | std::sort | 6.10666s |
-
-![](img/results.png)

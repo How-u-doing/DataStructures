@@ -1,14 +1,19 @@
 CXX := g++
-CXXFLAGS := -std=c++17 -Wall -g
+CXXFLAGS := -std=c++17 -Wall
 
 .PHONY: all clean
 
 TESTS := $(patsubst %.cpp, %, $(wildcard *.cpp))
 
-all: $(TESTS)
+STRING_SORTS := $(patsubst %.cc, %, $(wildcard *.cc))
+
+all: $(TESTS) $(STRING_SORTS)
 
 $(TESTS): %: %.cpp mySort.h
-	$(CXX) $(CXXFLAGS) -o $@ $<
+	$(CXX) $(CXXFLAGS) -g -o $@ $<
+
+$(STRING_SORTS): %: %.cc string_sort.cc mySort.h
+	$(CXX) $(CXXFLAGS) -O3 -o $@ $<
 
 clean:
-	rm -f $(TESTS)
+	rm -f $(TESTS) $(STRING_SORTS)
