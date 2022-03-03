@@ -6,9 +6,6 @@
  *  https://github.com/How-u-doing/DataStructures/tree/master/Searching/TreeMap/AVLtree_impl.h
  */
 
-#include <cstdlib>
-#include <exception>
-#include <tuple>
 #ifndef AVLTREE_IMPL_H
 #define AVLTREE_IMPL_H 1
 
