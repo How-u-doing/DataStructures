@@ -715,6 +715,42 @@ void insertion_sort(RandomIt first, RandomIt last, size_t d)
     }
 }
 
+template<typename RandomIt>
+void quick3string(RandomIt first, RandomIt last, size_t d)
+{
+    if (last - first < 2) return;
+#if 0 // seems not to help much
+    if (last - first <= 8) { // change the threshold as you like
+        insertion_sort(first, last, d);
+        return;
+    }
+#endif
+    typedef typename std::iterator_traits<RandomIt>::value_type String;
+    typedef typename string_traits<String>::value_type CharT;
+    typedef std::make_unsigned_t<CharT> UCharT;
+
+    RandomIt lt = first, i = first + 1, gt = last - 1;
+    /* make lo = median of {lo, mid, hi} */
+    RandomIt mid = lt + ((gt - lt) >> 1);
+    if ((*mid)[d] < (*lt)[d]) iter_swap(lt, mid);
+    if ((*mid)[d] < (*gt)[d]) iter_swap(gt, mid);
+    // now mid is the largest of the three, then make lo the median
+    if ((*lt)[d] < (*gt)[d]) iter_swap(lt, gt);
+
+    UCharT pivot = (*first)[d];
+    while (i <= gt) {
+        int diff = (UCharT) (*i)[d] - pivot;
+        if      (diff < 0) iter_swap(lt++, i++);
+        else if (diff > 0) iter_swap(i, gt--);
+        else               ++i;
+    }
+    // Now a[lo..lt-1] < pivot = a[lt..gt] < a[gt+1..hi].
+    quick3string(first, lt, d);      // sort a[lo..lt-1]
+    if (pivot != '\0')
+        quick3string(lt, gt+1, d+1); // sort a[lt..gt] on following character
+    quick3string(gt+1, last, d);     // sort a[gt+1..hi]
+}
+
 // MSD sort sorts subarrays whose first d characters
 // are equal, starting at the dth character.
 template<typename RandomIt>
@@ -791,7 +827,14 @@ void MSD_sort(RandomIt first, RandomIt last, size_t d)
     /* sort subarrays recursively */
     for (int r = 0; r < Radix; ++r)
         if (count[r+1] - count[r] > 1 && a[count[r]][d] != '\0')
+#if 1
             MSD_sort(first + count[r], first + count[r+1], d+1);
+#else
+            // MSD+Q3S (or rather multiway partitioning 3-way string quicksort)
+            // outperforms both MSD and quick3way in our benchmark to sort the
+            // text file leipzig1M.txt.
+            quick3string(first + count[r], first + count[r+1], d+1);
+#endif
 #endif
 }
 
@@ -814,42 +857,6 @@ void radix_sort(RandomIt first, RandomIt last)
 {
     // recursively sort subarrarys
     MSD_sort(first, last, 0);
-}
-
-template<typename RandomIt>
-void quick3string(RandomIt first, RandomIt last, size_t d)
-{
-    if (last - first < 2) return;
-#if 0 // seems not to help much
-    if (last - first <= 8) { // change the threshold as you like
-        insertion_sort(first, last, d);
-        return;
-    }
-#endif
-    typedef typename std::iterator_traits<RandomIt>::value_type String;
-    typedef typename string_traits<String>::value_type CharT;
-    typedef std::make_unsigned_t<CharT> UCharT;
-
-    RandomIt lt = first, i = first + 1, gt = last - 1;
-    /* make lo = median of {lo, mid, hi} */
-    RandomIt mid = lt + ((gt - lt) >> 1);
-    if ((*mid)[d] < (*lt)[d]) iter_swap(lt, mid);
-    if ((*mid)[d] < (*gt)[d]) iter_swap(gt, mid);
-    // now mid is the largest of the three, then make lo the median
-    if ((*lt)[d] < (*gt)[d]) iter_swap(lt, gt);
-
-    UCharT pivot = (*first)[d];
-    while (i <= gt) {
-        int diff = (UCharT) (*i)[d] - pivot;
-        if      (diff < 0) iter_swap(lt++, i++);
-        else if (diff > 0) iter_swap(i, gt--);
-        else               ++i;
-    }
-    // Now a[lo..lt-1] < pivot = a[lt..gt] < a[gt+1..hi].
-    quick3string(first, lt, d);      // sort a[lo..lt-1]
-    if (pivot != '\0')
-        quick3string(lt, gt+1, d+1); // sort a[lt..gt] on following character
-    quick3string(gt+1, last, d);     // sort a[gt+1..hi]
 }
 
 /*

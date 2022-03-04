@@ -8,5 +8,6 @@
 | Heapsort | 32.8318s |
 | MergeSort | 16.94s |
 | std::sort | 6.10666s |
+| MSD+Q3S | 3.74214s |
 
 ![](img/results.png)
