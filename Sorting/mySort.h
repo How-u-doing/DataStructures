@@ -704,6 +704,17 @@ void radix_sort(RandomIt first, RandomIt last, size_t W)
     }
 }
 
+template<typename RandomIt>
+void insertion_sort(RandomIt first, RandomIt last, size_t d)
+{
+    const int len = last - first;
+    for (int i = 1; i < len; ++i) {
+        // insert a[i] into the sorted sequence a[0..i-1]
+        for (int j = i; j > 0 && std::strcmp(&(*(first+j))[d], &(*(first+j-1))[d]) < 0; --j)
+            iter_swap(first + j, first + j - 1);
+    }
+}
+
 // MSD sort sorts subarrays whose first d characters
 // are equal, starting at the dth character.
 template<typename RandomIt>
@@ -711,30 +722,20 @@ void MSD_sort(RandomIt first, RandomIt last, size_t d)
 {
     const int n = last - first;
     if (n < 2) return;
-    typedef typename std::iterator_traits<RandomIt>::value_type String;
-    typedef typename string_traits<String>::value_type CharT;
-    typedef std::remove_cv_t<std::remove_pointer_t<String>>* StringNoConst;
-    typedef std::make_unsigned_t<CharT> UCharT;
     /* For a small number of strings using MSD radix sort can be overkill,
-     * as it would create lots of (empty) subarrays. Hence, again, we use
-     * a hybrid solution, with insertion sort, like we did in quicksort.
+     * as it would create lots of (empty) subarrays. Besides, long common
+     * prefixes make MSD sort suffer as well. Hence, again, we apply a
+     * hybrid solution, with insertion sort, like we did in quicksort.
      */
-    // It is more efficient if we implement another less(s1, s2, d) struct
-    // that works both on std::string and [const] char*, since the first d
-    // characters are all the same. But for a small number of strings the
-    // difference shouldn't be significant and we won't bother to do that.
 #if 1
-    if (n <= ISORT_MAX) { // change the threshold as you like
-        if constexpr (std::is_same_v<StringNoConst, char*>)
-            insertion_sort(first, last,  // C strings
-                    [](const char* a, const char* b) {
-                        return std::strcmp(a, b) < 0;
-                    });
-        else
-            insertion_sort(first, last); // std::string
+    if (n <= 8) { // change the threshold as you like
+        insertion_sort(first, last, d);
         return;
     }
 #endif
+    typedef typename std::iterator_traits<RandomIt>::value_type String;
+    typedef typename string_traits<String>::value_type CharT;
+    typedef std::make_unsigned_t<CharT> UCharT;
     constexpr int Radix = std::numeric_limits<UCharT>::max() + 1;
     static_assert(Radix > 0);
     auto a = & *first; // raw data of the arr, of type String*
@@ -819,6 +820,12 @@ template<typename RandomIt>
 void quick3string(RandomIt first, RandomIt last, size_t d)
 {
     if (last - first < 2) return;
+#if 0 // seems not to help much
+    if (last - first <= 8) { // change the threshold as you like
+        insertion_sort(first, last, d);
+        return;
+    }
+#endif
     typedef typename std::iterator_traits<RandomIt>::value_type String;
     typedef typename string_traits<String>::value_type CharT;
     typedef std::make_unsigned_t<CharT> UCharT;
