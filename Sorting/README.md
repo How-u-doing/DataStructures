@@ -1,13 +1,13 @@
 | Method | Time |
 | --- | --- |
-| Hoare | 7.8792s |
-| Quick3Way | 7.5074s |
-| Fast3Way | 5.78015s |
-| RadixSort | 4.86149s |
-| Quick3String | 4.3685s |
-| Heapsort | 32.8318s |
-| MergeSort | 16.94s |
-| std::sort | 6.10666s |
-| MSD+Q3S | 3.74214s |
+| Hoare | 7.5559s |
+| Quick3Way | 7.37315s |
+| Fast3Way | 5.58809s |
+| RadixSort | 4.73053s |
+| Quick3String | 4.30884s |
+| Heapsort | 32.416s |
+| MergeSort | 17.3843s |
+| std::sort | 6.03988s |
+| MSD+Q3S | 3.79136s |
 
 ![](img/results.png)

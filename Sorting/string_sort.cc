@@ -23,6 +23,9 @@
 #elif defined(USE_Q3S)
   #define __sort__    str_qsort
   #define __method__  "Quick3String"
+#elif defined(USE_MSD_PLUS_Q3S)
+  #define __sort__    radix_sort
+  #define __method__  "MSD+Q3S"
 #elif defined(USE_HEAPSORT)
   #define __sort__    heapsort
   #define __method__  "Heapsort"
@@ -60,7 +63,8 @@ int main()
 
 #if defined(USE_HOARE) || defined(USE_LOMUTO) || defined(USE_Q3W) || \
     defined(USE_F3W) || defined(USE_MSD) || defined(USE_Q3S) || \
-    defined(USE_MERGE_SORT) || defined(USE_HEAPSORT)
+    defined(USE_MERGE_SORT) || defined(USE_HEAPSORT) || \
+    defined(USE_MSD_PLUS_Q3S)
     namespace mysa = mySortingAlgo;
     mysa::__sort__(arr.begin(), arr.end());
 #else

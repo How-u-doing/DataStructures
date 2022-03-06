@@ -274,6 +274,9 @@ RandomIt Hoare_partition(RandomIt low, RandomIt high, Compare comp)
     // see also <https://en.wikipedia.org/wiki/quicksort#Hoare_partition_scheme>
     mid3(low, high, comp);    // make high = median of {low, mid, high}
     auto pivot = *high;       // choose the rightmost element as pivot
+    // Note: here j can not be high-1 when there are only two elements because
+    // if comp(pivot, *j) then j will get decreased again, thus pointing to an
+    // invalid position and we will return it.
     auto i = low, j = high;
     while (true) {
         while (comp(*i, pivot)) ++i;
@@ -286,21 +289,19 @@ RandomIt Hoare_partition(RandomIt low, RandomIt high, Compare comp)
 }
 
 template<typename RandomIt, typename Compare = std::less<typename std::iterator_traits<RandomIt>::value_type>>
-void quicksort(RandomIt first, RandomIt last, Compare comp = Compare{})
+void quick3way(RandomIt first, RandomIt last, Compare comp = Compare{})
 {
-    // see also <https://en.wikipedia.org/wiki/quicksort>
     if (last - first < 2) return;
-    if (last - first <= ISORT_MAX) { // hybrid with insertion sort for speed
+    if (last - first <= ISORT_MAX) { // hybridize with insertion sort for speed
         insertion_sort(first, last, comp);
         return;
     }
-#if defined(QUICK3WAY_PARTITION)
     // See also 'Algorithms-4e' p298-299. 3-way quicksort is based on Dutch National Flag algorithm
-    // (see <https://www.geeksforgeeks.org/sort-an-array-of-0s-1s-and-2s/>).
+    // (see <https://en.wikipedia.org/wiki/Dutch_national_flag_problem>).
     // Dijkstra's solution is based on a single left-to-right pass through the array that maintains a
     // pointer lt such that a[lo..lt-1] is less than v, a pointer gt such that a[gt+1..hi] is greater
     // than v, and a pointer i such that a[lt..i-1] are equal to v, and a[i..gt] are not yet examined.
-    // But we use the opposite of Dijkstra's approach, given mid3() makes hi the midian :)
+    // But we use a reversed version of Dijkstra's approach, given mid3() makes hi the midian :)
 #if 0
     mid3(first, last - 1, comp);
     iter_swap(first, last - 1);  // or we can do one more swap
@@ -322,78 +323,118 @@ void quicksort(RandomIt first, RandomIt last, Compare comp = Compare{})
     }
 #endif
     // Now a[lo..lt-1] < pivot = a[lt..gt] < a[gt+1..hi].
-    quicksort(first, lt, comp);      // sort a[lo..lt-1]
-    quicksort(gt + 1, last, comp);   // sort a[gt+1..hi]
+    quick3way(first, lt, comp);      // sort a[lo..lt-1]
+    quick3way(gt + 1, last, comp);   // sort a[gt+1..hi]
+}
 
-#elif defined(FAST3WAY_PARTITION) // by J. Bentley and D. McIlroy
+template<typename RandomIt, typename Compare = std::less<typename std::iterator_traits<RandomIt>::value_type>>
+void fast3way(RandomIt first, RandomIt last, Compare comp = Compare{})
+{
+    if (last - first < 2) return;
+    if (last - first <= ISORT_MAX) { // hybridize with insertion sort for speed
+        insertion_sort(first, last, comp);
+        return;
+    }
+    // by J. Bentley and D. McIlroy
     // See 'Algorithms-4e' p306 CREATIVE PROBLEMS 2.3.22
     // Note that this partitioning scheme does extra swaps for keys equal to the partitioning item's key,
     // while Quick3way does extra swaps for keys that are NOT equal to the partitioning item's key.
-    // See also <https://www.geeksforgeeks.org/3-way-quicksort-dutch-national-flag/>
 
-    int p = -1;          // p points to left last one that is equal to pivot
-    auto q = last - 1;   // q points to right first one that is equal to pivot
-    int i = -1;          // a[p+1..i-1] < pivot, a[lo..p]==pivot
-    auto j = last - 1;   // a[j+1..q-1] > pivot, a[q..hi]==pivot
-    auto pivot = *q;     // choose the rightmost element as pivot
+    /*
+     *          -----------------------------------------------
+     *  before  |                                           |v|
+     *          -----------------------------------------------
+     *           ^                                           ^
+     *           |                                           |
+     *           lo                                          hi
+     *
+     *          -----------------------------------------------
+     *  during  |   =v   |   <v   |         |   >v   |   =v   |
+     *          -----------------------------------------------
+     *           ^        ^        ^       ^        ^        ^
+     *           |        |        |       |        |        |
+     *           lo       p        i       j        q        hi
+     *
+     *          -----------------------------------------------
+     *   after  |       <v      |     =v      |      >v       |
+     *          -----------------------------------------------
+     *           ^             ^               ^             ^
+     *           |             |               |             |
+     *           lo            j               i             hi
+     */
+    mid3(first, last - 1, comp);
+    auto p = first;      // a[lo..p-1] = v
+    auto q = last - 2;   // a[q+1..hi] = v
+    auto i = first;      // a[p..i-1] < v
+    auto j = last - 2;   // a[j+1..q] > v
+    auto pivot = *(last-1); // v = a[hi]
     while (true) {
-        // increment i until it encounters first one that is less than pivot
-        while (comp(*(first + (++i)), pivot));
+        while (comp(*i, pivot)) ++i;
+        while (comp(pivot, *j)) --j;
 
-        // decrement j until it meets first one that is greater than pivot
-        while (comp(pivot, *(--j)))
-            if (j == first)
-                break;
+        if (i >= j) break;
 
-        // stop when iterators cross
-        if (first + i >= j) break;
+        iter_swap(i, j);
 
-        // swap, so that smaller goes on left and greater goes on right
-        iter_swap(first + i, j);
+        // Change this to `if (*i == pivot)` if == comparison is available,
+        // it can save one extra (potentially long) comparison (for strings).
+        if (!comp(*i, pivot) && !comp(pivot, *i))
+            iter_swap(p++, i);
 
-        // move all same left occurrence of pivot to beginning of array
-        if (!comp(*(first + i), pivot) && !comp(pivot, *(first + i))) {
-            iter_swap(first + (++p), first + i);
-        }
+        if (!comp(pivot, *j) && !comp(*j, pivot))
+            iter_swap(j, q--);
 
-        // move all same right occurrence of pivot to end of array
-        if (!comp(pivot, *j) && !comp(*j, pivot)) {
-            iter_swap(j, --q);
-        }
+        ++i; --j;
     }
+    if (i == j) // a[i] == a[j] == pivot
+        iter_swap(p++, i++);
+    // Now a[lo..p-1] = v, a[p..j] < v,
+    //     a[q+1..hi] = v, a[i..q] > v (i == j+1).
+    // Note: p may be equal to lo (no =v on the lhs),
+    // while at least one =v (the pivot) on the rhs.
 
-    // move pivot element to its correct index
-    if (comp(pivot, *(first + i)))  // *(first+i)>=pivot
-        iter_swap(first + i, last - 1);
+    /* swap the items with equal keys into position */
 
-    // move all left same occurrences from beginning to adjacent to a[i]
-    if (i >= 1)
-        j = first + i - 1;
-    else
-        j = first;
+    for (auto k = first; k != p; ++k)
+        iter_swap(k, j--);
 
-    for (int k = 0; k <= p; ++k) {
-        iter_swap(first + k, j);
-        if (j > first)
-            --j;
-        else
-            break;
+    for (auto k = last-1; k != q; --k)
+        iter_swap(i++, k);
+
+    // now a[lo..j] < v = a[j+1..i-1] < a[i..hi]
+    fast3way(first, j+1, comp); // sort a[lo..j]
+    fast3way(i, last, comp);    // sort a[i..hi]
+}
+
+template<typename RandomIt, typename Compare = std::less<typename std::iterator_traits<RandomIt>::value_type>>
+void quicksort_lomuto(RandomIt first, RandomIt last, Compare comp = Compare{})
+{
+    if (last - first < 2) return;
+    if (last - first <= ISORT_MAX) { // hybridize with insertion sort for speed
+        insertion_sort(first, last, comp);
+        return;
     }
-
-    // move all right same occurrences from end to adjacent to a[i]
-    i = i + 1;
-    for (auto k = last - 2; k >= q; --k, ++i)
-        iter_swap(first + i, k);
-
-    // sort the rest non-equal area on both sides
-    quicksort(first, j + 1, comp);    // sort a[lo..j]
-    quicksort(first + i, last, comp); // sort a[i..hi]
-
-#elif defined(LOMUTO_PARTITION)
     auto pivot = Lomuto_partition(first, last - 1, comp);
-    quicksort(first, pivot, comp);       // sort a[first..pivot-1]
-    quicksort(pivot + 1, last, comp);    // sort a[pivot+1..last-1]
+    quicksort_lomuto(first, pivot, comp);       // sort a[first..pivot-1]
+    quicksort_lomuto(pivot + 1, last, comp);    // sort a[pivot+1..last-1]
+}
+
+template<typename RandomIt, typename Compare = std::less<typename std::iterator_traits<RandomIt>::value_type>>
+void quicksort(RandomIt first, RandomIt last, Compare comp = Compare{})
+{
+    // see also <https://en.wikipedia.org/wiki/quicksort>
+#if defined(QUICK3WAY_PARTITION)
+    quick3way(first, last, comp);
+#elif defined(FAST3WAY_PARTITION)
+    fast3way(first, last, comp);
+#elif defined(LOMUTO_PARTITION)
+    quicksort_lomuto(first, last, comp);
 #else
+    if (last - first < 2) return;
+    if (last - first <= ISORT_MAX) { // hybridize with insertion sort for speed
+        insertion_sort(first, last, comp);
+        return;
+    }
     auto pivot = Hoare_partition(first, last - 1, comp);
     quicksort(first, pivot + 1, comp);   // sort a[frist..pivot]
     quicksort(pivot + 1, last, comp);    // sort a[pivot+1..last-1]
@@ -827,7 +868,7 @@ void MSD_sort(RandomIt first, RandomIt last, size_t d)
     /* sort subarrays recursively */
     for (int r = 0; r < Radix; ++r)
         if (count[r+1] - count[r] > 1 && a[count[r]][d] != '\0')
-#if 1
+#ifndef USE_MSD_PLUS_Q3S
             MSD_sort(first + count[r], first + count[r+1], d+1);
 #else
             // MSD+Q3S (or rather multiway partitioning 3-way string quicksort)
@@ -962,8 +1003,7 @@ void sort(RandomIt first, RandomIt last, bool (*comp)(
 
 /*
  * Time complexity: O(k+(n-k)log(k)+klog(k)). It's fast when k isn't very large.
- * See also https://en.wikipedia.org/wiki/Partial_sorting, and
- * https://www.geeksforgeeks.org/sort-vs-partial_sort-vs-nth_element-sort-in-c-stl/
+ * See also https://en.wikipedia.org/wiki/Partial_sorting
  * Alternative implementations:
  *
  * 1. Partial heapsort: Build a heap containing all n elements and then
