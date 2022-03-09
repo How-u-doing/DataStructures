@@ -912,9 +912,9 @@ void radix_sort(RandomIt first, RandomIt last)
  * other two recursively sort on the same depth (index of d) because these two
  * haven't been sorted on the dth character (just partitioned them: <v or >v).
  *
- * Time complexity: O(N~N*lgN), space complexity: O(lgN).
- * Explaination: N * string length (for partitioning, find equal-to-v part) +
- *               O(N*lgN) (to do the quicksort thing)
+ * Time complexity: O(N~N*log(N)), space complexity: O(log(N)).
+ * Explanation: N * string length (for partitioning, find equal-to-v part) +
+ *              O(N*log(N)) (to do the quicksort thing)
  * character comparisons (instead of string comparisons in normal quicksort).
  */
 template<typename RandomIt>
