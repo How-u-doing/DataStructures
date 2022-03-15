@@ -8,9 +8,16 @@ void test1()
     Bitmap bitmap(10);
     for (int i = 0; i < 10; ++i)
         bitmap.insert(i);
-    cout << bitmap.present(9) << '\n';
+
+    cout << bitmap.size() << '\t'
+         << bitmap.capacity() << '\t'
+         << bitmap.present(9) << '\n';
+
     bitmap.erase(9);
-    cout << bitmap.present(9) << '\n';
+
+    cout << bitmap.size() << '\t'
+         << bitmap.capacity() << '\t'
+         << bitmap.present(9) << '\n';
 }
 
 void test2()
@@ -21,7 +28,7 @@ void test2()
     // array, it will cost 2^32 B = 4 GiB of memory.
     // One might think of virtual memory, which, theoretically, can
     // be "infinite" (magnitude of TiB at least). But don't forget
-    // virtual memory and paging is painfully slow.
+    // virtual memory and paging are painfully slow.
     unsigned capacity = static_cast<unsigned>(-1);
     Bitmap bitmap(capacity);
     for (size_t i = 0; i < capacity; ++i)
