@@ -5,7 +5,7 @@ CXXFLAGS := -std=c++17 -Wall
 
 TESTS := lcs_length lcs_test
 
-all: $(TESTS) lcs_search
+all: $(TESTS) lcs_search lcs_diff
 
 lcs_length: lcs_length.cc
 	$(CXX) $(CXXFLAGS) -g -o $@ $<
@@ -25,5 +25,11 @@ lcs_search.o: lcs_search.cc lcs.h
 lcs_search: lcs_search.o lcs.o
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
+lcs_diff.o: lcs_diff.cc lcs.h
+	$(CXX) $(CXXFLAGS) -O3 -c $<
+
+lcs_diff: lcs_diff.o lcs.o
+	$(CXX) $(CXXFLAGS) -o $@ $^
+
 clean:
-	rm -f $(TESTS) lcs_search *.o
+	rm -f $(TESTS) lcs_search lcs_diff *.o
