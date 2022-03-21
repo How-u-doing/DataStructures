@@ -8,7 +8,7 @@ std::vector<int> BF_search(const std::string& pat, const std::string& txt)
 {
     const int M = pat.length();
     const int N = txt.length();
-    std::vector<int> occurences{};
+    std::vector<int> occurrences{};
     for (int i = 0; i <= N - M; ++i) {
         int j = 0;
         for (; j < M; ++j) {
@@ -16,9 +16,9 @@ std::vector<int> BF_search(const std::string& pat, const std::string& txt)
                 break;
         }
         if (j == M)
-            occurences.push_back(i);
+            occurrences.push_back(i);
     }
-    return occurences;	// return an empty vector when no matches
+    return occurrences;	// return an empty vector when no matches
 }
 
 // first-last matching
@@ -26,7 +26,7 @@ std::vector<int> FL_search(const std::string& pat, const std::string& txt)
 {
     const int M = pat.length();
     const int N = txt.length();
-    std::vector<int> occurences{};
+    std::vector<int> occurrences{};
     for (int i = 0; i <= N - M; ++i) {
         int j = 0;
         int k = M - 1;
@@ -36,9 +36,9 @@ std::vector<int> FL_search(const std::string& pat, const std::string& txt)
                 break;
         }
         if (j > k)
-            occurences.push_back(i);
+            occurrences.push_back(i);
     }
-    return occurences;
+    return occurrences;
 }
 
 // k = pi[i] is the largest integer smaller than i such that
@@ -64,7 +64,7 @@ std::vector<int> KMP_search(const std::string& pat, const std::string& txt)
 {
     const int m = pat.length();
     const int n = txt.length();
-    std::vector<int> occurences{};
+    std::vector<int> occurrences{};
     std::vector<int> pi = build_prefix_table(pat);
     int k = -1; // state of the finite automaton we have arrived
     for (int i = 0; i < n; ++i) { // O(n) complexity
@@ -73,7 +73,7 @@ std::vector<int> KMP_search(const std::string& pat, const std::string& txt)
          * mismatch, we keep falling back to the longest prefix of P[0..k]
          * that is also a suffix of P[0..k] by assigning k = pi[k] so that
          * we can align P[0..pi[k]] right with T[0..i-1], and then we test
-         * the new position P[pi[k]+1] with T[i]. If there is no occurence
+         * the new position P[pi[k]+1] with T[i]. If there is no occurrence
          * of T[i] in P[0..k], we will fall back to the original state and
          * have to start from comparing at P[0] with T[i+1].
          */
@@ -82,11 +82,11 @@ std::vector<int> KMP_search(const std::string& pat, const std::string& txt)
         if (pat[k + 1] == txt[i])
             ++k; // now points to the rightmost char matched
         if (k == m - 1) {
-            occurences.push_back(i - k);
+            occurrences.push_back(i - k);
             k = pi[k]; // align with next prefix (align pi[k] with k)
         }
     }
-    return occurences;
+    return occurrences;
 }
 
 std::vector<std::vector<int>> build_transition_table(const std::string& P, int R)
@@ -127,21 +127,21 @@ std::vector<int> finite_automaton_search(const std::string& pat, const std::stri
 {
     const int m = pat.length();
     const int n = txt.length();
-    std::vector<int> occurences{};
+    std::vector<int> occurrences{};
     std::vector<std::vector<int>> delta = build_transition_table(pat);
     int q = 0;
     for (int i = 0; i < n; ++i) {
         q = delta[q][txt[i]];
         if (q == m)
-            occurences.push_back(i - m + 1);
+            occurrences.push_back(i - m + 1);
     }
-    return occurences;
+    return occurrences;
 }
 
 // bad_char[txt[i]] = shift of i such that the mismatched char at txt[i] can
-// be aligned with the rightmost occurence of txt[i] of pat. If no occurence
+// be aligned with the rightmost occurrence of txt[i] of pat. If no occurrence
 // of txt[i] is found in pat, then align pat pass the mismatched char; if the
-// rightmost occurence of txt[i] is after j, that is, within the already
+// rightmost occurrence of txt[i] is after j, that is, within the already
 // matched characters pat[j+1..patlen-1], then we will just move pat right by
 // one position or it'll move backward (left)!  Note that, after the skip of
 // pat, we also need to move i to pat's ending character position.
@@ -152,7 +152,7 @@ std::vector<int> finite_automaton_search(const std::string& pat, const std::stri
 std::vector<int> build_bad_char_table(const std::string& P)
 {
     const int m = P.size(), R = 256;
-    std::vector<int> bad_char(R, m); // when no occurence, shift == patlen
+    std::vector<int> bad_char(R, m); // when no occurrence, shift == patlen
     for (int k = 0; k < m; ++k) {
         bad_char[P[k]] = m-1 - k;
     }
@@ -167,13 +167,22 @@ std::vector<int> build_good_suffix_table(const std::string& P)
     return good_suffix;
 }
 
+// Will pi_reversed[j] fall back to i?
+bool fall_back(const std::vector<int>& pi_reversed, int j, int i)
+{
+    int k = pi_reversed[j];
+    while (k > i)
+        k = pi_reversed[k];
+    return k == i;
+}
+
 // Boyer-Moore string-search algorithm:
 // the standard benchmark for practical string-search literature
 std::vector<int> BM_search(const std::string& pat, const std::string& txt)
 {
     const int m = pat.length();
     const int n = txt.length();
-    std::vector<int> occurences{};
+    std::vector<int> occurrences{};
     std::vector<int> pi = build_prefix_table(pat); // shift pat by m-1 - pi[m-1] instead of
                                                    // just by 1 when found a complete match
     std::vector<int> bad_char = build_bad_char_table(pat);
@@ -195,7 +204,7 @@ std::vector<int> BM_search(const std::string& pat, const std::string& txt)
             --j;
         }
         if (j < 0) {
-            occurences.push_back(i + 1);
+            occurrences.push_back(i + 1);
             i += m-1 - pi[m-1] + m;
         }
         else {
@@ -203,30 +212,43 @@ std::vector<int> BM_search(const std::string& pat, const std::string& txt)
             i += std::max(bad_char[txt[i]], good_suffix[j]);
 #else
             int shift = bad_char[txt[i]];
-            if (shift > m-1 - j) { // rightmost occurence of txt[i] is before j
-                // We can potentially skip all matched characters also by using the KMP
+            if (shift > m-1 - j) { // rightmost occurrence of txt[i] is before j
+                // We can potentially skip all matched characters by using the KMP
                 // prefix table for the reversed pat. For example:
-                // txt:     . . . . N L E . . .
-                //                    ===
-                // pat:       N E E D L E
-                //              ===
-                // idx:       k     j
-                // As long as the matched characters pat[j+1..m-1] != pat[k+1..k+m-1-j],
-                // then we can skip further all the matched characters, since there's no
-                // txt[i] in the matched characters in this case (k < j).
-                if (shift < m && j < m - 1 && pi_reversed[shift - 1] != m - 2 - j)
-                    shift = m;
+                // txt:  . . . . . . . . N L E . . .
+                //                         ===
+                // pat:  . . N L E N E E D L E
+                //                   ===
+                // idx:        q   k     j
+                // If the matched characters pat[j+1..m-1] != pat[k+1..k+m-1-j], then
+                // we can shift m-j more positions because the mismatched char txt[i]
+                // isn't in already matched characters (rightmost occurrence of txt[i]
+                // is before j). This can be quite helpful if m-j is large.
+                // The good suffix rule tries to find the position q such that
+                // pi_reversed[m-1-q] == m-1 - (j+1). But such q can be after k, which
+                // means good suffix skip < bad char skip. So, here we test if q will
+                // fall back on j+1 (i.e. q may go through many times of pi_reversed).
+                // We can achieve this by decreasing k and test each such position,
+                // but it is very inefficient. We can do better by pre-building the
+                // good suffix table and memoize it.
+#if 1
+                // The fall_back (contains a loop) function call may slow down the
+                // matching process in practice. For genomic substring search where
+                // already matched characters can be huge this might be justified.
+                if (shift < m && j < m - 1 && !fall_back(pi_reversed, shift-1, m-2-j))
+                    shift += m-j;
+#endif
             }
-            else { // rightmost occurence of txt[i] is after j
+            else { // rightmost occurrence of txt[i] is after j
                 // txt:     . . . . G A A T C G A A T A . . .
                 // pat:       A T C T A A T C G A A T A
-                shift = m-1 - j + m - 2 - j - pi_reversed[m - 2 - j];
+                shift = m-1 - j + m-2-j - pi_reversed[m-2-j];
             }
             i += shift;
 #endif
         }
     }
-    return occurences;
+    return occurrences;
 }
 
 } // namespace myStringAlgo
