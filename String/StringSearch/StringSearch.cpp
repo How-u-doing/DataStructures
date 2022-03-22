@@ -159,11 +159,27 @@ std::vector<int> build_bad_char_table(const std::string& P)
     return bad_char;
 }
 
-std::vector<int> build_good_suffix_table(const std::string& P)
+// pi_reversed[m-1-q] == m-1-(j+1), good_suffix[j] == m-q
+// txt:  . . . . . . . . N L E . . .
+//                         ===
+// pat:  . . N L E N E E D L E
+//             ===
+// idx:        q   k     j
+std::vector<int> build_good_suffix_table(const std::vector<int>& pi_reversed)
 {
-    const int patlen = P.size();
-    std::vector<int> good_suffix(patlen, 0);
-    // to be accomplished...
+    const int m = pi_reversed.size();
+    std::vector<int> good_suffix(m, -1);
+    for (int q = 0, j; q < m-1; ++q) {
+        j = pi_reversed[m-1-q]; // reverse index of j+1 in the above diagram
+        if (j != -1)
+            good_suffix[m-2-j] = m-q;
+    }
+    for (int j = 0; j < m-1; ++j) {
+        // matched suffix doesn't reoccur
+        if (good_suffix[j] == -1)
+            good_suffix[j] = m-1 - j + m; // we can skip the whole pat
+    }
+    good_suffix[m-1] = 1;
     return good_suffix;
 }
 
@@ -186,15 +202,14 @@ std::vector<int> BM_search(const std::string& pat, const std::string& txt)
     std::vector<int> pi = build_prefix_table(pat); // shift pat by m-1 - pi[m-1] instead of
                                                    // just by 1 when found a complete match
     std::vector<int> bad_char = build_bad_char_table(pat);
-
-#define IMPLEMENTED_GOOD_SUFFIX 0
-
-#if IMPLEMENTED_GOOD_SUFFIX
-    std::vector<int> good_suffix = build_good_suffix_table(pat);
-#else
     std::string pat_reversed(m, '\0');
     std::reverse_copy(pat.begin(), pat.end(), pat_reversed.begin());
     std::vector<int> pi_reversed = build_prefix_table(pat_reversed);
+
+#define IMPLEMENTED_GOOD_SUFFIX 1
+
+#if IMPLEMENTED_GOOD_SUFFIX
+    std::vector<int> good_suffix = build_good_suffix_table(pi_reversed);
 #endif
     int i = m - 1;
     while (i < n) {
