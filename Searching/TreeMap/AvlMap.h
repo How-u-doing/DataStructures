@@ -5,8 +5,6 @@
  *  https://github.com/How-u-doing/DataStructures/tree/master/Searching/TreeMap/AvlMap.h
  */
 
-#include <tuple>
-#include <utility>
 #ifndef AVLMAP_H
 #define AVLMAP_H 1
 
