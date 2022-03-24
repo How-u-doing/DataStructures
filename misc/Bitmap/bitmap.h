@@ -1,3 +1,6 @@
+#ifndef BITMAP_H
+#define BITMAP_H
+
 #include <vector>
 #include <cmath>
 
@@ -39,7 +42,7 @@ public:
         ++_count;
     }
 
-    bool present(unsigned n) const {
+    bool contains(unsigned n) const {
         const size_t index = n / 8;
         const unsigned char r = n % 8;
         return (_bitmap[index] >> r) & 1;
@@ -52,3 +55,5 @@ public:
         --_count;
     }
 };
+
+#endif

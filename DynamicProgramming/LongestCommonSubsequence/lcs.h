@@ -1,3 +1,6 @@
+#ifndef LCS_H
+#define LCS_H
+
 #include <string>
 #include <vector>
 
@@ -21,3 +24,5 @@ struct Coord {
  * See also https://en.wikipedia.org/wiki/Longest_common_subsequence_problem.
  */
 std::vector<Coord> longest_common_subsequence(const std::string& X, const std::string& Y);
+
+#endif

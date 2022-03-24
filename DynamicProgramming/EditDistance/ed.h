@@ -1,3 +1,6 @@
+#ifndef ED_H
+#define ED_H
+
 #include <string>
 
 /*
@@ -11,3 +14,5 @@
  *          https://en.wikipedia.org/wiki/Levenshtein_distance.
  */
 int edit_distance(const std::string& S, const std::string& T);
+
+#endif

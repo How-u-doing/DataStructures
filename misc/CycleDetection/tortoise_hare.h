@@ -1,3 +1,6 @@
+#ifndef TORTOISE_HARE_H
+#define TORTOISE_HARE_H
+
 /*
  * Floyd's tortoise and hare algorithm for cycle detection.
  * Runs in O(n) time and O(1) space.
@@ -95,3 +98,5 @@ NodePtr tortoise_hare(NodePtr head, int& lambda, int& mu)
 
     return where_the_loop_begins;
 }
+
+#endif

@@ -11,13 +11,13 @@ void test1()
 
     cout << bitmap.size() << '\t'
          << bitmap.capacity() << '\t'
-         << bitmap.present(9) << '\n';
+         << bitmap.contains(9) << '\n';
 
     bitmap.erase(9);
 
     cout << bitmap.size() << '\t'
          << bitmap.capacity() << '\t'
-         << bitmap.present(9) << '\n';
+         << bitmap.contains(9) << '\n';
 }
 
 void test2()
@@ -39,7 +39,7 @@ void test2()
     bitmap.erase(2022);
     bitmap.erase(2024);
     for (int year = 2017; year < 2027; ++year)
-        cout << year << ':' << bitmap.present(year) << '\n';
+        cout << year << ':' << bitmap.contains(year) << '\n';
 }
 
 int main()
