@@ -1,4 +1,4 @@
-#include "bitmap.h"
+#include "Bitmap.h"
 #include <iostream>
 
 using namespace std;
