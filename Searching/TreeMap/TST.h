@@ -185,7 +185,7 @@ public:
 
     node_ptr insert_or_assign(const std::string& key, const T& val) {
         if (key == "") throw std::invalid_argument("key to insert_or_assign() cannot be null");
-        return insert_or_assign(root, key, val, 0);
+        return insert(root, key, val, 0, /*assign=*/true);
     }
 
     void erase(const std::string& key) {
@@ -409,59 +409,43 @@ private:
     static bool is_leaf(node_ptr x) noexcept {
         return !(x->left || x->mid || x->right);
     }
-        
+
     // return pointer to key node, null if not found
     static node_ptr find_aux(node_ptr x, const std::string& key, size_t d) {
         while (x != nullptr) {
             if      (key[d] < x->ch)    x = x->left;
             else if (key[d] > x->ch)    x = x->right;
             else if (d < key.length() - 1) { x = x->mid; ++d; }
-            else return x;
+            else { // the node is present, but it may not contain a value
+                return x->pval ? x : nullptr;
+            }
         }
         return nullptr;
     }
 
-    // no overwriting if key already exists
-    // return pointer to new inserted node or key node
-    node_ptr insert(node_ptr& x, const std::string& key, const T& val, size_t d) {
+    // return the pointer to the newly inserted or overwritten node
+    // using reference so that root pointer will be set on first insertion
+    node_ptr insert(node_ptr& x, const std::string& key, const T& val,
+                    size_t d, bool assign = false) {
         // e.g. insert "shell" in "she", "shore" in "shell"
-        Node** curr = &x; // *curr is a reference to pointer
+        Node** cur = &x; // *cur is a reference to pointer
         Link pos = Link::MID; // link value for root if it is null
         node_ptr parent = nullptr;
         for (;;) {
-            if (*curr == nullptr) *curr = new Node(key[d], pos, parent);
-            parent = *curr;
-            if      (key[d] < (*curr)->ch) { curr = & (*curr)->left;  pos = Link::LEFT; }
-            else if (key[d] > (*curr)->ch) { curr = & (*curr)->right; pos = Link::RIGHT; }
-            else if (d < key.length() - 1) { curr = & (*curr)->mid;   pos = Link::MID; ++d; }
+            if (*cur == nullptr) *cur = new Node(key[d], pos, parent);
+            parent = *cur;
+            if      (key[d] < (*cur)->ch) { cur = & (*cur)->left;  pos = Link::LEFT; }
+            else if (key[d] > (*cur)->ch) { cur = & (*cur)->right; pos = Link::RIGHT; }
+            else if (d < key.length() - 1) { cur = & (*cur)->mid;  pos = Link::MID; ++d; }
             else { // found
-                if ((*curr)->pval == nullptr) {
-                    (*curr)->pval = new T(val); ++n;
-                } // else do nothing
-                return *curr;
-            }
-        }
-    }
-
-    // overwrite if key already exists
-    // return pointer to new inserted or overwritten node
-    node_ptr insert_or_assign(node_ptr& x, const std::string& key, const T& val, size_t d) {
-        // e.g. insert "shell" in "she", "shore" in "shell"
-        Node** curr = &x; // *curr is a reference to pointer
-        Link pos = Link::MID; // link value for root if it is null
-        node_ptr parent = nullptr;
-        for (;;) {
-            if (*curr == nullptr) *curr = new Node(key[d], pos, parent);
-            parent = *curr;
-            if      (key[d] < (*curr)->ch) { curr = & (*curr)->left;  pos = Link::LEFT; }
-            else if (key[d] > (*curr)->ch) { curr = & (*curr)->right; pos = Link::RIGHT; }
-            else if (d < key.length() - 1) { curr = & (*curr)->mid;   pos = Link::MID; ++d; }
-            else { // found
-                if ((*curr)->pval == nullptr) {
-                    (*curr)->pval = new T(val); ++n;
+                if ((*cur)->pval == nullptr) {
+                    (*cur)->pval = new T(val);
+                    ++n;
                 }
-                else *((*curr)->pval) = val; // overwrite
-                return *curr;
+                else if (assign) { // overwrite
+                    *((*cur)->pval) = val;
+                }
+                return *cur;
             }
         }
     }
@@ -613,7 +597,7 @@ private:
         }
     private:
         node_ptr _ptr;
-        const TST* _ptree;        
+        const TST* _ptree;
     };
 
     class Tst_const_iter
