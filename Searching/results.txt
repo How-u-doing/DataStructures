@@ -9,3 +9,4 @@
 | myst::RBtree | 10030.6 ms | 168.79 ms | 10199.4 ms | 736.18 ms | 73.206 ms | 22 |
 | myst::TST | 6399.39 ms | 306.177 ms | 6705.56 ms | 322.951 ms | 156.007 ms | 91 |
 | myst::SkipList | 20201.3 ms | 221.879 ms | 20423.2 ms | 2256.88 ms | 98.356 ms | 20 |
+| absl::flat_hash_map | 3255.41 ms | 25.121 ms | 3280.53 ms | 89.852 ms | 4.557 ms |

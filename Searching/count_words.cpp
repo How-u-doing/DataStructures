@@ -12,6 +12,8 @@
 #   include "HashMap/HashMap.h"
 #elif defined(USE_MYHT2)
 #   include "HashMap/alternative/HashMap2.h"
+#elif defined(USE_ABSL_FLAT_HASH_MAP)
+#   include "absl/container/flat_hash_map.h"
 #elif defined(USE_SKIPLIST)
 #   include "Randomized/SkiplistMap.h"
 #else
@@ -58,7 +60,7 @@ void show_top_k_most_common_words(MapIt begin, MapIt end, size_t k)
 {
     std::vector<MapIt> wordIters;
     // maybe we should also pass its size()
-    // iterating through the symbol table acctually takes most of the time
+    // iterating through the symbol table is non-trivial, esp. for TSTs
     size_t n = std::distance(begin, end);
     wordIters.reserve(n);
     for (auto i = begin; i != end; ++i)
@@ -112,6 +114,9 @@ int main(int argc, char* argv[])
 #elif defined(USE_MYHT2)
         mySymbolTable::alternative::HashMap<string, size_t> mp{};
         method = "myst::Hashtable2";
+#elif defined(USE_ABSL_FLAT_HASH_MAP)
+        absl::flat_hash_map<string, size_t> mp{};
+        method = "absl::flat_hash_map";
 #elif defined(USE_BST)
         mySymbolTable::BstMap<string, size_t> mp{};
         method = "myst::BST";
