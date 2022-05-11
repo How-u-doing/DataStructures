@@ -14,6 +14,10 @@
 #   include "HashMap/alternative/HashMap2.h"
 #elif defined(USE_ABSL_FLAT_HASH_MAP)
 #   include "absl/container/flat_hash_map.h"
+#elif defined(USE_PHMAP_FLAT_HASH_MAP)
+#   include "parallel_hashmap/phmap.h"
+#elif defined(USE_ROBIN_HOOD)
+#   include "robin_hood.h"
 #elif defined(USE_SKIPLIST)
 #   include "Randomized/SkiplistMap.h"
 #else
@@ -117,6 +121,12 @@ int main(int argc, char* argv[])
 #elif defined(USE_ABSL_FLAT_HASH_MAP)
         absl::flat_hash_map<string, size_t> mp{};
         method = "absl::flat_hash_map";
+#elif defined(USE_PHMAP_FLAT_HASH_MAP)
+        phmap::flat_hash_map<string, size_t> mp{};
+        method = "phmap::flat_hash_map";
+#elif defined(USE_ROBIN_HOOD)
+        robin_hood::unordered_map<string, size_t> mp{};
+        method = "robin_hood::unordered_map";
 #elif defined(USE_BST)
         mySymbolTable::BstMap<string, size_t> mp{};
         method = "myst::BST";

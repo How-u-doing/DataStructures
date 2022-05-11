@@ -5,6 +5,8 @@
 | [myst::Hashtable](https://github.com/How-u-doing/DataStructures/blob/master/Searching/HashMap/Hashtable_impl.h) | 4226.68 ms | 154.75 ms | 4381.43 ms | 223.399 ms | 66.969 ms |
 | [myst::Hashtable2](https://github.com/How-u-doing/DataStructures/blob/master/Searching/HashMap/alternative/Hashtable2_impl.h) | 4056.17 ms | 71.068 ms | 4127.24 ms | 180.967 ms | 13.586 ms |
 | [absl::flat\_hash\_map](https://github.com/abseil/abseil-cpp/blob/master/absl/container/flat_hash_map.h) | 3255.41 ms | 25.121 ms | 3280.53 ms | 89.852 ms | 4.557 ms |
+| [phmap::flat\_hash\_map](https://github.com/greg7mdp/parallel-hashmap/blob/master/parallel_hashmap/phmap.h) | 3192.56 ms | 21.159 ms | 3213.72 ms | 100.971 ms | 3.536 ms |
+| [robin\_hood::unordered\_map](https://github.com/martinus/robin-hood-hashing/blob/master/src/include/robin_hood.h) | 2965.08 ms | 20.377 ms | 2985.45 ms | 96.787 ms | 2.216 ms |
 | std::map | 9809.03 ms | 175.169 ms | 9984.2 ms | 976.686 ms | 76.235 ms |
 | [myst::BST](https://github.com/How-u-doing/DataStructures/blob/master/Searching/TreeMap/BST_impl.h) | 7176.01 ms | 179.524 ms | 7355.53 ms | 709.177 ms | 77.777 ms | 47 |
 | [myst::AVL](https://github.com/How-u-doing/DataStructures/tree/master/Searching/TreeMap/AVLtree_impl.h) | 10291 ms | 170.157 ms | 10461.2 ms | 761.241 ms | 73.967 ms | 22 |

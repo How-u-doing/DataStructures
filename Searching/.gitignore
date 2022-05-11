@@ -1,5 +1,7 @@
 count_words
 count_words_absl_flat_hmap
+count_words_phmap_flat_hmap
+count_words_robin_hood
 count_words_avl
 count_words_bst
 count_words_map
@@ -9,3 +11,6 @@ count_words_rbt
 count_words_skiplist
 count_words_tst
 build/
+*.sw*
+leipzig1M.txt
+leipzig100K.txt
