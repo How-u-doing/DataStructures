@@ -289,7 +289,7 @@ public:
     float load_factor() const {
         return static_cast<float>(size()) / bucket_count();
     }
-    
+
     float max_load_factor() const {
         return _mlf;
     }
@@ -410,9 +410,27 @@ private:
 private:
     // here n >= 5 and is odd number
     static bool is_odd_prime(size_t n) {
-        // This is checked so that we can skip middle 5 numbers in below loop
+        // Observation 1: We only need to test the factors up to sqrt(n)
+        // instead of n/2.
+        // Consider n=100, thus it can be writen as the product of its
+        // factors: 2x50, 4x25, 5x20, 10x10, 20x5, 25x4, 50x2.
+        // Same factors reoccurred after sqrt(100), so we can stop testing
+        // when the iterating number i reaches sqrt(n).
+        //
+        // Observation 2: All prime numbers greater than 3 are of the form
+        // 6k+/-1, where k is any positive integer.
+        // Just to notice that any integer can be written as 6k+i, where
+        // i=-1,0,1,2,3,4 (or 0..5), and 6k, 6k+2, 6k+4 can be devide by
+        // 2 and 6k+3 can be devide by 3, thus only leaving 6k+/-1.
+        //
+        // Therefore, we only need to test 6k+/-1 <= sqrt(n), for all
+        // such k.
         if (n % 3 == 0/* || n % 2 == 0 */) return false;
 
+        // Note that i*i may overflow for HUGE n in the range
+        // (2^32-1)^2 < n <= (2^32)^2.
+        // Luckily, in practice we wouldn't have such HUGE n (and thus
+        // computing sqrt(n) could be avoided :)
         for (size_t i = 5; i * i <= n; i = i + 6)
             if (n % i == 0 || n % (i + 2) == 0)
                 return false;
@@ -749,7 +767,7 @@ private:
         friend bool operator!=(const _self& lhs, const _self& rhs) {
             assert(lhs._table == rhs._table && "iterators incompatible");
             return lhs._ptr != rhs._ptr;
-        }        
+        }
     };
 
     class Hash_local_iter : public Hash_iter {
