@@ -3,6 +3,39 @@
 
 namespace myStringAlgo {
 
+/*
+ * NB: In many practical uses (say, English text searches), the naive string
+ * searching algorithm functions pretty efficient! See the README under the
+ * same folder to verify it.
+ *
+ * For randomly chosen pattern P of length m and text T of length n, from the
+ * d-ary alphabet, where d>=2, the expected number of character-to-character
+ * comparisons is (see 'CLRS 3e' Exercise 32.1-3)
+ *
+ *           (n-m+1) * (1-d^{-m}) / (1-d^{-1}) <= 2(n-m+1).
+ *
+ * Proof:
+ * Let E[k] be the expected # of character-to-character comparisons when the
+ * pattern P is aligned with T[k:], where 0 <= k <= n-m.
+ *
+ * (For ease of writing, let p = 1/d, q = (d-1)/d = 1-p.)
+ *
+ * Then, E[k] = 1*q + 2*p*q + 3*p^2*q + ... + m*p^{m-1}*q + m*p^m
+ *            = q * S + m*p^m,
+ * where S = \sum_{i=1}^{m} i*p^{i-1}.
+ *
+ * Thus, q*S = (S-p*S) = p^0 + p^1 + ... + p^{m-1} - m*p^m.
+ *
+ * Therefore,
+ *       E[k] = q*S + m*p^m = p^0 + p^1 + ... + p^{m-1}
+ *            = (1-p^m) / (1-p)
+ *            = (1-d^{-m}) / (1-d^{-1}).
+ *
+ * Since P and T are randomly chosen, E[k] for each shift k are the same, and
+ * thereby giving the total expected # of character-to-character comparisons
+ * (n-m+1) * E[k], which is the result given above.  QED
+ */
+
 // Brute-force string searching algorithm
 std::vector<int> BF_search(const std::string& pat, const std::string& txt)
 {
