@@ -711,18 +711,28 @@ protected:
         return newnode;
     }
 
+    node_ptr insert_constructed_node_at(node** x, node* newnode) {
+        *x = newnode;
+        ++_count;
+        if (_count == 1)
+            return _header->_parent = _header->_left = _header->_right = *x;
+
+        if      (*x == _header->_left->_left  ) _header->_left  = *x;
+        else if (*x == _header->_right->_right) _header->_right = *x;
+        rebalance_after_inserting(*x);
+        return newnode;
+    }
+
 private:
     // precondition: *x != nullptr
     // Here args can be of type value_type or of a few types (to be forwarded)
     template<typename... Args>
     std::pair<node_ptr, bool> insert_aux(node** x, bool assign, Args&&... args) {
         if (empty()) return { insert_leaf_at(&ROOT, _header, std::forward<Args>(args)...), true };
-        // This is acctually a fake emplace routine as we will have an extra move operation.
-        // But it does make life much easier because it can serve as the base implementation
-        // of  insert( [const_iterator hint,] value_type&& value ),
-        //     insert_or_assign( [const_iterator hint,] Key&& k, M&& obj ),
-        //     [try_]emplace[_hint]( [const_iterator hint,] Args&&... args ).  :)
-        value_type val(std::forward<Args>(args)...);
+        // Construct the node first, and then extract the key from the node.
+        // This avoids the extra temporary copy (move + dtor).
+        node_ptr newnode = new_node(nullptr, std::forward<Args>(args)...);
+        value_type& val = newnode->_val;
         const key_type& key = get_key(val);
         node_ptr parent = (*x)->_parent;
         while (*x != nullptr) {
@@ -746,7 +756,8 @@ private:
                 }
             }
         }
-        return { insert_leaf_at(x, parent, std::move(val)), true };
+        newnode->_parent = parent;
+        return { insert_constructed_node_at(x, newnode), true };
     }
 
     // H(X)=h, H(b)=h+2, H(Z)=h+1, H(Y)=h (insertion at Z or deletion at X) or H(Y)=h+1 (deletion at X)
