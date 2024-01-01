@@ -82,7 +82,12 @@ std::vector<int> build_prefix_table(const std::string& P)
     const int m = P.size();
     std::vector<int> pi(m, -1); // pi[0] = -1
     int k = -1;
-    for (int i = 1; i < m; ++i) { // O(m) complexity
+    // Runs in Θ(m) time since
+    //   1. pi[k] decreases k, k < i, pi[i] = k < i
+    //   2. within the for loop k gets increased at most m-1 times
+    //   3. when executing k = pi[k], 0 <= k < m
+    // Therefore, the while body k = pi[k] is executed at most m-1 times in total.
+    for (int i = 1; i < m; ++i) {
         while (k > -1 && P[k + 1] != P[i])
             k = pi[k]; // P[0..pi[k]] suff P[0..k] suff P[0..i]
         if (P[k + 1] == P[i])
