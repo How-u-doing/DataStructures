@@ -47,53 +47,29 @@ public:
     // get only the longest pattern if mutiple patterns have the same suffix
     // search "unix is awesome" for "nix|unix|nix is" -> ["unix", "nix is"]
     std::vector<ac_result_t> find(const char *haystack) {
-        std::vector<ac_result_t> results;
-        const UChar *h = reinterpret_cast<const UChar *>(haystack);
-        ACTrieNode *n = root_;
-        for (int pos = -1; *h; h++) {
-            pos++;
-            while (n && !n->goto_[*h]) {
-                n = n->failure_link_;
-            }
-            if (!n) {
-                n = root_;
-                continue;
-            }
-            n = n->goto_[*h];
-            if (n->is_word_) {
-                int pattern_index = n->pat_idx_;
-                int match_end = pos + 1;
-                int match_begin = match_end - (int)patterns_[n->pat_idx_].size();
-                results.push_back({pattern_index, match_begin, match_end});
-            }
-        }
-        return results;
+        return find_helper(haystack,
+                           [this](int pos, ACTrieNode *n, std::vector<ac_result_t> &results) {
+                               if (n->is_word_) {
+                                   int pattern_index = n->pat_idx_;
+                                   int match_end = pos + 1;
+                                   int match_begin = match_end - (int)patterns_[n->pat_idx_].size();
+                                   results.push_back({pattern_index, match_begin, match_end});
+                               }
+                           });
     }
 
     // search "unix is awesome" for "nix|unix|nix is" -> ["unix", "nix", "nix is"]
     std::vector<ac_result_t> find_all(const char *haystack) {
-        std::vector<ac_result_t> results;
-        const UChar *h = reinterpret_cast<const UChar *>(haystack);
-        ACTrieNode *n = root_;
-        for (int pos = -1; *h; h++) {
-            pos++;
-            while (n && !n->goto_[*h]) {
-                n = n->failure_link_;
-            }
-            if (!n) {
-                n = root_;
-                continue;
-            }
-            n = n->goto_[*h];
-            for (ACTrieNode *match_node = n; match_node->is_word_;
-                 match_node = match_node->failure_link_) {
-                int pattern_index = match_node->pat_idx_;
-                int match_end = pos + 1;
-                int match_begin = match_end - (int)patterns_[match_node->pat_idx_].size();
-                results.push_back({pattern_index, match_begin, match_end});
-            }
-        }
-        return results;
+        return find_helper(
+            haystack, [this](int pos, ACTrieNode *n, std::vector<ac_result_t> &results) {
+                for (ACTrieNode *match_node = n; match_node->is_word_;
+                     match_node = match_node->failure_link_) {
+                    int pattern_index = match_node->pat_idx_;
+                    int match_end = pos + 1;
+                    int match_begin = match_end - (int)patterns_[match_node->pat_idx_].size();
+                    results.push_back({pattern_index, match_begin, match_end});
+                }
+            });
     }
 
 private:
@@ -102,8 +78,8 @@ private:
             for (int c = 0; c < Radix; c++) {
                 destroy(x->goto_[c]);
             }
+            delete x;
         }
-        delete x;
     }
 
     void insert(const char *pattern, size_t pattern_index) {
@@ -124,6 +100,26 @@ private:
         }
         cur->is_word_ = true;
         cur->pat_idx_ = pattern_index;
+    }
+
+    template <typename Op>
+    std::vector<ac_result_t> find_helper(const char *haystack, Op populate_results) {
+        std::vector<ac_result_t> results;
+        const UChar *h = reinterpret_cast<const UChar *>(haystack);
+        ACTrieNode *n = root_;
+        for (int pos = -1; *h; h++) {
+            pos++;
+            while (n && !n->goto_[*h]) {
+                n = n->failure_link_;
+            }
+            if (!n) {
+                n = root_;
+                continue;
+            }
+            n = n->goto_[*h];
+            populate_results(pos, n, results);
+        }
+        return results;
     }
 
     void construct_failure_links() {
