@@ -1,4 +1,5 @@
 #include "StringSearch.h"
+#include "AhoCorasick/AhoCorasick.h"
 #include <string>
 #include <vector>
 #include <sstream>
@@ -9,6 +10,11 @@
 
 using namespace std;
 
+struct match_t {
+    int match_begin;
+    int match_end;
+};
+
 #define RED    "\033[0;31m"
 #define GREEN  "\033[0;32m"
 #define BLUE   "\033[0;34m"
@@ -16,7 +22,7 @@ using namespace std;
 
 void print_help(const char* arg0)
 {
-    cout << "Usage: " << arg0 << " [OPTION...] PATTERN FILE\n"
+    cout << "Usage: " << arg0 << " [OPTION...] PATTERNS FILE\n"
          << "Currently available options are:\n"
          << "  -h  (help)\n"
          << "        Output a usage message and exit.\n"
@@ -67,28 +73,26 @@ vector<int> search(const string& pattern, const string& text,
         return myStringAlgo::BF_search(pattern, text);
 }
 
-void print_matches(const string& text, const string& pattern,
-                   const vector<int>& occurrences)
+void print_matches(const string& text, const vector<match_t>& matches)
 {
-    const int M = occurrences.size();
+    const int M = matches.size();
     const int T = text.size();
-    const int P = pattern.size();
     int i = 0, k = 0, line = 1;
     int start_of_line = 0;
     while (k < M && i < T) {
-        if (i == occurrences[k]) { // print the whole line
+        if (i == matches[k].match_begin) { // print the whole line
             // follow color scheme of grep
             cout << GREEN << line << END << BLUE << ':' << END;
-            for (int j = start_of_line; j != i; ++j)
-                cout << text[j];
+            cout << text.substr(start_of_line, i - start_of_line);
             // add i < T in case of noeol
             while (i < T && text[i] != '\n') {
-                if (i == occurrences[k]) {
+                if (i == matches[k].match_begin) {
+                    int pat_len = matches[k].match_end - matches[k].match_begin;
                     cout << RED; // highlight matches
-                    for (int t = 0; t < P; ++t)
-                        cout << text[i++];
+                    cout << text.substr(matches[k].match_begin, pat_len);
                     cout << END;
                     ++k;
+                    i += pat_len;
                 }
                 else {
                     cout << text[i++];
@@ -106,13 +110,25 @@ void print_matches(const string& text, const string& pattern,
     }
 }
 
+// "hello\|howdy\|hey there" -> ["hello", "howdy", "hey there"]
+vector<string> split_partterns(const char *s) {
+    vector<string> patterns;
+    for (const char *p = s; *p;) {
+        if (p[0] == '\\' && p[1] == '|') {
+            if (p != s)
+                patterns.emplace_back(s, p);
+            s = p = p + 2;
+            continue;
+        }
+        if (!p[1])
+            patterns.emplace_back(s, p + 1);
+        p++;
+    }
+    return patterns;
+}
+
 const unordered_set<string> supported_options = { "-h", "-c", "-t", "-m" };
 const unordered_set<string> supported_methods = { "BM", "KMP", "FA", "BF" };
-
-#define UNSUPPORTED_OPTION -2
-#define UNSUPPORTED_METHOD -1
-#define WRONG_ARGUMENTS 1
-#define OPEN_FILE_ERROR 2
 
 int main(int argc, char* argv[])
 {
@@ -126,7 +142,7 @@ int main(int argc, char* argv[])
         if (supported_options.count(opt) == 0) {
             cerr << RED << "unsupported option(s)\n" << END;
             print_help(argv[0]);
-            return UNSUPPORTED_OPTION;
+            return -1;
         }
         else if (opt == "-h") {
             print_help(argv[0]);
@@ -137,20 +153,24 @@ int main(int argc, char* argv[])
     if (supported_methods.count(method) == 0) {
         cerr << RED << "unsupported method\n" << END;
         print_help(argv[0]);
-        return UNSUPPORTED_METHOD;
+        return -1;
     }
 
     if (args.size() != 3) {
         cerr << RED << "wrong arguments\n" << END;
         print_help(argv[0]);
-        return WRONG_ARGUMENTS;
+        return -1;
     }
 
-    string pattern { args[1] };
+    auto patterns = split_partterns(args[1].c_str());
+    if (patterns.size() == 0) {
+        cerr << RED << "please provide at least one pattern\n" << END;
+        return -1;
+    }
     ifstream file{ args[2] };
     if (!file.is_open()) {
         cerr << RED << "error: cannot open file " << args[2] << '\n' << END;
-        return OPEN_FILE_ERROR;
+        return -1;
     }
 
     // read the whole file into a string
@@ -158,17 +178,52 @@ int main(int argc, char* argv[])
     buffer << file.rdbuf();
     string text{ buffer.str() };
 
-    [[maybe_unused]] double time;
+    vector<int> occurrences;
+    vector<myStringAlgo::ac_result_t> ac_results;
     clock_t t0 = clock();
-    vector<int> occurrences = search(pattern, text, method);
+    if (patterns.size() == 1) {
+        occurrences = search(patterns[0], text, method);
+    }
+    else {
+        myStringAlgo::ACTrie ac(patterns);
+        // the results only contain the longest suffix patterns
+        // but prefix patterns still exist
+        // ["wonderful job", "wonder", "job"] -> ["wonder", "wonderful job"]
+        ac_results = ac.find(text.c_str());
+    }
     clock_t t1 = clock();
     // in ms
-    time = (t1 - t0) / ((double) CLOCKS_PER_SEC / 1'000);
+    [[maybe_unused]] double time = (t1 - t0) / ((double) CLOCKS_PER_SEC / 1'000);
 
-    if (options.count("-c") == 1)
-        cout << occurrences.size() << '\n';
-    else
-        print_matches(text, pattern, occurrences);
+    if (options.count("-c") == 1) {
+        if (patterns.size() == 1)
+            cout << occurrences.size() << '\n';
+        else
+            cout << ac_results.size() << '\n';
+    }
+    else if (!occurrences.empty() || !ac_results.empty())  {
+        vector<match_t> matches;
+        if (occurrences.size() != 0) {
+            matches.reserve(occurrences.size());
+            int pat_len = patterns[0].size();
+            for (auto pos : occurrences)
+                matches.push_back({pos, pos + pat_len});
+        }
+        else {
+            // eliminate prefix patterns
+            // matches: |=====|===|=|=|===|==|=|=|
+            //               ^   ^ ^ ^   ^  ^ ^ ^
+            size_t prefix = 0;
+            size_t sz = ac_results.size();
+            for (size_t i = 1; i <= sz; i++) {
+                while (i < sz && ac_results[i].match_begin == ac_results[prefix].match_begin)
+                    i++;
+                matches.push_back({ac_results[i-1].match_begin, ac_results[i-1].match_end});
+                prefix = i;
+            }
+        }
+        print_matches(text, matches);
+    }
 
     if (options.count("-t") == 1)
         cout << time << " ms\n";
