@@ -35,6 +35,7 @@ inline void iter_swap(Iter it_1, Iter it_2)
     *it_2 = std::move(tmp);
 }
 
+#if 0
 template<typename RandomIt, typename Compare = std::less<typename std::iterator_traits<RandomIt>::value_type>>
 void insertion_sort(RandomIt first, RandomIt last, Compare comp = Compare{})
 {
@@ -46,6 +47,25 @@ void insertion_sort(RandomIt first, RandomIt last, Compare comp = Compare{})
             iter_swap(first + j, first + j - 1);
     }
 }
+#else
+// optimized version: see https://godbolt.org/z/5YMn33Wa4
+// 5x speedup on my Mac (M2 Pro, arm64), 10x speedup on x86_64
+// It wouldn't matter much though, given the cardinality is usually small for isort ;-)
+template<typename RandomIt, typename Compare = std::less<typename std::iterator_traits<RandomIt>::value_type>>
+void insertion_sort(RandomIt first, RandomIt last, Compare comp = Compare{})
+{
+    auto A = first;
+    auto len = last - first;
+    for (auto i = 1; i < len; ++i) {
+        auto x = A[i];
+        auto j = i;
+        // put A[i] into its position by shifting elements instead of swapping
+        for (; j > 0 && comp(x, A[j - 1]); --j)
+            A[j] = A[j - 1];
+        A[j] = x;
+    }
+}
+#endif
 
 // Helper function for binary insertion routine.
 // Return the position where target should INSERT_BEFORE in scope [first, last)
