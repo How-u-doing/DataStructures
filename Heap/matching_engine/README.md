@@ -34,23 +34,23 @@ python3 verify.py
 Ask set
 
 $$
-A = \{
+A = \lbrace
     (ap_1, aq_1),
     (ap_2, aq_2),
     \cdots,
     (ap_m, aq_m)
-\}
+\rbrace
 $$
 
 Bid set
 
 $$
-B = \{
+B = \lbrace
     (bp_1, bq_1),
     (bp_2, bq_2),
     \cdots,
     (bp_n, bq_n)
-\}
+\rbrace
 $$
 
 ```
