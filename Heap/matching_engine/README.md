@@ -32,6 +32,7 @@ python3 verify.py
 
 ## Find the matching price that maximizes the total transaction amount
 Ask set
+
 $$
 A = \{
     (ap_1, aq_1),
@@ -42,6 +43,7 @@ A = \{
 $$
 
 Bid set
+
 $$
 B = \{
     (bp_1, bq_1),
@@ -81,9 +83,11 @@ at such price. All orders from $AB$ and $BA$ are traded at price $p$.
 
 So, the total transaction amount $T$ is bounded by lower one of the selling
 quantity of $AB$ and the buying quantity of $BA$. That is,
+
 $$
 T = p \times \min(Q_A(p), Q_B(p)),
 $$
+
 where
 $Q_A(p)$ is the cumulative quantity of asks at or below ($\leq$) $p$, and
 $Q_B(p)$ is the cumulative quantity of bids at or above ($\geq$) $p$.
