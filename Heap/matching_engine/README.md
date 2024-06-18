@@ -31,6 +31,7 @@ python3 verify.py
 ```
 
 ## Find the matching price that maximizes the total transaction amount
+### The formula
 Ask set
 
 $$
@@ -81,7 +82,7 @@ price $p$ (the area $AB$) are glad to sell their shares, and that only the bid
 orders at or above the matching price (the area $BA$) are happy to buy shares
 at such price. All orders from $AB$ and $BA$ are traded at price $p$.
 
-So, the total transaction amount $T$ is bounded by lower one of the selling
+So, the total transaction amount $T$ is bounded by the lower one of the selling
 quantity of $AB$ and the buying quantity of $BA$. That is,
 
 $$
@@ -89,8 +90,56 @@ T = p \times \min(Q_A(p), Q_B(p)),
 $$
 
 where
-$Q_A(p)$ is the cumulative quantity of asks at or below ($\leq$) $p$, and
-$Q_B(p)$ is the cumulative quantity of bids at or above ($\geq$) $p$.
+$Q_A(p)$ is the cumulative quantity of asks at or below price $p$, and
+$Q_B(p)$ is the cumulative quantity of bids at or above price $p$.
 
-Math time!
-...
+### Observation
+A naive algorithm we can easily come up with is to try each price in the
+tradable price range $[a,b]$, where $a$ is the minimum ask price and $b$ is
+the maximum bid price. But prices aren't continuous, how can or should we
+try all prices?
+
+```
+            |~
+            |~        bids
+            |~         *| <-- b
+            |~         *|
+            |          *|
+            |~         *| <-- p'
+            |           |
+            |-----------|<--- p
+            |~          |
+            |~         *|
+            |~         *|
+            |~         *| <-- a
+           asks        *|
+                       *|
+```
+The thing is if we have found the ideal price $p$ that is neither a bid price
+nor an ask price, we can keep increasing the price $p$ until we encounter the
+first bid or ask price, marking it as $p'$. Then we have
+
+$$
+p' > p, \\
+Q_A(p') \geq Q_A(p), \\
+Q_B(p') = Q_B(p),
+$$
+
+which indicates
+
+$$
+T' = p' \times \min(Q_A(p'), Q_B(p')) > p \times \min(Q_A(p), Q_B(p)) = T.
+$$
+
+This suggests that the matching price $p$ that maximizes the total transaction
+amount must be a bid or ask price!
+
+### Visualization
+![](img/matching_price_graph.png)
+
+```bash
+mark@ubuntu ~/r/D/H/matching_engine (master)> make P2
+FF_DOS=1 ./matching_engine 2 < data/orders.csv
+matching price: 75.33, max transaction amount: 9450223.83
+```
+![](img/p2_result.png)

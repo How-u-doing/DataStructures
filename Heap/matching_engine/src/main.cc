@@ -8,6 +8,7 @@
 #include <iomanip>
 #include <cstdlib>
 #include <cmath>
+#include <cassert>
 
 using namespace std;
 
@@ -206,6 +207,16 @@ unordered_map<string, NetPosition> normal_priority_rules()
     return net_positions;
 }
 
+struct OrderPQ {
+    double price = 0.0;
+    int quantity = 0;
+};
+
+struct matching_info_t {
+    double matching_price;
+    double max_transaction_amount;
+};
+
 // (price, quantity) tuples of bid-ask orders
 //
 // Ask set A = {                  Bid set B = {
@@ -238,12 +249,132 @@ unordered_map<string, NetPosition> normal_priority_rules()
 //                              |    |
 //
 // Find the matching price that maximizes the total transaction amount.
-double auction_period_rules()
+matching_info_t compute_matching_price(const vector<OrderPQ> &asks, const vector<OrderPQ> &bids,
+                                       int Q_A_b, int A_gt_b_idx)
 {
-    double matching_price = 0;
-    // ...
+    if (asks.empty() || bids.empty() || A_gt_b_idx < 1)
+        return {-1, -1};  // no trade
+    double a = asks[0].price;
+    double b = bids[0].price;
+    int Q_A_p = Q_A_b;
+    int Q_B_p = bids[0].quantity;
+    int a_idx = A_gt_b_idx - 1;
+    int b_idx = 0;
+    const int asks_sz = asks.size();
+    const int bids_sz = bids.size();
 
-    return matching_price;
+    assert(asks[a_idx].price <= b);
+    if (A_gt_b_idx < asks_sz)
+        assert(asks[A_gt_b_idx].price > b);
+
+    double max_transaction_amount = 0;
+    double matching_price = -1;
+
+    // try each bid/ask price in [a, b] in descending order
+    for (double p = b; p >= a;) {
+        double transaction_amount = p * min(Q_A_p, Q_B_p);
+        if (transaction_amount > max_transaction_amount) {
+            max_transaction_amount = transaction_amount;
+            matching_price = p;
+        }
+
+        if (Q_A_p <= Q_B_p)
+            // min(Q_A_p, Q_B_p) = Q_A_p, which's non-increasing as p decreases. Thus,
+            // max_transaction_amount = p * min(Q_A_p, Q_B_p) will decrease if we continue.
+            break;
+
+        //  asks        bids
+        //   |*         ~| <- p
+        //   |          ~|
+        //   |*          |
+        //   |*         ~|
+        //   |*         ~|
+        if (asks[a_idx].price == p) {
+            Q_A_p -= asks[a_idx].quantity;
+            a_idx--;
+        }
+        if (bids[b_idx].price == p)
+            b_idx++;
+
+        if (a_idx < 0 || b_idx == bids_sz)
+            break;
+
+        // determine next price
+        if (asks[a_idx].price <= bids[b_idx].price) {
+            p = bids[b_idx].price;
+            Q_B_p += bids[b_idx].quantity;
+        } else {
+            p = asks[a_idx].price;
+        }
+    }
+
+    return {matching_price, max_transaction_amount};
+}
+
+template <typename Comp>
+bool put_order(vector<OrderPQ> &orders, OrderPQ order, Comp comp)
+{
+    bool inserted = true;
+    // e.g. put 5.7 in [5.3, 5.4, 5.6, 5.7, 5.8, 5.9]
+    auto it = lower_bound(orders.begin(), orders.end(), order, comp);
+    if (it != orders.end()) {
+        if (it->price == order.price) {
+            it->quantity += order.quantity;
+            inserted = false;
+        } else {
+            orders.insert(it, order);
+        }
+    } else {
+        orders.push_back(order);
+    }
+    return inserted;
+}
+
+bool put_ask_order(vector<OrderPQ> &asks, OrderPQ ask_order)
+{
+    return put_order(asks, ask_order, [](OrderPQ a, OrderPQ b) { return a.price < b.price; });
+}
+
+void put_bid_order(vector<OrderPQ> &bids, OrderPQ bid_order)
+{
+    put_order(bids, bid_order, [](OrderPQ a, OrderPQ b) { return a.price > b.price; });
+}
+
+matching_info_t auction_period_rules()
+{
+    vector<OrderPQ> asks;
+    vector<OrderPQ> bids;
+    double b = 0.0;      // max bid price
+    int Q_A_b = 0;       // cumulative quantity of asks at or below price b
+    int A_gt_b_idx = 0;  // index of first ask price > b
+    matching_info_t matching_info{-1, -1};
+    for (;;) {
+        auto order = fetch_an_order();
+        if (!order)
+            break;
+        if (order->side == Side::BUY) {
+            double old_b = bids.empty() ? -1 : bids[0].price;
+            put_bid_order(bids, {order->price, order->quantity});
+            b = bids[0].price;
+            if (b > old_b) {
+                auto it = upper_bound(asks.begin(), asks.end(), OrderPQ{old_b, 0},
+                                      [](OrderPQ a, OrderPQ b) { return a.price < b.price; });
+                for (; it < asks.end() && it->price <= b; ++it)
+                    Q_A_b += it->quantity;
+                A_gt_b_idx = it - asks.begin();
+            }
+        } else {
+            bool inserted = put_ask_order(asks, {order->price, order->quantity});
+            if (order->price <= b) {
+                Q_A_b += order->quantity;
+                A_gt_b_idx += inserted;
+            }
+        }
+        matching_info = compute_matching_price(asks, bids, Q_A_b, A_gt_b_idx);
+        // display the matching price dynamically
+        // ...
+    }
+    return matching_info;
 }
 
 int main(int argc, char *argv[])
@@ -268,8 +399,9 @@ int main(int argc, char *argv[])
             cout << party << ',' << net_position.shares << ',' << net_position.earnings << '\n';
         cerr << "volume: " << volume << '\n';
     } else {
-        double matching_price = auction_period_rules();
-        cout << "matching price: " << matching_price << '\n';
+        auto matching_info = auction_period_rules();
+        cout << "matching price: " << matching_info.matching_price
+             << ", max transaction amount: " << matching_info.max_transaction_amount << '\n';
     }
 
     return 0;
