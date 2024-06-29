@@ -38,7 +38,7 @@ public:
         while (tail->next != nullptr)
             tail = tail->next;
 
-        // now make a cycle, let the evil begins
+        // now make a cycle, let the evil begin
         tail->next = nth_node;
 
         return true;
@@ -65,6 +65,9 @@ void test1()
              << "\nLoop started with a distance of " << mu
              << " from the head node, its value is " << p->data
              << '\n';
+        // break the cycle, so resources can be cleaned up
+        // see also https://en.cppreference.com/w/cpp/memory/weak_ptr/~weak_ptr#Example
+        p->next = nullptr;
     }
 }
 
