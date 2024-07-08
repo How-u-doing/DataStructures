@@ -137,6 +137,37 @@ amount must be a bid or ask price!
 ### Visualization
 ![](img/matching_price_graph.png)
 
+We can compute the final matching price with a single SQL query using DuckDB!
+```sql
+with df as (
+    select *
+    from read_csv('data/orders.csv', names=['id', 'party', 'price', 'quantity', 'timestamp', 'side'])
+)
+select *
+from (
+    select distinct price as test_price
+    from df
+    where price <= (
+            select max(price) from df where side='BUY'
+        ) and price >= (
+            select min(price) from df where side='SELL'
+        )
+), lateral (
+    with cte1 as (
+        select sum(quantity) as Q_A_p
+        from df
+        where side='SELL' and price <= test_price
+    ), cte2 as (
+        select sum(quantity) as Q_B_p
+        from df
+        where side='BUY' and price >= test_price
+    )
+    select Q_A_p, Q_B_p, test_price * least(Q_A_p, Q_B_p) as transaction_amount
+    from cte1, cte2
+)
+order by test_price desc
+```
+
 ```bash
 mark@ubuntu ~/r/D/H/matching_engine (master)> make P2
 FF_DOS=1 ./matching_engine 2 < data/orders.csv
