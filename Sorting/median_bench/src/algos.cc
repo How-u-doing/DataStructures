@@ -60,13 +60,11 @@ double median(const T *arr, size_t n, Fn partition_fn) {
     std::vector<T> copy(arr, arr + n);
     T *data = copy.data();
     size_t m = n / 2;
-    // odd
-    if (n % 2 == 1) {
-        partition_fn(data, data + m, data + n);
-        return data[m];
-    }
-    // even
     partition_fn(data, data + m, data + n);
+    // odd
+    if (n % 2 == 1)
+        return data[m];
+    // even
     return (data[m] + *std::max_element(data, data + m)) / 2.0;
 }
 
