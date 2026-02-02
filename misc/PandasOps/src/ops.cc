@@ -1,4 +1,7 @@
+#include "statistics.h"
+#include "rolling_no_nulls.h"
 #include "rolling_nulls.h"
+#include <vector>
 
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
@@ -56,7 +59,68 @@ static py::array_t<double> ts_rolling_apply(py::array_t<uint32_t> t, py::array_t
     return res;
 }
 
+static double median(py::array_t<double> x) {
+    py::buffer_info buf_info = x.request();
+    const double *x_data = static_cast<const double *>(buf_info.ptr);
+
+    std::vector<double> x_copy(x_data, x_data + buf_info.size);
+
+    return stats::median(x_copy.data(), x_copy.size());
+}
+
+static double quantile(py::array_t<double> x, double q, stats::QuantileMethod method) {
+    py::buffer_info buf_info = x.request();
+    const double *x_data = static_cast<const double *>(buf_info.ptr);
+
+    std::vector<double> x_copy(x_data, x_data + buf_info.size);
+
+    return stats::quantile(x_copy.data(), x_copy.size(), q, method);
+}
+
+static double nanquantile(py::array_t<double> x, double q, stats::QuantileMethod method) {
+    py::buffer_info buf_info = x.request();
+    double *x_data = static_cast<double *>(buf_info.ptr);
+
+    return stats::nanquantile(x_data, buf_info.size, q, method);
+}
+
+static py::array_t<double> rolling_quantile(
+    py::array_t<double> x, uint32_t window, double q,
+    stats::QuantileMethod method = stats::QuantileMethod::Linear) {
+    py::buffer_info buf_info = x.request();
+    const double *x_data = static_cast<const double *>(x.request().ptr);
+
+    py::array_t<double> res(buf_info.size);
+    double *res_data = static_cast<double *>(res.request().ptr);
+
+    rolling_no_nulls::RollingQuantile<double> rq(window, q, method);
+
+    for (py::ssize_t i = 0; i < buf_info.size; i++) {
+        rq.update(x_data[i]);
+        res_data[i] = rq.get();
+    }
+
+    return res;
+}
+
 PYBIND11_MODULE(ops, m) {
+    py::enum_<stats::QuantileMethod>(m, "QuantileMethod")
+        .value("Nearest", stats::QuantileMethod::Nearest)
+        .value("Lower", stats::QuantileMethod::Lower)
+        .value("Higher", stats::QuantileMethod::Higher)
+        .value("Midpoint", stats::QuantileMethod::Midpoint)
+        .value("Linear", stats::QuantileMethod::Linear);
+
+    m.def("median", &median, py::arg("x"));
+    m.def("quantile", &quantile, py::arg("x"), py::arg("q"),
+          py::arg("method") = stats::QuantileMethod::Linear);
+    // nanquantile modifies the array in-place
+    m.def("nanquantile", &nanquantile, py::arg("x"), py::arg("q"),
+          py::arg("method") = stats::QuantileMethod::Linear);
+
+    m.def("rolling_quantile", &rolling_quantile, py::arg("x"), py::arg("window"), py::arg("q"),
+          py::arg("method") = stats::QuantileMethod::Linear);
+
     m.def("rolling_sum", &rolling_apply<double, SumF64>, py::arg("x"), py::arg("window"),
           py::arg("min_obs") = 0);
 

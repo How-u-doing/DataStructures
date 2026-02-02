@@ -26,9 +26,16 @@ function(add_shared_lib target)
     add_library(${target} MODULE ${ARGN})
     set_target_properties(${target} PROPERTIES PREFIX "")
 
-    target_include_directories(${target} PRIVATE
-        ${pybind11_INCLUDE_DIRS}
+    target_link_directories(${target} PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/lib
+    )
+    target_link_libraries(${target} PRIVATE
+        select_nth_unstable
+        pybind11::module
     )
 endfunction()
 
-add_shared_lib(ops src/ops.cc)
+add_shared_lib(ops
+    src/ops.cc
+    src/statistics.cc
+)

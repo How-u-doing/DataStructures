@@ -1,4 +1,6 @@
 CMAKE := cmake
+RUST_LIB := lib/libselect_nth_unstable.a
+RUST_SRC := src/select_nth_unstable.rs
 
 .PHONY: all clean
 
@@ -10,8 +12,12 @@ release debug: requirements
 	$(CMAKE) -B build -S . -DCMAKE_BUILD_TYPE=$(build_type)
 	$(MAKE) -C build -j$(shell nproc)
 
-requirements:
+requirements: $(RUST_LIB)
 	pip3 install pybind11
+
+$(RUST_LIB): $(RUST_SRC)
+	mkdir -p lib
+	rustc -C opt-level=3 $< --crate-type staticlib -o $@
 
 clean:
 	rm -rf build/
