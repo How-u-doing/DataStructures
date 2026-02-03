@@ -72,13 +72,17 @@ class TsRollingSum {
 public:
     explicit TsRollingSum(uint32_t window_ms) : window_ms_(window_ms) {}
 
-    // user can replace NaN with 0
-    void update(std::pair<uint32_t, T> x) {
+    void expire(uint32_t t) {
         // right closed: (t - window_ms, t]
-        while (!buf_.empty() && x.first - window_ms_ >= buf_.front().first) {
+        while (!buf_.empty() && buf_.front().first <= t - window_ms_) {
             SumTraits::sub(sum_, buf_.front().second, compensation_sub_);
             buf_.pop_front();
         }
+    }
+
+    // user can replace NaN with 0
+    void update(std::pair<uint32_t, T> x) {
+        expire(x.first);
 
         buf_.push_back(x);
         SumTraits::add(sum_, x.second, compensation_add_);
@@ -122,6 +126,8 @@ template <typename T, typename S>
 class TsRollingMean {
 public:
     explicit TsRollingMean(uint32_t window_ms) : sum_(window_ms) {}
+
+    void expire(uint32_t t) { sum_.expire(t); }
 
     // if you replace NaN with 0, real_avg = get_sum() / (count() - 1)
     // or you can use the rolling_nulls::TsRollingMean version instead
@@ -181,11 +187,15 @@ public:
     explicit TsRollingMinMax(uint32_t window_ms, Compare cmp = Compare{})
         : window_ms_(window_ms), cmp_(cmp) {}
 
+    void expire(uint32_t t) {
+        // right closed: (t - window_ms, t]
+        while (!dq_.empty() && dq_.front().first <= t - window_ms_)
+            dq_.pop_front();
+    }
+
     // user can replace NaN with DBL_MAX/DBL_MIN
     void update(std::pair<uint32_t, T> x) {
-        // right closed: (t - window_ms, t]
-        while (!dq_.empty() && dq_.front().first <= x.first - window_ms_)
-            dq_.pop_front();
+        expire(x.first);
 
         while (!dq_.empty() && !cmp_(dq_.back().second, x.second))
             dq_.pop_back();

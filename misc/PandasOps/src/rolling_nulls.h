@@ -90,15 +90,19 @@ public:
     explicit TsRollingSum(uint32_t window_ms, uint32_t min_obs = 1)
         : window_ms_(window_ms), min_obs_(min_obs) {}
 
-    void update(std::pair<uint32_t, T> x) {
+    void expire(uint32_t t) {
         // right closed: (t - window_ms, t]
-        while (!buf_.empty() && x.first - window_ms_ >= buf_.front().first) {
+        while (!buf_.empty() && buf_.front().first <= t - window_ms_) {
             if (!is_null(buf_.front().second))
                 SumTraits::sub(sum_, buf_.front().second, compensation_sub_);
             else
                 null_cnt_--;
             buf_.pop_front();
         }
+    }
+
+    void update(std::pair<uint32_t, T> x) {
+        expire(x.first);
 
         buf_.push_back(x);
         if (!is_null(x.second))
@@ -143,6 +147,8 @@ template <typename T, typename S>
 class TsRollingMean {
 public:
     explicit TsRollingMean(uint32_t window_ms, uint32_t min_obs = 1) : sum_(window_ms, min_obs) {}
+
+    void expire(uint32_t t) { sum_.expire(t); }
 
     void update(std::pair<uint32_t, T> x) { sum_.update(x); }
 
@@ -218,17 +224,20 @@ public:
     explicit TsRollingMinMax(uint32_t window_ms, uint32_t min_obs = 1, Compare cmp = Compare{})
         : window_ms_(window_ms), min_obs_(min_obs), cmp_(cmp) {}
 
-    void update(std::pair<uint32_t, T> x) {
+    void expire(uint32_t t) {
         // right closed: (t - window_ms, t]
-        while (!is_null_.empty() && is_null_.front().first <= x.first - window_ms_) {
+        while (!is_null_.empty() && is_null_.front().first <= t - window_ms_) {
             if (is_null_.front().second)
                 null_cnt_--;
             is_null_.pop_front();
         }
 
-        // remove the extremum if it's outside the current window
-        while (!dq_.empty() && dq_.front().first <= x.first - window_ms_)
+        while (!dq_.empty() && dq_.front().first <= t - window_ms_)
             dq_.pop_front();
+    }
+
+    void update(std::pair<uint32_t, T> x) {
+        expire(x.first);
 
         if (!is_null(x.second)) {
             while (!dq_.empty() && !cmp_(dq_.back().second, x.second))
