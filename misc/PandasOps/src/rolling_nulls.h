@@ -2,6 +2,7 @@
 
 #include <deque>
 #include <functional>
+#include <limits>
 #include <type_traits>
 #include <utility>
 
@@ -273,5 +274,219 @@ using TsRollingMin = TsRollingMinMax<T, std::less<T>>;
 
 template <typename T>
 using TsRollingMax = TsRollingMinMax<T, std::greater<T>>;
+
+constexpr double InvCondTol = std::numeric_limits<double>::epsilon() * 1e3;
+
+template <int N>
+class RollingMoment {
+    static_assert(N >= 2 && N <= 4, "RollingMoment only supports 2nd, 3rd, 4th moments");
+
+public:
+    RollingMoment() = default;
+
+    // See https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance
+    void push(double x) {
+        if (is_null(x))
+            return;
+
+        double old_moment = (N == 4) ? M4_ : (N == 3 ? M3_ : M2_);
+
+        n_++;
+        double delta = x - mean_;
+        double delta_n = delta / n_;
+        double delta_n2 = delta_n * delta_n;
+        double term1 = delta * delta_n * (n_ - 1);
+
+        mean_ += delta_n;
+        if constexpr (N >= 4) {
+            M4_ +=
+                term1 * delta_n2 * (n_ * n_ - 3 * n_ + 3) + 6 * delta_n2 * M2_ - 4 * delta_n * M3_;
+        }
+        if constexpr (N >= 3) {
+            M3_ += term1 * delta_n * (n_ - 2) - 3 * delta_n * M2_;
+        }
+        M2_ += term1;
+
+        double new_moment = (N == 4) ? M4_ : (N == 3 ? M3_ : M2_);
+        if (abs(old_moment) * InvCondTol > abs(new_moment))
+            // possible catastrophic cancellation
+            numerically_unstable_ = true;
+    }
+
+    void pop(double x) {
+        if (is_null(x))
+            return;
+
+        if (n_ <= 1) {
+            reset();
+            return;
+        }
+
+        double old_moment = (N == 4) ? M4_ : (N == 3 ? M3_ : M2_);
+
+        n_--;
+        double delta = x - mean_;
+        double delta_n = delta / n_;
+        double term1 = delta_n * delta * (n_ + 1);
+
+        mean_ -= delta_n;
+        if constexpr (N >= 4) {
+            M4_ -= delta_n * (delta_n * (term1 * (n_ * n_ + 3 * n_ + 3) - 6 * M2_) - 4 * M3_);
+        }
+        if constexpr (N >= 3) {
+            M3_ -= delta_n * (term1 * (n_ + 2) - 3 * M2_);
+        }
+        M2_ -= term1;
+
+        double new_moment = (N == 4) ? M4_ : (N == 3 ? M3_ : M2_);
+        if ((abs(old_moment) + abs(new_moment - old_moment)) * InvCondTol > abs(new_moment))
+            // possible catastrophic cancellation
+            numerically_unstable_ = true;
+    }
+
+    void reset() {
+        n_ = 0;
+        mean_ = M2_ = M3_ = M4_ = 0.0;
+        numerically_unstable_ = false;
+    }
+
+    void clear_numerical_instability() { numerically_unstable_ = false; }
+
+    bool numerically_unstable() const { return numerically_unstable_; }
+
+    template <typename Iter>
+    void recalculate(Iter begin, Iter end) {
+        reset();
+        for (auto it = begin; it != end; ++it)
+            push(*it);
+        clear_numerical_instability();
+    }
+
+    int64_t count() const { return n_; }
+
+    double sum() const { return mean_ * n_; }
+
+    double mean() const { return mean_; }
+
+    double var(bool biased = false) const {
+        if (n_ < 2)
+            return NAN;
+        return M2_ / (biased ? n_ : (n_ - 1));
+    }
+
+    double std(bool biased = false) const {
+        double v = var(biased);
+        return std::isnan(v) ? v : std::sqrt(v);
+    }
+
+    double skew(bool biased = false) const {
+        static_assert(N >= 3, "skewness requires N >= 3");
+
+        if (n_ < 3)
+            return NAN;
+
+        double moments_ratio = M3_ / std::pow(M2_, 1.5);
+
+        if (biased)
+            return std::sqrt(n_) * moments_ratio;
+
+        double correction = n_ * std::sqrt(n_ - 1.0) / (n_ - 2.0);
+        return correction * moments_ratio;
+    }
+
+    double kurt(bool biased = false) const {
+        static_assert(N >= 4, "kurtosis requires N >= 4");
+
+        if (n_ < 4)
+            return NAN;
+
+        double g2 = n_ * M4_ / (M2_ * M2_);
+
+        if (biased)
+            return g2;
+
+        double correction = (n_ - 1.0) / ((n_ - 2.0) * (n_ - 3.0));
+        double term = (n_ + 1.0) * g2 - 3.0 * (n_ - 1.0);
+        return correction * term;
+    }
+
+private:
+    int64_t n_ = 0;
+    double mean_ = 0.0;
+    double M2_ = 0.0;
+    double M3_ = 0.0;
+    double M4_ = 0.0;
+    bool numerically_unstable_ = false;
+};
+
+template <int N>
+class TsRollingMoment {
+public:
+    explicit TsRollingMoment(uint32_t window_ms, uint32_t min_obs)
+        : window_ms_(window_ms), min_obs_(min_obs) {}
+
+    void expire(uint32_t t) {
+        // right closed: (t - window_ms, t]
+        while (!buf_.empty() && buf_.front().first <= t - window_ms_) {
+            rm_.pop(buf_.front().second);
+            buf_.pop_front();
+        }
+    }
+
+    void update(std::pair<uint32_t, double> x) {
+        expire(x.first);
+
+        rm_.push(x.second);
+        buf_.push_back(x);
+
+        if (numerically_unstable())
+            recalculate();
+    }
+
+    bool numerically_unstable() const { return rm_.numerically_unstable(); }
+
+    // update();
+    // ...
+    // expire();
+    // if (numerically_unstable())
+    //     recalculate();
+    // var() / skew() / kurt();
+    void recalculate() {
+        rm_.reset();
+        for (auto [_, value] : buf_)
+            rm_.push(value);
+        rm_.clear_numerical_instability();
+    }
+
+    double var() const {
+        if (rm_.count() < min_obs_)
+            return NAN;
+        return rm_.var();
+    }
+
+    double std() const {
+        if (rm_.count() < min_obs_)
+            return NAN;
+        return rm_.std();
+    }
+
+    double skew() const {
+        if (rm_.count() < min_obs_)
+            return NAN;
+        return rm_.skew();
+    }
+
+    double kurt() const {
+        if (rm_.count() < min_obs_)
+            return NAN;
+        return rm_.kurt();
+    }
+
+private:
+    uint32_t window_ms_;
+    uint32_t min_obs_;
+    RollingMoment<N> rm_;
+    std::deque<std::pair<uint32_t, double>> buf_;  // (time, value)
+};
 
 }  // namespace rolling_nulls

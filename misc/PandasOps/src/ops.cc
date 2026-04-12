@@ -103,6 +103,65 @@ static py::array_t<double> rolling_quantile(
     return res;
 }
 
+template <int N>
+static py::array_t<double> rolling_moment(py::array_t<double> x, uint32_t window) {
+    py::buffer_info buf_info = x.request();
+    const double *x_data = static_cast<const double *>(buf_info.ptr);
+
+    py::array_t<double> res(buf_info.size);
+    double *res_data = static_cast<double *>(res.request().ptr);
+
+    rolling_nulls::RollingMoment<N> rm;
+    for (py::ssize_t i = 0; i < buf_info.size; i++) {
+        rm.push(x_data[i]);
+        if (i >= window) {
+            rm.pop(x_data[i - window]);
+
+            if (rm.numerically_unstable())
+                rm.recalculate(x_data + i - window + 1, x_data + i + 1);
+        }
+
+        if constexpr (N == 2) {
+            res_data[i] = rm.var();
+        } else if constexpr (N == 3) {
+            res_data[i] = rm.skew();
+        } else if constexpr (N == 4) {
+            res_data[i] = rm.kurt();
+        }
+    }
+
+    return res;
+}
+
+template <int N>
+static py::array_t<double> ts_rolling_moment(py::array_t<uint32_t> t, py::array_t<double> x,
+                                             uint32_t window_ms, uint32_t min_obs = 1) {
+    py::buffer_info buf_info = t.request();
+    const uint32_t *t_data = static_cast<const uint32_t *>(buf_info.ptr);
+    const double *x_data = static_cast<const double *>(x.request().ptr);
+
+    py::array_t<double> res(buf_info.size);
+    double *res_data = static_cast<double *>(res.request().ptr);
+
+    rolling_nulls::TsRollingMoment<N> rm(window_ms, min_obs);
+    for (py::ssize_t i = 0; i < buf_info.size; i++) {
+        rm.update({t_data[i], x_data[i]});
+
+        if (rm.numerically_unstable())
+            rm.recalculate();
+
+        if constexpr (N == 2) {
+            res_data[i] = rm.var();
+        } else if constexpr (N == 3) {
+            res_data[i] = rm.skew();
+        } else if constexpr (N == 4) {
+            res_data[i] = rm.kurt();
+        }
+    }
+
+    return res;
+}
+
 PYBIND11_MODULE(ops, m) {
     py::enum_<stats::QuantileMethod>(m, "QuantileMethod")
         .value("Nearest", stats::QuantileMethod::Nearest)
@@ -133,6 +192,10 @@ PYBIND11_MODULE(ops, m) {
     m.def("rolling_max", &rolling_apply<double, MaxF64>, py::arg("x"), py::arg("window"),
           py::arg("min_obs") = 0);
 
+    m.def("rolling_var", &rolling_moment<2>, py::arg("x"), py::arg("window"));
+    m.def("rolling_skew", &rolling_moment<3>, py::arg("x"), py::arg("window"));
+    m.def("rolling_kurt", &rolling_moment<4>, py::arg("x"), py::arg("window"));
+
     // time series
     m.def("ts_rolling_sum", &ts_rolling_apply<uint32_t, TsSumU32>, py::arg("t"), py::arg("x"),
           py::arg("window_ms"), py::arg("min_obs") = 1);
@@ -156,5 +219,12 @@ PYBIND11_MODULE(ops, m) {
           py::arg("window_ms"), py::arg("min_obs") = 1);
 
     m.def("ts_rolling_max", &ts_rolling_apply<double, TsMaxF64>, py::arg("t"), py::arg("x"),
+          py::arg("window_ms"), py::arg("min_obs") = 1);
+
+    m.def("ts_rolling_var", &ts_rolling_moment<2>, py::arg("t"), py::arg("x"), py::arg("window_ms"),
+          py::arg("min_obs") = 1);
+    m.def("ts_rolling_skew", &ts_rolling_moment<3>, py::arg("t"), py::arg("x"),
+          py::arg("window_ms"), py::arg("min_obs") = 1);
+    m.def("ts_rolling_kurt", &ts_rolling_moment<4>, py::arg("t"), py::arg("x"),
           py::arg("window_ms"), py::arg("min_obs") = 1);
 }
